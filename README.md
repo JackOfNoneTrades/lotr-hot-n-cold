@@ -5,6 +5,7 @@
 
 ## Description
 This mod allows to grant immunity from frost and heat damage for arbitrary mobs, for the LOTR Legacy mod.
+It also allows to configure which biomes are hot or frosty.
 
 ## Usage
 Turn on the `printMobs` option in the config to print all possible entities to the console.
@@ -12,13 +13,22 @@ Then add those names in the respective config lists:
 ```
 # List of mobs that should be immune to frost.
 S:mobsImmuneToFrost <
-lotr.HighElf
-Sheep
+    lotr.HighElf
+    Sheep
  >
 
 # List of mobs that should be immune to heat.
 S:mobsImmuneToHeat <
-Pig
+    Pig
+ >
+```
+You can make arbitrary biomes hot or frosty. Add their name or ID to the appropriate list.
+The list can be printed if you enable the `printBiomes` config option.
+```
+# List of biomes that should apply the frost mechanic.
+S:frostBiomes <
+    96
+    nearHarad
  >
 ```
 

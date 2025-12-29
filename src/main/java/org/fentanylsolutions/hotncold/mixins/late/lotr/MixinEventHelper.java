@@ -1,6 +1,7 @@
 package org.fentanylsolutions.hotncold.mixins.late.lotr;
 
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraftforge.event.entity.living.LivingEvent;
 
 import org.fentanylsolutions.hotncold.HotNCold;
@@ -60,6 +61,30 @@ public class MixinEventHelper {
     private boolean hotncold$wrapImmuneToHeat(Object obj, Operation<Boolean> original,
         LivingEvent.LivingUpdateEvent event) {
         if (HotNCold.mobsImmuneToHeat.contains(event.entity.getClass())) {
+            return true;
+        }
+
+        return original.call(obj);
+    }
+
+    @WrapOperation(
+        method = "onLivingUpdate(Lnet/minecraftforge/event/entity/living/LivingEvent$LivingUpdateEvent;)V",
+        at = @At(value = "CONSTANT", args = "classValue=lotr.common.world.biome.LOTRBiomeGenForodwaith"))
+    private boolean frostBiomeCheckWrap(Object obj, Operation<Boolean> original, LivingEvent.LivingUpdateEvent event) {
+
+        if (HotNCold.frostBiomes.contains(((BiomeGenBase) obj).biomeID)) {
+            return true;
+        }
+
+        return original.call(obj);
+    }
+
+    @WrapOperation(
+        method = "onLivingUpdate(Lnet/minecraftforge/event/entity/living/LivingEvent$LivingUpdateEvent;)V",
+        at = @At(value = "CONSTANT", args = "classValue=lotr.common.world.biome.LOTRBiomeGenNearHarad"))
+    private boolean heatBiomeCheckWrap(Object obj, Operation<Boolean> original, LivingEvent.LivingUpdateEvent event) {
+
+        if (HotNCold.heatBiomes.contains(((BiomeGenBase) obj).biomeID)) {
             return true;
         }
 

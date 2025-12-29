@@ -2,9 +2,13 @@ package org.fentanylsolutions.hotncold;
 
 import java.util.ArrayList;
 
+import net.minecraft.world.biome.BiomeGenBase;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
+import org.fentanylsolutions.hotncold.util.Util;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
@@ -25,6 +29,8 @@ public class HotNCold {
 
     public static ArrayList<Class> mobsImmuneToFrost;
     public static ArrayList<Class> mobsImmuneToHeat;
+    public static ArrayList<Integer> frostBiomes;
+    public static ArrayList<Integer> heatBiomes;
 
     @SidedProxy(
         clientSide = "org.fentanylsolutions.hotncold.ClientProxy",
@@ -85,6 +91,37 @@ public class HotNCold {
                     LOG.error("Failed to get class for classname {}", class_);
                 }
             }
+        }
+    }
+
+    public static void rebuildBiomeLists() {
+        frostBiomes = new ArrayList<>();
+        for (String s : Config.frostBiomes) {
+            BiomeGenBase b;
+            if (Util.isNumeric(s)) {
+                b = BiomeUtil.getBiomeGenBase(Integer.parseInt(s));
+            } else {
+                b = BiomeUtil.getBiomeGenBase(s);
+            }
+            if (b == null) {
+                LOG.warn("Biome {} not found, skipping", s);
+                continue;
+            }
+            frostBiomes.add(b.biomeID);
+        }
+        heatBiomes = new ArrayList<>();
+        for (String s : Config.heatBiomes) {
+            BiomeGenBase b;
+            if (Util.isNumeric(s)) {
+                b = BiomeUtil.getBiomeGenBase(Integer.parseInt(s));
+            } else {
+                b = BiomeUtil.getBiomeGenBase(s);
+            }
+            if (b == null) {
+                LOG.warn("Biome {} not found, skipping", s);
+                continue;
+            }
+            heatBiomes.add(b.biomeID);
         }
     }
 }

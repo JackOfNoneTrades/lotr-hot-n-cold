@@ -1,5 +1,6 @@
 package org.fentanylsolutions.hotncold;
 
+import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -24,7 +25,13 @@ public class CommonProxy {
             MobUtil.printMobNames();
         }
         HotNCold.rebuildMobLists();
+        if (Config.printBiomes) {
+            BiomeUtil.printBiomeNames();
+        }
+        HotNCold.rebuildBiomeLists();
     }
 
-    public void serverStarting(FMLServerStartingEvent event) {}
+    public void serverStarting(FMLServerStartingEvent event) {
+
+    }
 }
