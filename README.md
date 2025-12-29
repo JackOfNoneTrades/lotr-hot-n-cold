@@ -1,5 +1,8 @@
 # Hot N Cold: LOTR Addon
 
+![logo](src/main/resources/assets/hotncold/logo.png)
+
+
 ## Description
 This mod allows to grant immunity from frost and heat damage for arbitrary mods.
 
@@ -19,8 +22,22 @@ Pig
  >
 ```
 
+## Downloads
+<!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
+* [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->
+* [Git ![git](images/icons/git.png)](https://github.com/JackOfNoneTrades/lotr-hot-n-cold/releases)
+
 ## Dependencies
-* Unimixins
+* [UniMixins](https://modrinth.com/mod/unimixins) ([![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/unimixins), [![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/unimixins/versions), [![git](images/icons/git.png)](https://github.com/LegacyModdingMC/UniMixins/releases)) is a required dependency.
+
+## Building
+
+`./gradlew build`.
 
 ## License
-ARR
+
+`LgplV3 + SNEED`.
+
+<br>
+
+![license](images/lgplsneed_small.png)
