@@ -10,16 +10,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+
 import lotr.common.LOTREventHandler;
 import lotr.common.entity.npc.LOTREntityNPC;
 
+@SuppressWarnings("unused")
 @Mixin(value = LOTREventHandler.class, remap = false)
 public class MixinEventHelper {
 
     @ModifyVariable(
         method = "onLivingUpdate(Lnet/minecraftforge/event/entity/living/LivingEvent$LivingUpdateEvent;)V",
-        at = @At(value = "STORE", ordinal = 11 // Adjust this if needed
-        ),
+        at = @At(value = "STORE", ordinal = 11),
         name = "flag")
     private boolean modifyFrostFlag(boolean flag, LivingEvent.LivingUpdateEvent event) {
         EntityLivingBase entity = event.entityLiving;
@@ -48,10 +51,18 @@ public class MixinEventHelper {
         if (entity instanceof LOTREntityNPC && ((LOTREntityNPC) entity).isImmuneToFrost) {
             return true;
         }
-        System.out.println(
-            "Class " + entity.getClass()
-                + " found in mobsImmuneToFrost: "
-                + HotNCold.mobsImmuneToFrost.contains(entity.getClass()));
         return HotNCold.mobsImmuneToFrost.contains(entity.getClass());
+    }
+
+    @WrapOperation(
+        method = "onLivingUpdate(Lnet/minecraftforge/event/entity/living/LivingEvent$LivingUpdateEvent;)V",
+        at = @At(value = "CONSTANT", args = "classValue=lotr.common.world.biome.LOTRBiomeGenNearHarad$ImmuneToHeat"))
+    private boolean hotncold$wrapImmuneToHeat(Object obj, Operation<Boolean> original,
+        LivingEvent.LivingUpdateEvent event) {
+        if (HotNCold.mobsImmuneToHeat.contains(event.entity.getClass())) {
+            return true;
+        }
+
+        return original.call(obj);
     }
 }

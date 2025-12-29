@@ -19,9 +19,17 @@ public class Config {
         mobsImmuneToFrost = configuration
             .get(
                 Configuration.CATEGORY_GENERAL,
-                "passiveMobsWhichCanInflictDamage",
+                "mobsImmuneToFrost",
                 mobsImmuneToFrost,
-                "List of passive mobs that should be able to inflict damage.")
+                "List of mobs that should be immune to frost.")
+            .getStringList();
+
+        mobsImmuneToHeat = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "mobsImmuneToHeat",
+                mobsImmuneToHeat,
+                "List of mobs that should be immune to heat.")
             .getStringList();
 
         if (configuration.hasChanged()) {
