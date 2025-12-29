@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8.7-GTNH",
+  "package": "org.fentanylsolutions.hotncold.mixins.early",
+  "refmap": "mixins.hotncold.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8"
+}
