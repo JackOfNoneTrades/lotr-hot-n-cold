@@ -4,7 +4,7 @@
 
 
 ## Description
-This mod allows to grant immunity from frost and heat damage for arbitrary mods.
+This mod allows to grant immunity from frost and heat damage for arbitrary mobs, for the LOTR Legacy mod.
 
 ## Usage
 Turn on the `printMobs` option in the config to print all possible entities to the console.
