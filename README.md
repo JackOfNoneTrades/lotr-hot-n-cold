@@ -5,7 +5,7 @@
 
 ## Description
 This mod allows to grant immunity from frost and heat damage for arbitrary mobs, for the LOTR Legacy mod.
-It also allows to configure which biomes are hot or frosty.
+It also allows to configure which biomes are hot or frosty. This mod is compatible with the [War of the Ring mod](https://www.curseforge.com/minecraft/mc-mods/war-of-the-ring-mc).
 
 ## Usage
 Turn on the `printMobs` option in the config to print all possible entities to the console.

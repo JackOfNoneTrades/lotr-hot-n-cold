@@ -36,6 +36,10 @@
 dependencies {
     //runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
 
-    implementation(rfg.deobf("curse.maven:the-lord-of-the-rings-mod-legacy-423748:4091561"))
+    //implementation(rfg.deobf("curse.maven:the-lord-of-the-rings-mod-legacy-423748:4091561"))
+    implementation(rfg.deobf("curse.maven:the-lord-of-the-rings-mod-legacy-423748:3646430"))
     // runtimeOnlyNonPublishable(rfg.deobf("curse.maven:natures-compass-252848:2451823"))
+    compileOnly(rfg.deobf("curse.maven:war-of-the-ring-mc-444971:4559696"))
+    // runtimeOnly(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
+    // runtimeOnly(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
 }
