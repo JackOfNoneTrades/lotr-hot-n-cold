@@ -32,6 +32,9 @@ S:frostBiomes <
  >
 ```
 
+## Other features
+* Allows Custom NPCs to select LOTR biomes for NPC spawns
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

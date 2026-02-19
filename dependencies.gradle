@@ -42,4 +42,6 @@ dependencies {
     compileOnly(rfg.deobf("curse.maven:war-of-the-ring-mc-444971:4559696"))
     // runtimeOnly(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
     // runtimeOnly(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
+
+    compileOnly(rfg.deobf("curse.maven:custom-npcs-221826:2495406"))
 }

@@ -3,6 +3,8 @@ package org.fentanylsolutions.hotncold.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.fentanylsolutions.hotncold.HotNCold;
+
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.relauncher.FMLLaunchHandler;
 
@@ -39,6 +41,7 @@ public class MixinUtil {
             }
 
             mixins.add(modid + "." + name);
+            HotNCold.LOG.info("Added mixin {}", modid + "." + name);
             return this;
         }
 
