@@ -88,7 +88,8 @@ public class Config {
 
         String[] generatedDefaults = BiomeUtil.getDefaultEnviromineBiomeTemperatures();
         if (generatedDefaults.length == 0) {
-            HotNCold.LOG.warn("Failed to generate default EnviroMine LOTR biome temperatures, leaving config entry empty");
+            HotNCold.LOG
+                .warn("Failed to generate default EnviroMine LOTR biome temperatures, leaving config entry empty");
             return;
         }
 
@@ -110,8 +111,7 @@ public class Config {
 
         enviromineBiomeTemperatures = generatedDefaults;
         shouldPopulateGeneratedEnviromineBiomeTemperatures = false;
-        HotNCold.LOG.info(
-            "Generated {} default EnviroMine LOTR biome temperature entries",
-            enviromineBiomeTemperatures.length);
+        HotNCold.LOG
+            .info("Generated {} default EnviroMine LOTR biome temperature entries", enviromineBiomeTemperatures.length);
     }
 }

@@ -70,7 +70,8 @@ public final class EnviroMineCompat {
 
     private static void logBiomeIdCollisionIfNeeded(BiomeGenBase lotrBiome) {
         BiomeGenBase biomeArrayEntry = BiomeUtil.getBiomeArrayEntry(lotrBiome.biomeID);
-        if (biomeArrayEntry == null || biomeArrayEntry instanceof LOTRBiome || !loggedCollisionIds.add(lotrBiome.biomeID)) {
+        if (biomeArrayEntry == null || biomeArrayEntry instanceof LOTRBiome
+            || !loggedCollisionIds.add(lotrBiome.biomeID)) {
             return;
         }
 

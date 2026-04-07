@@ -132,7 +132,8 @@ public class HotNCold {
         enviromineBiomeTemperatures = new HashMap<>();
 
         for (String entry : Config.enviromineBiomeTemperatures) {
-            if (entry == null || entry.trim().isEmpty()) {
+            if (entry == null || entry.trim()
+                .isEmpty()) {
                 continue;
             }
 
