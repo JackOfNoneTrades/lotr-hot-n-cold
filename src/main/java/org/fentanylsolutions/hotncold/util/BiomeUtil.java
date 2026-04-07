@@ -1,7 +1,10 @@
 package org.fentanylsolutions.hotncold.util;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,6 +31,38 @@ public class BiomeUtil {
         return biomes;
     }
 
+    public static String[] getDefaultEnviromineBiomeTemperatures() {
+        List<BiomeGenBase> biomes = new ArrayList<>(getAllLOTRBiomes());
+        biomes.sort(Comparator.comparing(biome -> biome.biomeName));
+
+        String[] defaults = new String[biomes.size()];
+        for (int i = 0; i < biomes.size(); i++) {
+            BiomeGenBase biome = biomes.get(i);
+            defaults[i] = biome.biomeName + ":" + formatTemperature(getEnviromineDefaultAmbientTemperature(biome));
+        }
+
+        return defaults;
+    }
+
+    public static float getEnviromineDefaultAmbientTemperature(BiomeGenBase biome) {
+        return getEnviromineDefaultAmbientTemperature(biome.temperature);
+    }
+
+    public static float getEnviromineDefaultAmbientTemperature(float minecraftTemperature) {
+        double radians = Math.toRadians(minecraftTemperature * 45F);
+        if (minecraftTemperature >= 0F) {
+            return (float) (Math.sin(radians) * 45D);
+        }
+        return (float) (Math.sin(radians) * -15D);
+    }
+
+    private static String formatTemperature(float temperature) {
+        return BigDecimal.valueOf(temperature)
+            .setScale(1, RoundingMode.HALF_UP)
+            .stripTrailingZeros()
+            .toPlainString();
+    }
+
     public static List<BiomeGenBase> getBiomeList() {
         List<BiomeGenBase> res = new ArrayList<>();
 
@@ -46,6 +81,45 @@ public class BiomeUtil {
             }
         }
         return null;
+    }
+
+    public static BiomeGenBase getLOTRBiome(String nameOrId) {
+        if (Util.isNumeric(nameOrId)) {
+            return getLOTRBiome(Integer.parseInt(nameOrId));
+        }
+
+        List<BiomeGenBase> lotrBiomes = getAllLOTRBiomes();
+        for (BiomeGenBase biome : lotrBiomes) {
+            if (biome.biomeName.equals(nameOrId)) {
+                return biome;
+            }
+        }
+        for (BiomeGenBase biome : lotrBiomes) {
+            if (biome.biomeName.equalsIgnoreCase(nameOrId)) {
+                return biome;
+            }
+        }
+
+        return null;
+    }
+
+    public static BiomeGenBase getLOTRBiome(int id) {
+        for (BiomeGenBase biome : getAllLOTRBiomes()) {
+            if (biome.biomeID == id) {
+                return biome;
+            }
+        }
+
+        return null;
+    }
+
+    public static BiomeGenBase getBiomeArrayEntry(int id) {
+        BiomeGenBase[] biomeArray = BiomeGenBase.getBiomeGenArray();
+        if (id < 0 || id >= biomeArray.length) {
+            return null;
+        }
+
+        return biomeArray[id];
     }
 
     public static BiomeGenBase getBiomeGenBase(int id) {

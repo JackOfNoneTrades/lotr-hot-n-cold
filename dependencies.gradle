@@ -44,4 +44,5 @@ dependencies {
     // runtimeOnly(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
 
     compileOnly(rfg.deobf("curse.maven:custom-npcs-221826:2495406"))
+    compileOnly(rfg.deobf("curse.maven:enviromine-230236:2269710"))
 }

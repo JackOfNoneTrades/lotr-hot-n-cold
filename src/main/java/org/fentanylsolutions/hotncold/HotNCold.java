@@ -1,7 +1,9 @@
 package org.fentanylsolutions.hotncold;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +33,7 @@ public class HotNCold {
     public static ArrayList<Class> mobsImmuneToHeat;
     public static ArrayList<Integer> frostBiomes;
     public static ArrayList<Integer> heatBiomes;
+    public static HashMap<Integer, Float> enviromineBiomeTemperatures;
 
     @SidedProxy(
         clientSide = "org.fentanylsolutions.hotncold.ClientProxy",
@@ -123,5 +126,60 @@ public class HotNCold {
             }
             heatBiomes.add(b.biomeID);
         }
+    }
+
+    public static void rebuildEnviromineBiomeTemperatureOverrides() {
+        enviromineBiomeTemperatures = new HashMap<>();
+
+        for (String entry : Config.enviromineBiomeTemperatures) {
+            if (entry == null || entry.trim().isEmpty()) {
+                continue;
+            }
+
+            int separatorIndex = entry.lastIndexOf(':');
+            if (separatorIndex <= 0 || separatorIndex >= entry.length() - 1) {
+                LOG.warn(
+                    "Invalid EnviroMine biome temperature override '{}', expected biomeName:temperatureC or biomeId:temperatureC",
+                    entry);
+                continue;
+            }
+
+            String biomeToken = entry.substring(0, separatorIndex)
+                .trim();
+            String temperatureToken = entry.substring(separatorIndex + 1)
+                .trim();
+
+            BiomeGenBase biome = BiomeUtil.getLOTRBiome(biomeToken);
+            if (biome == null) {
+                LOG.warn("LOTR biome '{}' not found for EnviroMine temperature override '{}'", biomeToken, entry);
+                continue;
+            }
+
+            float temperature;
+            try {
+                temperature = Float.parseFloat(temperatureToken);
+            } catch (NumberFormatException e) {
+                LOG.warn("Invalid EnviroMine temperature '{}' in override '{}'", temperatureToken, entry);
+                continue;
+            }
+
+            Float previous = enviromineBiomeTemperatures.put(biome.biomeID, temperature);
+            if (previous != null) {
+                LOG.warn(
+                    "Duplicate EnviroMine temperature override for biome {} ({}), replacing {}C with {}C",
+                    biome.biomeName,
+                    biome.biomeID,
+                    previous,
+                    temperature);
+            }
+        }
+    }
+
+    public static BiomeGenBase getWorldBiomeForCoords(World world, int x, int z) {
+        if (world == null) {
+            return null;
+        }
+
+        return world.getBiomeGenForCoords(x, z);
     }
 }

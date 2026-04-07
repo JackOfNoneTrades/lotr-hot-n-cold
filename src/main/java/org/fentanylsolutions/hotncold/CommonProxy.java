@@ -1,8 +1,10 @@
 package org.fentanylsolutions.hotncold;
 
+import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
 import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -29,6 +31,11 @@ public class CommonProxy {
             BiomeUtil.printBiomeNames();
         }
         HotNCold.rebuildBiomeLists();
+        Config.populateGeneratedEnviromineBiomeTemperaturesIfNeeded();
+        HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
+        if (Loader.isModLoaded("enviromine")) {
+            EnviroMineCompat.applyBiomeTemperatureOverrides("CommonProxy.postInit");
+        }
     }
 
     public void serverStarting(FMLServerStartingEvent event) {
