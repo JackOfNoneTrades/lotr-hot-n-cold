@@ -44,5 +44,6 @@ dependencies {
     // runtimeOnly(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
 
     compileOnly(rfg.deobf("curse.maven:custom-npcs-221826:2495406"))
-    implementation(rfg.deobf("curse.maven:enviromine-for-galaxy-odyssey-429410:4449395"))
+    //implementation(rfg.deobf("curse.maven:enviromine-for-galaxy-odyssey-429410:4449395"))
+    implementation(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
 }

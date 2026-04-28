@@ -13,6 +13,7 @@ public class Config {
 
     public static boolean printMobs = false;
     public static boolean printBiomes = false;
+    public static boolean autoPopulateEnviromineBiomeTemperatures = false;
 
     public static String[] mobsImmuneToFrost = {};
     public static String[] mobsImmuneToHeat = {};
@@ -24,8 +25,17 @@ public class Config {
     public static void synchronizeConfiguration(File configFile) {
         loadedConfigFile = configFile;
         Configuration configuration = new Configuration(configFile);
-        shouldPopulateGeneratedEnviromineBiomeTemperatures = !configuration
+        boolean enviromineBiomeTemperaturesKeyMissing = !configuration
             .hasKey(Configuration.CATEGORY_GENERAL, "enviromineBiomeTemperatures");
+
+        autoPopulateEnviromineBiomeTemperatures = configuration.getBoolean(
+            "autoPopulateEnviromineBiomeTemperatures",
+            Configuration.CATEGORY_GENERAL,
+            autoPopulateEnviromineBiomeTemperatures,
+            "If true, hotncold will auto-fill enviromineBiomeTemperatures with generated defaults on first run. Off by default so EnviroMine's lotr.cfg stays the canonical source of truth; turn this on if you want to seed enviromineBiomeTemperatures with hotncold's defaults and edit from there.");
+
+        shouldPopulateGeneratedEnviromineBiomeTemperatures = enviromineBiomeTemperaturesKeyMissing
+            && autoPopulateEnviromineBiomeTemperatures;
 
         printMobs = configuration.getBoolean("printMobs", Configuration.CATEGORY_GENERAL, printMobs, "Print mob names");
         printBiomes = configuration
