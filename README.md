@@ -55,6 +55,7 @@ If you want the full generated default list to be recreated in an older config, 
 
 ## Other features
 * Allows Custom NPCs to select LOTR biomes for NPC spawns
+* Removes War of the Ring dedicated-server restriction
 
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)

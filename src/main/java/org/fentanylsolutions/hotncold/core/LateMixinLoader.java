@@ -29,6 +29,15 @@ public class LateMixinLoader implements ILateMixinLoader {
             .addMixin("MixinEMConfigHandler", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEMStatusManagerLOTR", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCFactions", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCRecipes", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCAchievement", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCServerAchievement", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCItems", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCNewBlocks", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCNewBrick", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCEventLoader", MixinUtil.Side.BOTH, "wotrmc")
+            .addMixin("MixinWOTRMCBiomes", MixinUtil.Side.BOTH, "wotrmc")
             .addMixin("MixinSubGuiNpcBiomes", MixinUtil.Side.CLIENT, "customnpcs")
             .build();
     }

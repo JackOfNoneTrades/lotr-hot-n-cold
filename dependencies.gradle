@@ -40,10 +40,13 @@ dependencies {
     implementation(rfg.deobf("curse.maven:the-lord-of-the-rings-mod-legacy-423748:3646430"))
     // runtimeOnlyNonPublishable(rfg.deobf("curse.maven:natures-compass-252848:2451823"))
     compileOnly(rfg.deobf("curse.maven:war-of-the-ring-mc-444971:4559696"))
-    // runtimeOnly(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
-    // runtimeOnly(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
+    runtimeOnlyNonPublishable(rfg.deobf("curse.maven:war-of-the-ring-mc-444971:4559696"))
+    runtimeOnlyNonPublishable(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
+    runtimeOnlyNonPublishable(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
 
     compileOnly(rfg.deobf("curse.maven:custom-npcs-221826:2495406"))
     //implementation(rfg.deobf("curse.maven:enviromine-for-galaxy-odyssey-429410:4449395"))
     implementation(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
+
+    testImplementation("junit:junit:4.13.2")
 }
