@@ -57,6 +57,16 @@ If you want the full generated default list to be recreated in an older config, 
 * Allows Custom NPCs to select LOTR biomes for NPC spawns
 * Removes War of the Ring dedicated-server restriction
 
+## War of the Ring animal spawns
+
+War of the Ring adds a large number of natural animal spawns to LOTR biomes. They can all be disabled with:
+```
+B:removeAllWarOfTheRingAnimalSpawns=true
+```
+
+This affects future natural animal spawning only. It does not remove existing entities or disable spawn eggs, commands,
+breeding, mounts, or scripted spawns.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

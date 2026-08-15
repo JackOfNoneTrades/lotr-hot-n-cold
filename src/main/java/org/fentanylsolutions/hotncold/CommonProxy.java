@@ -1,6 +1,7 @@
 package org.fentanylsolutions.hotncold;
 
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
+import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
 import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
 
@@ -31,6 +32,7 @@ public class CommonProxy {
             BiomeUtil.printBiomeNames();
         }
         HotNCold.rebuildBiomeLists();
+        WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured();
         Config.populateGeneratedEnviromineBiomeTemperaturesIfNeeded();
         HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
         if (Loader.isModLoaded("enviromine")) {

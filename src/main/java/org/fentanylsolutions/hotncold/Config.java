@@ -14,6 +14,7 @@ public class Config {
     public static boolean printMobs = false;
     public static boolean printBiomes = false;
     public static boolean autoPopulateEnviromineBiomeTemperatures = false;
+    public static boolean removeAllWarOfTheRingAnimalSpawns = false;
 
     public static String[] mobsImmuneToFrost = {};
     public static String[] mobsImmuneToHeat = {};
@@ -40,6 +41,13 @@ public class Config {
         printMobs = configuration.getBoolean("printMobs", Configuration.CATEGORY_GENERAL, printMobs, "Print mob names");
         printBiomes = configuration
             .getBoolean("printBiomes", Configuration.CATEGORY_GENERAL, printBiomes, "Print biome names");
+
+        removeAllWarOfTheRingAnimalSpawns = configuration.getBoolean(
+            "removeAllWarOfTheRingAnimalSpawns",
+            Configuration.CATEGORY_GENERAL,
+            removeAllWarOfTheRingAnimalSpawns,
+            "Remove every natural animal spawn added to LOTR biomes by War of the Ring. This does not remove "
+                + "existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.");
 
         mobsImmuneToFrost = configuration
             .get(
