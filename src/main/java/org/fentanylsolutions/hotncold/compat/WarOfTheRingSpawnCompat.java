@@ -32,7 +32,7 @@ public final class WarOfTheRingSpawnCompat {
         int removedEntries = 0;
         int changedBiomes = 0;
 
-        for (BiomeGenBase biome : getAllPotentialSpawnBiomes()) {
+        for (BiomeGenBase biome : getAllLOTRSpawnBiomes()) {
             int removedFromBiome = removeWarOfTheRingEntries(biome.getSpawnableList(EnumCreatureType.creature));
             if (removedFromBiome > 0) {
                 removedEntries += removedFromBiome;
@@ -48,7 +48,7 @@ public final class WarOfTheRingSpawnCompat {
 
     public static int countWarOfTheRingAnimalSpawns() {
         int count = 0;
-        for (BiomeGenBase biome : getAllPotentialSpawnBiomes()) {
+        for (BiomeGenBase biome : getAllLOTRSpawnBiomes()) {
             for (Object value : biome.getSpawnableList(EnumCreatureType.creature)) {
                 if (value instanceof BiomeGenBase.SpawnListEntry
                     && isWarOfTheRingEntity(((BiomeGenBase.SpawnListEntry) value).entityClass)) {
@@ -59,10 +59,13 @@ public final class WarOfTheRingSpawnCompat {
         return count;
     }
 
-    private static Set<BiomeGenBase> getAllPotentialSpawnBiomes() {
+    static Set<BiomeGenBase> getAllLOTRSpawnBiomes() {
         Set<BiomeGenBase> biomes = Collections.newSetFromMap(new IdentityHashMap<BiomeGenBase, Boolean>());
-        Collections.addAll(biomes, BiomeGenBase.getBiomeGenArray());
-        biomes.remove(null);
+        for (BiomeGenBase biome : BiomeGenBase.getBiomeGenArray()) {
+            if (biome instanceof LOTRBiome) {
+                biomes.add(biome);
+            }
+        }
         biomes.addAll(BiomeUtil.getAllLOTRBiomes());
         addStaticBiomeFields(biomes, LOTRBiome.class);
 

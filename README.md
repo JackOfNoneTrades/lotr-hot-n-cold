@@ -67,6 +67,19 @@ B:removeAllWarOfTheRingAnimalSpawns=true
 This affects future natural animal spawning only. It does not remove existing entities or disable spawn eggs, commands,
 breeding, mounts, or scripted spawns.
 
+## Blocking selected entities in LOTR biomes
+
+Specific entities can be prevented from spawning naturally in every LOTR biome by adding their registered names to:
+```
+S:blockedEntitiesInAllLOTRBiomes <
+    MoCreatures.Elephant
+>
+```
+
+Names are exact and case-sensitive. Set `B:printMobs=true` for one launch to print the available names to the log. This
+setting checks every natural spawn category but does not remove existing entities or affect spawn eggs, commands,
+breeding, mounts, or scripted spawns.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->
@@ -79,6 +92,9 @@ breeding, mounts, or scripted spawns.
 ## Building
 
 `./gradlew build`.
+
+For a development client, use `./gradlew runClient` or `./gradlew runClient25`. These tasks include development-only
+compatibility for the War of the Ring 1.3.1 mod bundle; the compatibility fixture is not included in published jars.
 
 ## License
 

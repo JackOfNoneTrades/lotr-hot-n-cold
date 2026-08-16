@@ -18,6 +18,7 @@ public class Config {
 
     public static String[] mobsImmuneToFrost = {};
     public static String[] mobsImmuneToHeat = {};
+    public static String[] blockedEntitiesInAllLOTRBiomes = {};
 
     public static String[] frostBiomes = {};
     public static String[] heatBiomes = {};
@@ -48,6 +49,16 @@ public class Config {
             removeAllWarOfTheRingAnimalSpawns,
             "Remove every natural animal spawn added to LOTR biomes by War of the Ring. This does not remove "
                 + "existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.");
+
+        blockedEntitiesInAllLOTRBiomes = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockedEntitiesInAllLOTRBiomes",
+                blockedEntitiesInAllLOTRBiomes,
+                "Registered entity names that must not spawn naturally in any LOTR biome. Names are exact and "
+                    + "case-sensitive; enable printMobs to list valid names. This does not remove existing entities "
+                    + "or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
+            .getStringList();
 
         mobsImmuneToFrost = configuration
             .get(
