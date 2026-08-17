@@ -1,5 +1,6 @@
 package org.fentanylsolutions.hotncold.compat;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -80,5 +81,49 @@ public class LOTRSpawnControlTest {
 
         assertTrue(targetBiomeEntries.isEmpty());
         assertSame(otherBiomeEntry, otherBiomeEntries.get(0));
+    }
+
+    @Test
+    public void resolvesValidSpawnAdditionsAndRejectsInvalidRules() {
+        Set<BiomeGenBase> lotrBiomes = Collections.newSetFromMap(new IdentityHashMap<BiomeGenBase, Boolean>());
+        lotrBiomes.add(BiomeGenBase.plains);
+
+        List<LOTRSpawnControl.SpawnAddition> additions = LOTRSpawnControl.resolveBiomeSpawnAdditions(
+            new String[] { "Cow:pLaInS:CrEaTuRe:7:2:4", "invalidRule", "missing.entity:Plains:creature:7:2:4",
+                "Cow:missingBiome:creature:7:2:4", "Cow:Plains:missingCategory:7:2:4", "Cow:Plains:creature:0:2:4",
+                "Cow:Plains:creature:7:0:4", "Cow:Plains:creature:7:4:2" },
+            lotrBiomes);
+
+        assertEquals(1, additions.size());
+        LOTRSpawnControl.SpawnAddition addition = additions.get(0);
+        assertSame(BiomeGenBase.plains, addition.biome);
+        assertSame(EntityCow.class, addition.entityClass);
+        assertSame(net.minecraft.entity.EnumCreatureType.creature, addition.creatureType);
+        assertEquals(7, addition.weight);
+        assertEquals(2, addition.minimumGroupSize);
+        assertEquals(4, addition.maximumGroupSize);
+    }
+
+    @Test
+    public void parsesNamespacedEntityNamesFromTheRight() {
+        assertArrayEquals(
+            new String[] { "example:animal", "shire", "creature", "10", "1", "3" },
+            LOTRSpawnControl.splitSpawnAdditionRule("example:animal:shire:creature:10:1:3"));
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void addsSpawnEntriesOnlyOnce() {
+        List entries = new ArrayList();
+
+        assertTrue(LOTRSpawnControl.addSpawnEntryIfAbsent(entries, EntityCow.class, 7, 2, 4));
+        assertFalse(LOTRSpawnControl.addSpawnEntryIfAbsent(entries, EntityCow.class, 20, 1, 1));
+        assertEquals(1, entries.size());
+
+        BiomeGenBase.SpawnListEntry entry = (BiomeGenBase.SpawnListEntry) entries.get(0);
+        assertSame(EntityCow.class, entry.entityClass);
+        assertEquals(7, entry.itemWeight);
+        assertEquals(2, entry.minGroupCount);
+        assertEquals(4, entry.maxGroupCount);
     }
 }

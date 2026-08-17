@@ -20,6 +20,7 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.registry.EntityRegistry;
+import hotncold.fixture.entities.AddedTestAnimal;
 import hotncold.fixture.entities.AllowedTestAnimal;
 import hotncold.fixture.entities.BiomeBlockedTestAnimal;
 import hotncold.fixture.entities.BlockedTestAnimal;
@@ -35,6 +36,7 @@ public final class WarOfTheRingServerFixture {
 
     private static final String BLOCKED_ENTITY_NAME = "hotncold_wotrmc_fixture.BlockedTestAnimal";
     private static final String BIOME_BLOCKED_ENTITY_NAME = "hotncold_wotrmc_fixture.BiomeBlockedTestAnimal";
+    private static final String ADDED_ENTITY_NAME = "hotncold_wotrmc_fixture.AddedTestAnimal";
     private static final Logger LOG = LogManager.getLogger("WOTR server fixture");
     private static BiomeGenBase testBiome;
     private static BiomeGenBase otherBiome;
@@ -51,6 +53,7 @@ public final class WarOfTheRingServerFixture {
         EntityRegistry.registerModEntity(BlockedTestAnimal.class, "BlockedTestAnimal", 0, this, 64, 3, true);
         EntityRegistry.registerModEntity(AllowedTestAnimal.class, "AllowedTestAnimal", 1, this, 64, 3, true);
         EntityRegistry.registerModEntity(BiomeBlockedTestAnimal.class, "BiomeBlockedTestAnimal", 2, this, 64, 3, true);
+        EntityRegistry.registerModEntity(AddedTestAnimal.class, "AddedTestAnimal", 3, this, 64, 3, true);
 
         testBiome = LOTRBiome.shire;
         otherBiome = LOTRBiome.mordor;
@@ -113,6 +116,17 @@ public final class WarOfTheRingServerFixture {
         Config.blockedEntityBiomeRules = Arrays.copyOf(configuredBiomeRules, configuredBiomeRules.length + 1);
         Config.blockedEntityBiomeRules[configuredBiomeRules.length] = BIOME_BLOCKED_ENTITY_NAME + ":"
             + testBiome.biomeName;
+
+        EnumCreatureType[] creatureTypes = EnumCreatureType.values();
+        String[] configuredAdditionRules = Config.addedEntityBiomeRules;
+        Config.addedEntityBiomeRules = Arrays
+            .copyOf(configuredAdditionRules, configuredAdditionRules.length + creatureTypes.length * 2);
+        int ruleIndex = configuredAdditionRules.length;
+        for (EnumCreatureType creatureType : creatureTypes) {
+            String additionRule = ADDED_ENTITY_NAME + ":" + testBiome.biomeName + ":" + creatureType.name() + ":7:2:4";
+            Config.addedEntityBiomeRules[ruleIndex++] = additionRule;
+            Config.addedEntityBiomeRules[ruleIndex++] = additionRule;
+        }
     }
 
     @Mod.EventHandler
@@ -123,6 +137,8 @@ public final class WarOfTheRingServerFixture {
         boolean allowedPreserved = true;
         boolean biomeBlockedRemoved = true;
         boolean otherBiomePreserved = true;
+        boolean addedExactlyOnce = true;
+        boolean absentFromOtherBiome = true;
         for (EnumCreatureType creatureType : EnumCreatureType.values()) {
             List categoryEntries = testBiome.getSpawnableList(creatureType);
             blockedRemoved &= !categoryEntries.contains(blockedEntries.get(creatureType));
@@ -130,6 +146,13 @@ public final class WarOfTheRingServerFixture {
             biomeBlockedRemoved &= !categoryEntries.contains(biomeBlockedEntries.get(creatureType));
             otherBiomePreserved &= otherBiome.getSpawnableList(creatureType)
                 .contains(otherBiomeEntries.get(creatureType));
+            addedExactlyOnce &= countMatchingEntries(categoryEntries, AddedTestAnimal.class, 7, 2, 4) == 1;
+            absentFromOtherBiome &= countMatchingEntries(
+                otherBiome.getSpawnableList(creatureType),
+                AddedTestAnimal.class,
+                7,
+                2,
+                4) == 0;
         }
         boolean controlPreserved = spawnEntries.contains(controlEntry);
         int remainingWarOfTheRingEntries = WarOfTheRingSpawnCompat.countWarOfTheRingAnimalSpawns();
@@ -138,6 +161,8 @@ public final class WarOfTheRingServerFixture {
             || !allowedPreserved
             || !biomeBlockedRemoved
             || !otherBiomePreserved
+            || !addedExactlyOnce
+            || !absentFromOtherBiome
             || !controlPreserved
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
@@ -150,6 +175,10 @@ public final class WarOfTheRingServerFixture {
                     + biomeBlockedRemoved
                     + ", otherBiomePreserved="
                     + otherBiomePreserved
+                    + ", addedExactlyOnce="
+                    + addedExactlyOnce
+                    + ", absentFromOtherBiome="
+                    + absentFromOtherBiome
                     + ", controlPreserved="
                     + controlPreserved
                     + ", remainingWarOfTheRingEntries="
@@ -157,6 +186,23 @@ public final class WarOfTheRingServerFixture {
         }
 
         LOG.info(
-            "SERVER_FIXTURE_PASSED: global and biome-specific blocks removed only their targets; controls preserved");
+            "SERVER_FIXTURE_PASSED: additions and blocks changed only their targets; duplicates and controls handled");
+    }
+
+    private static int countMatchingEntries(List entries, Class entityClass, int weight, int minimumGroupSize,
+        int maximumGroupSize) {
+        int matches = 0;
+        for (Object value : entries) {
+            if (!(value instanceof BiomeGenBase.SpawnListEntry)) {
+                continue;
+            }
+            BiomeGenBase.SpawnListEntry entry = (BiomeGenBase.SpawnListEntry) value;
+            if (entry.entityClass == entityClass && entry.itemWeight == weight
+                && entry.minGroupCount == minimumGroupSize
+                && entry.maxGroupCount == maximumGroupSize) {
+                matches++;
+            }
+        }
+        return matches;
     }
 }

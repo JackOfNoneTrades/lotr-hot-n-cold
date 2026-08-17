@@ -91,6 +91,25 @@ S:blockedEntityBiomeRules <
 Biome names are matched without regard to capitalization. A rule applies to every matching War of the Ring replacement
 biome as well as the original LOTR biome.
 
+## Adding entities to LOTR biomes
+
+Add natural spawns with `entityName:biomeName:category:weight:minGroup:maxGroup` rules. A biome ID can replace the
+biome name:
+```
+S:addedEntityBiomeRules <
+    MoCreatures.Elephant:shire:creature:10:1:3
+    MoCreatures.Lion:nearHarad:creature:6:1:2
+>
+```
+
+Categories are `creature`, `monster`, `waterCreature`, `ambient`, and `LOTRAmbient` when LOTR provides it. Weight is
+relative frequency—a larger number makes that entry more likely compared with other entries in the same category.
+The final two numbers are the smallest and largest group sizes. Values must be positive, and the maximum cannot be
+smaller than the minimum.
+
+An entity is not added twice to the same biome and category. Existing entries are preserved rather than silently
+replaced. If an addition also matches a blocking rule, the blocking rule wins.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

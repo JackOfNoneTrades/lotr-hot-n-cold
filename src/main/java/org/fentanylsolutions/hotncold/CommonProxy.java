@@ -30,7 +30,6 @@ public class CommonProxy {
             BiomeUtil.printBiomeNames();
         }
         HotNCold.rebuildBiomeLists();
-        WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured();
         Config.populateGeneratedEnviromineBiomeTemperaturesIfNeeded();
         HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
         if (Loader.isModLoaded("enviromine")) {
@@ -42,6 +41,8 @@ public class CommonProxy {
         if (Config.printMobs) {
             MobUtil.printMobNames();
         }
+        LOTRSpawnControl.addBiomeEntitySpawns();
+        WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured();
         LOTRSpawnControl.removeGloballyBlockedEntities();
         LOTRSpawnControl.removeBiomeBlockedEntities();
     }

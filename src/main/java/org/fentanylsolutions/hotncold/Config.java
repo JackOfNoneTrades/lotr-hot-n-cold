@@ -20,6 +20,7 @@ public class Config {
     public static String[] mobsImmuneToHeat = {};
     public static String[] blockedEntitiesInAllLOTRBiomes = {};
     public static String[] blockedEntityBiomeRules = {};
+    public static String[] addedEntityBiomeRules = {};
 
     public static String[] frostBiomes = {};
     public static String[] heatBiomes = {};
@@ -69,6 +70,16 @@ public class Config {
                 "Natural spawn blocks in the format entityName:biomeName or entityName:biomeId. Entity names are "
                     + "exact and case-sensitive; enable printMobs and printBiomes to list valid names. This does not "
                     + "remove existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
+            .getStringList();
+
+        addedEntityBiomeRules = configuration.get(
+            Configuration.CATEGORY_GENERAL,
+            "addedEntityBiomeRules",
+            addedEntityBiomeRules,
+            "Natural spawn additions in the format "
+                + "entityName:biomeName:category:weight:minGroup:maxGroup. Biome IDs are also accepted. "
+                + "Categories are creature, monster, waterCreature, ambient, and LOTRAmbient when available. "
+                + "Entity names are exact and case-sensitive; enable printMobs and printBiomes to list valid names.")
             .getStringList();
 
         mobsImmuneToFrost = configuration
