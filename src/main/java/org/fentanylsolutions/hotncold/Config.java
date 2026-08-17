@@ -19,6 +19,7 @@ public class Config {
     public static String[] mobsImmuneToFrost = {};
     public static String[] mobsImmuneToHeat = {};
     public static String[] blockedEntitiesInAllLOTRBiomes = {};
+    public static String[] blockedEntityBiomeRules = {};
 
     public static String[] frostBiomes = {};
     public static String[] heatBiomes = {};
@@ -58,6 +59,16 @@ public class Config {
                 "Registered entity names that must not spawn naturally in any LOTR biome. Names are exact and "
                     + "case-sensitive; enable printMobs to list valid names. This does not remove existing entities "
                     + "or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
+            .getStringList();
+
+        blockedEntityBiomeRules = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockedEntityBiomeRules",
+                blockedEntityBiomeRules,
+                "Natural spawn blocks in the format entityName:biomeName or entityName:biomeId. Entity names are "
+                    + "exact and case-sensitive; enable printMobs and printBiomes to list valid names. This does not "
+                    + "remove existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
             .getStringList();
 
         mobsImmuneToFrost = configuration

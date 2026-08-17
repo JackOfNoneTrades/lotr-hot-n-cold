@@ -80,6 +80,17 @@ Names are exact and case-sensitive. Set `B:printMobs=true` for one launch to pri
 setting checks every natural spawn category but does not remove existing entities or affect spawn eggs, commands,
 breeding, mounts, or scripted spawns.
 
+To block an entity only in selected LOTR biomes, add one `entityName:biomeName` or `entityName:biomeId` rule per line:
+```
+S:blockedEntityBiomeRules <
+    MoCreatures.Elephant:shire
+    MoCreatures.Lion:nearHarad
+>
+```
+
+Biome names are matched without regard to capitalization. A rule applies to every matching War of the Ring replacement
+biome as well as the original LOTR biome.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

@@ -43,5 +43,6 @@ public class CommonProxy {
             MobUtil.printMobNames();
         }
         LOTRSpawnControl.removeGloballyBlockedEntities();
+        LOTRSpawnControl.removeBiomeBlockedEntities();
     }
 }
