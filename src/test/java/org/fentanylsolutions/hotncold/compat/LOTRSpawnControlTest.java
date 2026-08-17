@@ -126,4 +126,48 @@ public class LOTRSpawnControlTest {
         assertEquals(2, entry.minGroupCount);
         assertEquals(4, entry.maxGroupCount);
     }
+
+    @Test
+    public void guardsOnlyConfiguredEntitiesInsideLOTRBiomes() {
+        Set<BiomeGenBase> lotrBiomes = Collections.newSetFromMap(new IdentityHashMap<BiomeGenBase, Boolean>());
+        lotrBiomes.add(BiomeGenBase.plains);
+        lotrBiomes.add(BiomeGenBase.desert);
+
+        Set<Class> globallyBlocked = Collections.<Class>singleton(EntityCow.class);
+        Map<BiomeGenBase, Set<Class>> blockedByBiome = new IdentityHashMap<>();
+        blockedByBiome.put(BiomeGenBase.plains, Collections.<Class>singleton(EntityPig.class));
+
+        assertTrue(
+            LOTRSpawnControl.isSpawnBlocked(
+                EntityCow.class,
+                BiomeGenBase.desert,
+                lotrBiomes,
+                false,
+                globallyBlocked,
+                blockedByBiome));
+        assertTrue(
+            LOTRSpawnControl.isSpawnBlocked(
+                EntityPig.class,
+                BiomeGenBase.plains,
+                lotrBiomes,
+                false,
+                globallyBlocked,
+                blockedByBiome));
+        assertFalse(
+            LOTRSpawnControl.isSpawnBlocked(
+                EntityPig.class,
+                BiomeGenBase.desert,
+                lotrBiomes,
+                false,
+                globallyBlocked,
+                blockedByBiome));
+        assertFalse(
+            LOTRSpawnControl.isSpawnBlocked(
+                EntityCow.class,
+                BiomeGenBase.forest,
+                lotrBiomes,
+                false,
+                globallyBlocked,
+                blockedByBiome));
+    }
 }

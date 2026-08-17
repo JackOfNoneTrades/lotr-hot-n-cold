@@ -26,6 +26,7 @@ public class LateMixinLoader implements ILateMixinLoader {
     @Override
     public List<String> getMixins(Set<String> loadedCoreMods) {
         return new MixinUtil.MixinBuilder(false).addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "lotr")
+            .addMixin("MixinLOTRSpawnerAnimals", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinEMConfigHandler", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEMStatusManagerLOTR", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "wotrmc")

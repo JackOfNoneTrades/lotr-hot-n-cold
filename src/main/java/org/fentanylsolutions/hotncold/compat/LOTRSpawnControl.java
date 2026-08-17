@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import org.fentanylsolutions.hotncold.Config;
@@ -19,7 +21,25 @@ import org.fentanylsolutions.hotncold.HotNCold;
 
 public final class LOTRSpawnControl {
 
+    private static Set<BiomeGenBase> cachedLOTRBiomes = Collections.emptySet();
+    private static Set<Class> cachedGloballyBlockedClasses = Collections.emptySet();
+    private static Map<BiomeGenBase, Set<Class>> cachedBlockedClassesByBiome = Collections.emptyMap();
+    private static boolean cachedRemoveAllWarOfTheRingAnimals;
+
     private LOTRSpawnControl() {}
+
+    public static void prepareSpawnBlockRules() {
+        Set<BiomeGenBase> lotrBiomes = WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes();
+        Set<Class> globallyBlockedClasses = resolveBlockedEntityClasses(Config.blockedEntitiesInAllLOTRBiomes);
+        Map<BiomeGenBase, Set<Class>> blockedClassesByBiome = resolveBiomeBlockedEntityClasses(
+            Config.blockedEntityBiomeRules,
+            lotrBiomes);
+
+        cachedLOTRBiomes = lotrBiomes;
+        cachedGloballyBlockedClasses = globallyBlockedClasses;
+        cachedBlockedClassesByBiome = blockedClassesByBiome;
+        cachedRemoveAllWarOfTheRingAnimals = Config.removeAllWarOfTheRingAnimalSpawns;
+    }
 
     public static void addBiomeEntitySpawns() {
         List<SpawnAddition> additions = resolveBiomeSpawnAdditions(
@@ -55,7 +75,7 @@ public final class LOTRSpawnControl {
     }
 
     public static void removeGloballyBlockedEntities() {
-        Set<Class> blockedEntityClasses = resolveBlockedEntityClasses(Config.blockedEntitiesInAllLOTRBiomes);
+        Set<Class> blockedEntityClasses = cachedGloballyBlockedClasses;
         if (blockedEntityClasses.isEmpty()) {
             return;
         }
@@ -81,10 +101,7 @@ public final class LOTRSpawnControl {
     }
 
     public static void removeBiomeBlockedEntities() {
-        Set<BiomeGenBase> lotrBiomes = WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes();
-        Map<BiomeGenBase, Set<Class>> blockedClassesByBiome = resolveBiomeBlockedEntityClasses(
-            Config.blockedEntityBiomeRules,
-            lotrBiomes);
+        Map<BiomeGenBase, Set<Class>> blockedClassesByBiome = cachedBlockedClassesByBiome;
         if (blockedClassesByBiome.isEmpty()) {
             return;
         }
@@ -108,6 +125,45 @@ public final class LOTRSpawnControl {
 
         HotNCold.LOG
             .info("Removed {} biome-specific natural spawn entries from {} LOTR biomes", removedEntries, changedBiomes);
+    }
+
+    public static boolean isSpawnBlocked(Class entityClass, BiomeGenBase biome) {
+        return isSpawnBlocked(
+            entityClass,
+            biome,
+            cachedLOTRBiomes,
+            cachedRemoveAllWarOfTheRingAnimals,
+            cachedGloballyBlockedClasses,
+            cachedBlockedClassesByBiome);
+    }
+
+    static boolean isSpawnBlocked(Class entityClass, BiomeGenBase biome, Set<BiomeGenBase> lotrBiomes,
+        boolean removeAllWarOfTheRingAnimals, Set<Class> globallyBlockedClasses,
+        Map<BiomeGenBase, Set<Class>> blockedClassesByBiome) {
+        if (entityClass == null || biome == null || !lotrBiomes.contains(biome)) {
+            return false;
+        }
+        if (removeAllWarOfTheRingAnimals && WarOfTheRingSpawnCompat.isWarOfTheRingEntity(entityClass)) {
+            return true;
+        }
+        if (globallyBlockedClasses.contains(entityClass)) {
+            return true;
+        }
+
+        Set<Class> biomeBlockedClasses = blockedClassesByBiome.get(biome);
+        return biomeBlockedClasses != null && biomeBlockedClasses.contains(entityClass);
+    }
+
+    public static boolean spawnWorldGenEntityUnlessBlocked(World world, Entity entity) {
+        if (entity instanceof EntityLiving) {
+            BiomeGenBase biome = world.getBiomeGenForCoords(
+                net.minecraft.util.MathHelper.floor_double(entity.posX),
+                net.minecraft.util.MathHelper.floor_double(entity.posZ));
+            if (isSpawnBlocked(entity.getClass(), biome)) {
+                return false;
+            }
+        }
+        return world.spawnEntityInWorld(entity);
     }
 
     static Set<Class> resolveBlockedEntityClasses(String[] entityNames) {

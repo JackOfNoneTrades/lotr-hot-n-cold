@@ -1,7 +1,10 @@
 package org.fentanylsolutions.hotncold;
 
+import net.minecraftforge.common.MinecraftForge;
+
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
+import org.fentanylsolutions.hotncold.compat.LOTRSpawnGuard;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
 import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
@@ -21,7 +24,7 @@ public class CommonProxy {
     }
 
     public void init(FMLInitializationEvent event) {
-
+        MinecraftForge.EVENT_BUS.register(LOTRSpawnGuard.INSTANCE);
     }
 
     public void postInit(FMLPostInitializationEvent event) {
@@ -41,6 +44,7 @@ public class CommonProxy {
         if (Config.printMobs) {
             MobUtil.printMobNames();
         }
+        LOTRSpawnControl.prepareSpawnBlockRules();
         LOTRSpawnControl.addBiomeEntitySpawns();
         WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured();
         LOTRSpawnControl.removeGloballyBlockedEntities();

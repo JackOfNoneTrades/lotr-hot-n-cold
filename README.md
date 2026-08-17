@@ -80,6 +80,10 @@ Names are exact and case-sensitive. Set `B:printMobs=true` for one launch to pri
 setting checks every natural spawn category but does not remove existing entities or affect spawn eggs, commands,
 breeding, mounts, or scripted spawns.
 
+Blocked entities are also rejected at the final natural-spawn check and in LOTR world-generation spawning. This catches
+entries added by another mod after server startup and prevents a blocked entity's own broken spawn check from running.
+Direct spawning through commands, eggs, breeding, and scripts does not use this guard.
+
 To block an entity only in selected LOTR biomes, add one `entityName:biomeName` or `entityName:biomeId` rule per line:
 ```
 S:blockedEntityBiomeRules <
