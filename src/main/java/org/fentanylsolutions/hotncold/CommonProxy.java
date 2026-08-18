@@ -2,6 +2,7 @@ package org.fentanylsolutions.hotncold;
 
 import net.minecraftforge.common.MinecraftForge;
 
+import org.fentanylsolutions.hotncold.command.CommandHotNCold;
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnGuard;
@@ -49,5 +50,6 @@ public class CommonProxy {
         WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured();
         LOTRSpawnControl.removeGloballyBlockedEntities();
         LOTRSpawnControl.removeBiomeBlockedEntities();
+        event.registerServerCommand(new CommandHotNCold());
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityCow;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraftforge.common.DimensionManager;
@@ -171,6 +172,9 @@ public final class WarOfTheRingServerFixture {
         boolean controlPreserved = spawnEntries.contains(controlEntry);
         int remainingWarOfTheRingEntries = WarOfTheRingSpawnCompat.countWarOfTheRingAnimalSpawns();
         boolean lateSpawnGuardPassed = verifyLateSpawnGuard();
+        MinecraftServer server = MinecraftServer.getServer();
+        boolean dumpCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold spawns dump shire creature") == 1;
 
         if (!fixtureRemoved || !blockedRemoved
             || !allowedPreserved
@@ -180,6 +184,7 @@ public final class WarOfTheRingServerFixture {
             || !absentFromOtherBiome
             || !controlPreserved
             || !lateSpawnGuardPassed
+            || !dumpCommandPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
                 "Spawn cleanup integration check failed: fixtureRemoved=" + fixtureRemoved
@@ -199,6 +204,8 @@ public final class WarOfTheRingServerFixture {
                     + controlPreserved
                     + ", lateSpawnGuardPassed="
                     + lateSpawnGuardPassed
+                    + ", dumpCommandPassed="
+                    + dumpCommandPassed
                     + ", remainingWarOfTheRingEntries="
                     + remainingWarOfTheRingEntries);
         }

@@ -114,6 +114,19 @@ smaller than the minimum.
 An entity is not added twice to the same biome and category. Existing entries are preserved rather than silently
 replaced. If an addition also matches a blocking rule, the blocking rule wins.
 
+## Inspecting biome spawns
+
+Use the read-only dump command from chat or the server console to see the effective spawn list after additions and
+blocks have been applied:
+```
+/hotncold spawns dump shire
+/hotncold spawns dump shire creature
+```
+
+The optional category keeps large lists manageable. The output includes every matching LOTR or War of the Ring biome
+variant, registered entity names, relative weights, and group sizes. Biome IDs can be used instead of names, and tab
+completion is available for biome names, IDs, and categories.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->
