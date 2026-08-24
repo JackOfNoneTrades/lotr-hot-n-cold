@@ -127,6 +127,15 @@ The optional category keeps large lists manageable. The output includes every ma
 variant, registered entity names, relative weights, and group sizes. Biome IDs can be used instead of names, and tab
 completion is available for biome names, IDs, and categories.
 
+To check one entity and see why it is allowed or blocked, use:
+```
+/hotncold spawns explain shire MoCreatures.Elephant
+```
+
+The explanation reports `BLOCKED`, `PRESENT`, or `ABSENT` for every matching LOTR or War of the Ring biome variant. It
+names any global block, biome-specific block, or War of the Ring cleanup setting responsible, and shows matching spawn
+entries and configured additions. Tab completion is available for biome and registered entity names.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

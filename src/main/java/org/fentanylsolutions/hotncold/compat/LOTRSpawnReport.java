@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -18,6 +19,17 @@ public final class LOTRSpawnReport {
 
     public static List<String> createBiomeDump(String biomeToken, String categoryToken) {
         return createBiomeDump(biomeToken, categoryToken, WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes());
+    }
+
+    public static List<String> createSpawnExplanation(String biomeToken, String entityToken) {
+        return createSpawnExplanation(
+            biomeToken,
+            entityToken,
+            LOTRSpawnControl.getPreparedLOTRBiomes(),
+            LOTRSpawnControl.removesAllWarOfTheRingAnimals(),
+            LOTRSpawnControl.getGloballyBlockedClasses(),
+            LOTRSpawnControl.getBlockedClassesByBiome(),
+            LOTRSpawnControl.getConfiguredAdditions());
     }
 
     static List<String> createBiomeDump(String biomeToken, String categoryToken, Set<BiomeGenBase> lotrBiomes) {
@@ -38,13 +50,7 @@ public final class LOTRSpawnReport {
                 "LOTR biome '" + biomeToken + "' was not found. Enable printBiomes to list valid names and IDs.");
         }
 
-        List<BiomeGenBase> sortedBiomes = new ArrayList<>(matchingBiomes);
-        sortedBiomes.sort(
-            Comparator.comparing((BiomeGenBase biome) -> biome.biomeName)
-                .thenComparingInt(biome -> biome.biomeID)
-                .thenComparing(
-                    biome -> biome.getClass()
-                        .getName()));
+        List<BiomeGenBase> sortedBiomes = getSortedBiomes(matchingBiomes);
 
         List<String> lines = new ArrayList<>();
         lines.add("Found " + sortedBiomes.size() + " LOTR biome variant(s) matching '" + biomeToken + "'.");
@@ -68,6 +74,41 @@ public final class LOTRSpawnReport {
         return lines;
     }
 
+    static List<String> createSpawnExplanation(String biomeToken, String entityToken, Set<BiomeGenBase> lotrBiomes,
+        boolean removeAllWarOfTheRingAnimals, Set<Class> globallyBlockedClasses,
+        Map<BiomeGenBase, Set<Class>> blockedClassesByBiome, List<LOTRSpawnControl.SpawnAddition> configuredAdditions) {
+        Object mappedEntityClass = EntityList.stringToClassMapping.get(entityToken);
+        if (!(mappedEntityClass instanceof Class)) {
+            return Collections.singletonList(
+                "Entity '" + entityToken
+                    + "' was not found. Names are exact and case-sensitive; enable printMobs to list valid names.");
+        }
+        Class entityClass = (Class) mappedEntityClass;
+
+        Set<BiomeGenBase> matchingBiomes = LOTRSpawnControl.resolveLOTRSpawnBiomes(biomeToken, lotrBiomes);
+        if (matchingBiomes.isEmpty()) {
+            return Collections.singletonList(
+                "LOTR biome '" + biomeToken + "' was not found. Enable printBiomes to list valid names and IDs.");
+        }
+
+        List<BiomeGenBase> sortedBiomes = getSortedBiomes(matchingBiomes);
+        List<String> lines = new ArrayList<>();
+        lines.add("Entity " + getEntityName(entityClass) + " (" + entityClass.getName() + ")");
+        lines.add("Found " + sortedBiomes.size() + " LOTR biome variant(s) matching '" + biomeToken + "'.");
+        for (BiomeGenBase biome : sortedBiomes) {
+            appendExplanation(
+                lines,
+                biome,
+                entityClass,
+                lotrBiomes,
+                removeAllWarOfTheRingAnimals,
+                globallyBlockedClasses,
+                blockedClassesByBiome,
+                configuredAdditions);
+        }
+        return lines;
+    }
+
     public static String[] getBiomeNamesAndIds() {
         Set<String> values = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (BiomeGenBase biome : WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes()) {
@@ -83,6 +124,130 @@ public final class LOTRSpawnReport {
             names.add(creatureType.name());
         }
         return names.toArray(new String[0]);
+    }
+
+    public static String[] getEntityNames() {
+        Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Object value : EntityList.stringToClassMapping.keySet()) {
+            if (value instanceof String) {
+                names.add((String) value);
+            }
+        }
+        return names.toArray(new String[0]);
+    }
+
+    private static void appendExplanation(List<String> lines, BiomeGenBase biome, Class entityClass,
+        Set<BiomeGenBase> lotrBiomes, boolean removeAllWarOfTheRingAnimals, Set<Class> globallyBlockedClasses,
+        Map<BiomeGenBase, Set<Class>> blockedClassesByBiome, List<LOTRSpawnControl.SpawnAddition> configuredAdditions) {
+        lines.add(
+            "Biome " + biome.biomeName
+                + " (ID "
+                + biome.biomeID
+                + ", "
+                + biome.getClass()
+                    .getSimpleName()
+                + ")");
+
+        boolean warOfTheRingBlocked = removeAllWarOfTheRingAnimals
+            && WarOfTheRingSpawnCompat.isWarOfTheRingEntity(entityClass);
+        boolean globallyBlocked = globallyBlockedClasses.contains(entityClass);
+        Set<Class> biomeBlockedClasses = blockedClassesByBiome.get(biome);
+        boolean biomeBlocked = biomeBlockedClasses != null && biomeBlockedClasses.contains(entityClass);
+        boolean blocked = LOTRSpawnControl.isSpawnBlocked(
+            entityClass,
+            biome,
+            lotrBiomes,
+            removeAllWarOfTheRingAnimals,
+            globallyBlockedClasses,
+            blockedClassesByBiome);
+        List<CategorizedSpawnEntry> entries = getEntityEntries(biome, entityClass);
+        Set<String> additionDescriptions = getAdditionDescriptions(biome, entityClass, configuredAdditions);
+
+        if (blocked) {
+            lines.add("  Status: BLOCKED");
+            if (warOfTheRingBlocked) {
+                lines.add("    Reason: removeAllWarOfTheRingAnimalSpawns=true");
+            }
+            if (globallyBlocked) {
+                lines.add("    Reason: blockedEntitiesInAllLOTRBiomes");
+            }
+            if (biomeBlocked) {
+                lines.add("    Reason: blockedEntityBiomeRules matches this biome");
+            }
+            if (!entries.isEmpty()) {
+                lines.add("    A runtime spawn-list entry exists, but the final spawn guard still rejects it.");
+                appendEntries(lines, entries);
+            }
+        } else if (!entries.isEmpty()) {
+            lines.add("  Status: PRESENT - listed for natural spawning");
+            appendEntries(lines, entries);
+        } else {
+            lines.add("  Status: ABSENT - no natural spawn-list entry is present");
+        }
+
+        for (String description : additionDescriptions) {
+            lines.add("    Matching addedEntityBiomeRules rule: " + description);
+        }
+    }
+
+    private static void appendEntries(List<String> lines, List<CategorizedSpawnEntry> entries) {
+        for (CategorizedSpawnEntry categorizedEntry : entries) {
+            BiomeGenBase.SpawnListEntry entry = categorizedEntry.entry;
+            lines.add(
+                "    " + categorizedEntry.creatureType.name()
+                    + " - weight "
+                    + entry.itemWeight
+                    + ", group "
+                    + entry.minGroupCount
+                    + "-"
+                    + entry.maxGroupCount);
+        }
+    }
+
+    private static List<CategorizedSpawnEntry> getEntityEntries(BiomeGenBase biome, Class entityClass) {
+        List<CategorizedSpawnEntry> entries = new ArrayList<>();
+        for (EnumCreatureType creatureType : EnumCreatureType.values()) {
+            for (Object value : biome.getSpawnableList(creatureType)) {
+                if (value instanceof BiomeGenBase.SpawnListEntry
+                    && ((BiomeGenBase.SpawnListEntry) value).entityClass == entityClass) {
+                    entries.add(new CategorizedSpawnEntry(creatureType, (BiomeGenBase.SpawnListEntry) value));
+                }
+            }
+        }
+        entries.sort(
+            Comparator.comparing((CategorizedSpawnEntry value) -> value.creatureType.name())
+                .thenComparingInt(value -> value.entry.itemWeight)
+                .thenComparingInt(value -> value.entry.minGroupCount)
+                .thenComparingInt(value -> value.entry.maxGroupCount));
+        return entries;
+    }
+
+    private static Set<String> getAdditionDescriptions(BiomeGenBase biome, Class entityClass,
+        List<LOTRSpawnControl.SpawnAddition> configuredAdditions) {
+        Set<String> descriptions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (LOTRSpawnControl.SpawnAddition addition : configuredAdditions) {
+            if (addition.biome == biome && addition.entityClass == entityClass) {
+                descriptions.add(
+                    addition.creatureType.name() + ", weight "
+                        + addition.weight
+                        + ", group "
+                        + addition.minimumGroupSize
+                        + "-"
+                        + addition.maximumGroupSize);
+            }
+        }
+        return descriptions;
+    }
+
+    private static List<BiomeGenBase> getSortedBiomes(Set<BiomeGenBase> biomes) {
+        List<BiomeGenBase> sortedBiomes = new ArrayList<>(biomes);
+        sortedBiomes.sort(
+            Comparator.comparing((BiomeGenBase biome) -> biome.biomeName)
+                .thenComparingInt(biome -> biome.biomeID)
+                .thenComparing(
+                    biome -> biome.getClass()
+                        .getName()));
+        return sortedBiomes;
     }
 
     private static void appendCategory(List<String> lines, BiomeGenBase biome, EnumCreatureType creatureType) {
@@ -123,5 +288,16 @@ public final class LOTRSpawnReport {
             return (String) registeredName;
         }
         return entityClass == null ? "<unknown>" : entityClass.getName();
+    }
+
+    private static final class CategorizedSpawnEntry {
+
+        private final EnumCreatureType creatureType;
+        private final BiomeGenBase.SpawnListEntry entry;
+
+        private CategorizedSpawnEntry(EnumCreatureType creatureType, BiomeGenBase.SpawnListEntry entry) {
+            this.creatureType = creatureType;
+            this.entry = entry;
+        }
     }
 }

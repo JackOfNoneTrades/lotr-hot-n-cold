@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fentanylsolutions.hotncold.Config;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
+import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
 
 import cpw.mods.fml.common.Mod;
@@ -175,6 +176,9 @@ public final class WarOfTheRingServerFixture {
         MinecraftServer server = MinecraftServer.getServer();
         boolean dumpCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold spawns dump shire creature") == 1;
+        boolean explainCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold spawns explain shire " + BLOCKED_ENTITY_NAME) == 1;
+        boolean explainReportPassed = verifyExplainReport();
 
         if (!fixtureRemoved || !blockedRemoved
             || !allowedPreserved
@@ -185,6 +189,8 @@ public final class WarOfTheRingServerFixture {
             || !controlPreserved
             || !lateSpawnGuardPassed
             || !dumpCommandPassed
+            || !explainCommandPassed
+            || !explainReportPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
                 "Spawn cleanup integration check failed: fixtureRemoved=" + fixtureRemoved
@@ -206,12 +212,60 @@ public final class WarOfTheRingServerFixture {
                     + lateSpawnGuardPassed
                     + ", dumpCommandPassed="
                     + dumpCommandPassed
+                    + ", explainCommandPassed="
+                    + explainCommandPassed
+                    + ", explainReportPassed="
+                    + explainReportPassed
                     + ", remainingWarOfTheRingEntries="
                     + remainingWarOfTheRingEntries);
         }
 
         LOG.info(
             "SERVER_FIXTURE_PASSED: additions and blocks changed only their targets; duplicates and controls handled");
+    }
+
+    private static boolean verifyExplainReport() {
+        List<String> globalBlock = LOTRSpawnReport.createSpawnExplanation(testBiome.biomeName, BLOCKED_ENTITY_NAME);
+        List<String> biomeBlock = LOTRSpawnReport
+            .createSpawnExplanation(testBiome.biomeName, BIOME_BLOCKED_ENTITY_NAME);
+        List<String> configuredAddition = LOTRSpawnReport
+            .createSpawnExplanation(testBiome.biomeName, ADDED_ENTITY_NAME);
+        List<String> absentAddition = LOTRSpawnReport.createSpawnExplanation(otherBiome.biomeName, ADDED_ENTITY_NAME);
+        String registeredWarOfTheRingEntity = findRegisteredWarOfTheRingEntity();
+        List<String> warOfTheRingBlock = registeredWarOfTheRingEntity == null ? null
+            : LOTRSpawnReport.createSpawnExplanation(testBiome.biomeName, registeredWarOfTheRingEntity);
+
+        return containsLine(globalBlock, "Status: BLOCKED")
+            && containsLine(globalBlock, "blockedEntitiesInAllLOTRBiomes")
+            && containsLine(biomeBlock, "Status: BLOCKED")
+            && containsLine(biomeBlock, "blockedEntityBiomeRules")
+            && containsLine(configuredAddition, "Status: PRESENT")
+            && containsLine(configuredAddition, "Matching addedEntityBiomeRules rule")
+            && containsLine(absentAddition, "Status: ABSENT")
+            && warOfTheRingBlock != null
+            && containsLine(warOfTheRingBlock, "Status: BLOCKED")
+            && containsLine(warOfTheRingBlock, "removeAllWarOfTheRingAnimalSpawns=true");
+    }
+
+    private static String findRegisteredWarOfTheRingEntity() {
+        for (Object value : EntityList.stringToClassMapping.entrySet()) {
+            Map.Entry entry = (Map.Entry) value;
+            if (entry.getKey() instanceof String && entry.getValue() instanceof Class
+                && ((Class) entry.getValue()).getName()
+                    .startsWith("wotrmc.common.entities.")) {
+                return (String) entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsLine(List<String> lines, String expectedText) {
+        for (String line : lines) {
+            if (line.contains(expectedText)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -24,6 +24,7 @@ public final class LOTRSpawnControl {
     private static Set<BiomeGenBase> cachedLOTRBiomes = Collections.emptySet();
     private static Set<Class> cachedGloballyBlockedClasses = Collections.emptySet();
     private static Map<BiomeGenBase, Set<Class>> cachedBlockedClassesByBiome = Collections.emptyMap();
+    private static List<SpawnAddition> cachedConfiguredAdditions = Collections.emptyList();
     private static boolean cachedRemoveAllWarOfTheRingAnimals;
 
     private LOTRSpawnControl() {}
@@ -45,6 +46,7 @@ public final class LOTRSpawnControl {
         List<SpawnAddition> additions = resolveBiomeSpawnAdditions(
             Config.addedEntityBiomeRules,
             WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes());
+        cachedConfiguredAdditions = Collections.unmodifiableList(new ArrayList<>(additions));
         if (additions.isEmpty()) {
             return;
         }
@@ -135,6 +137,26 @@ public final class LOTRSpawnControl {
             cachedRemoveAllWarOfTheRingAnimals,
             cachedGloballyBlockedClasses,
             cachedBlockedClassesByBiome);
+    }
+
+    static Set<BiomeGenBase> getPreparedLOTRBiomes() {
+        return cachedLOTRBiomes;
+    }
+
+    static boolean removesAllWarOfTheRingAnimals() {
+        return cachedRemoveAllWarOfTheRingAnimals;
+    }
+
+    static Set<Class> getGloballyBlockedClasses() {
+        return cachedGloballyBlockedClasses;
+    }
+
+    static Map<BiomeGenBase, Set<Class>> getBlockedClassesByBiome() {
+        return cachedBlockedClassesByBiome;
+    }
+
+    static List<SpawnAddition> getConfiguredAdditions() {
+        return cachedConfiguredAdditions;
     }
 
     static boolean isSpawnBlocked(Class entityClass, BiomeGenBase biome, Set<BiomeGenBase> lotrBiomes,
@@ -479,8 +501,8 @@ public final class LOTRSpawnControl {
         final int minimumGroupSize;
         final int maximumGroupSize;
 
-        private SpawnAddition(BiomeGenBase biome, EnumCreatureType creatureType,
-            Class<? extends EntityLiving> entityClass, int weight, int minimumGroupSize, int maximumGroupSize) {
+        SpawnAddition(BiomeGenBase biome, EnumCreatureType creatureType, Class<? extends EntityLiving> entityClass,
+            int weight, int minimumGroupSize, int maximumGroupSize) {
             this.biome = biome;
             this.creatureType = creatureType;
             this.entityClass = entityClass;
