@@ -250,6 +250,7 @@ public final class WarOfTheRingServerFixture {
             .add(unrelatedLateEntry);
 
         boolean alternateRulesApplied;
+        LOTRSpawnControl.SpawnRuleResult repeatedResult = null;
         try {
             Config.removeAllWarOfTheRingAnimalSpawns = false;
             Config.blockedEntitiesInAllLOTRBiomes = new String[0];
@@ -273,11 +274,16 @@ public final class WarOfTheRingServerFixture {
             Config.blockedEntityBiomeRules = configuredBiomeBlocks;
             Config.addedEntityBiomeRules = configuredAdditions;
             LOTRSpawnControl.applyConfiguredSpawnRules();
-            LOTRSpawnControl.applyConfiguredSpawnRules();
+            repeatedResult = LOTRSpawnControl.applyConfiguredSpawnRules();
         }
 
         return alternateRulesApplied && testBiome.getSpawnableList(EnumCreatureType.monster)
-            .contains(unrelatedLateEntry);
+            .contains(unrelatedLateEntry)
+            && repeatedResult != null
+            && repeatedResult.describeStartup()
+                .contains("LOTR spawn summary:")
+            && repeatedResult.describeStartup()
+                .contains("duplicate addition target(s)");
     }
 
     private static boolean verifyExplainReport() {

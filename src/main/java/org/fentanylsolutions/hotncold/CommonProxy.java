@@ -44,7 +44,9 @@ public class CommonProxy {
         if (Config.printMobs) {
             MobUtil.printMobNames();
         }
-        LOTRSpawnControl.applyConfiguredSpawnRules();
+        HotNCold.LOG.info(
+            LOTRSpawnControl.applyConfiguredSpawnRules()
+                .describeStartup());
         event.registerServerCommand(new CommandHotNCold());
     }
 }

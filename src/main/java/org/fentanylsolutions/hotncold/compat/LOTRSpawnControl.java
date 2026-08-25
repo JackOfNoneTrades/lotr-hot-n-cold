@@ -34,6 +34,7 @@ public final class LOTRSpawnControl {
         int undoneChanges = APPLIED_CHANGES.undo();
         prepareSpawnBlockRules();
         int addedEntries = addBiomeEntitySpawns();
+        int rejectedAdditionTargets = cachedConfiguredAdditions.size() - addedEntries;
         int removedWarOfTheRingEntries = WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured(APPLIED_CHANGES);
         int removedGloballyBlockedEntries = removeGloballyBlockedEntities();
         int removedBiomeBlockedEntries = removeBiomeBlockedEntities();
@@ -42,7 +43,8 @@ public final class LOTRSpawnControl {
             addedEntries,
             removedWarOfTheRingEntries,
             removedGloballyBlockedEntries,
-            removedBiomeBlockedEntries);
+            removedBiomeBlockedEntries,
+            rejectedAdditionTargets);
     }
 
     public static SpawnRuleResult reloadConfiguredSpawnRules() {
@@ -555,14 +557,33 @@ public final class LOTRSpawnControl {
         private final int removedWarOfTheRingEntries;
         private final int removedGloballyBlockedEntries;
         private final int removedBiomeBlockedEntries;
+        private final int rejectedAdditionTargets;
 
-        private SpawnRuleResult(int undoneChanges, int addedEntries, int removedWarOfTheRingEntries,
-            int removedGloballyBlockedEntries, int removedBiomeBlockedEntries) {
+        SpawnRuleResult(int undoneChanges, int addedEntries, int removedWarOfTheRingEntries,
+            int removedGloballyBlockedEntries, int removedBiomeBlockedEntries, int rejectedAdditionTargets) {
             this.undoneChanges = undoneChanges;
             this.addedEntries = addedEntries;
             this.removedWarOfTheRingEntries = removedWarOfTheRingEntries;
             this.removedGloballyBlockedEntries = removedGloballyBlockedEntries;
             this.removedBiomeBlockedEntries = removedBiomeBlockedEntries;
+            this.rejectedAdditionTargets = rejectedAdditionTargets;
+        }
+
+        public String describeStartup() {
+            int totalRemovedEntries = removedWarOfTheRingEntries + removedGloballyBlockedEntries
+                + removedBiomeBlockedEntries;
+            return "LOTR spawn summary: added " + addedEntries
+                + "; removed "
+                + totalRemovedEntries
+                + " total ("
+                + removedWarOfTheRingEntries
+                + " War of the Ring, "
+                + removedGloballyBlockedEntries
+                + " globally blocked, "
+                + removedBiomeBlockedEntries
+                + " biome-blocked); rejected "
+                + rejectedAdditionTargets
+                + " duplicate addition target(s).";
         }
 
         public String describeReload() {
@@ -575,7 +596,9 @@ public final class LOTRSpawnControl {
                 + removedGloballyBlockedEntries
                 + " globally blocked, and "
                 + removedBiomeBlockedEntries
-                + " biome-blocked spawn entry/entries.";
+                + " biome-blocked spawn entry/entries; rejected "
+                + rejectedAdditionTargets
+                + " duplicate addition target(s).";
         }
     }
 

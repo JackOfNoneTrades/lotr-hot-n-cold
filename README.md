@@ -146,6 +146,10 @@ Reload affects `removeAllWarOfTheRingAnimalSpawns`, `blockedEntitiesInAllLOTRBio
 made previously, then applies the new rules once. Unrelated entries added by another mod are preserved, and the command
 prints a short summary of the changes.
 
+Server startup also prints one `LOTR spawn summary` line with the number of entries added, the total removed with a
+breakdown by reason, and configured addition targets rejected because that entity was already present. Invalid rules
+still receive their specific warning messages.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->
