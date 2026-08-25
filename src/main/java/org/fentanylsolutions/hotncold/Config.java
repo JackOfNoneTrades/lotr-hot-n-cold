@@ -45,42 +45,7 @@ public class Config {
         printBiomes = configuration
             .getBoolean("printBiomes", Configuration.CATEGORY_GENERAL, printBiomes, "Print biome names");
 
-        removeAllWarOfTheRingAnimalSpawns = configuration.getBoolean(
-            "removeAllWarOfTheRingAnimalSpawns",
-            Configuration.CATEGORY_GENERAL,
-            removeAllWarOfTheRingAnimalSpawns,
-            "Remove every natural animal spawn added to LOTR biomes by War of the Ring. This does not remove "
-                + "existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.");
-
-        blockedEntitiesInAllLOTRBiomes = configuration
-            .get(
-                Configuration.CATEGORY_GENERAL,
-                "blockedEntitiesInAllLOTRBiomes",
-                blockedEntitiesInAllLOTRBiomes,
-                "Registered entity names that must not spawn naturally in any LOTR biome. Names are exact and "
-                    + "case-sensitive; enable printMobs to list valid names. This does not remove existing entities "
-                    + "or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
-            .getStringList();
-
-        blockedEntityBiomeRules = configuration
-            .get(
-                Configuration.CATEGORY_GENERAL,
-                "blockedEntityBiomeRules",
-                blockedEntityBiomeRules,
-                "Natural spawn blocks in the format entityName:biomeName or entityName:biomeId. Entity names are "
-                    + "exact and case-sensitive; enable printMobs and printBiomes to list valid names. This does not "
-                    + "remove existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
-            .getStringList();
-
-        addedEntityBiomeRules = configuration.get(
-            Configuration.CATEGORY_GENERAL,
-            "addedEntityBiomeRules",
-            addedEntityBiomeRules,
-            "Natural spawn additions in the format "
-                + "entityName:biomeName:category:weight:minGroup:maxGroup. Biome IDs are also accepted. "
-                + "Categories are creature, monster, waterCreature, ambient, and LOTRAmbient when available. "
-                + "Entity names are exact and case-sensitive; enable printMobs and printBiomes to list valid names.")
-            .getStringList();
+        readSpawnConfiguration(configuration);
 
         mobsImmuneToFrost = configuration
             .get(
@@ -130,6 +95,58 @@ public class Config {
             HotNCold.rebuildBiomeLists();
             HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
         }
+    }
+
+    public static boolean reloadSpawnConfiguration() {
+        if (loadedConfigFile == null) {
+            return false;
+        }
+
+        Configuration configuration = new Configuration(loadedConfigFile);
+        readSpawnConfiguration(configuration);
+        if (configuration.hasChanged()) {
+            configuration.save();
+        }
+        return true;
+    }
+
+    private static void readSpawnConfiguration(Configuration configuration) {
+        removeAllWarOfTheRingAnimalSpawns = configuration.getBoolean(
+            "removeAllWarOfTheRingAnimalSpawns",
+            Configuration.CATEGORY_GENERAL,
+            removeAllWarOfTheRingAnimalSpawns,
+            "Remove every natural animal spawn added to LOTR biomes by War of the Ring. This does not remove "
+                + "existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.");
+
+        blockedEntitiesInAllLOTRBiomes = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockedEntitiesInAllLOTRBiomes",
+                blockedEntitiesInAllLOTRBiomes,
+                "Registered entity names that must not spawn naturally in any LOTR biome. Names are exact and "
+                    + "case-sensitive; enable printMobs to list valid names. This does not remove existing entities "
+                    + "or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
+            .getStringList();
+
+        blockedEntityBiomeRules = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "blockedEntityBiomeRules",
+                blockedEntityBiomeRules,
+                "Natural spawn blocks in the format entityName:biomeName or entityName:biomeId. Entity names are "
+                    + "exact and case-sensitive; enable printMobs and printBiomes to list valid names. This does not "
+                    + "remove existing entities or disable spawn eggs, commands, breeding, mounts, or scripted spawns.")
+            .getStringList();
+
+        addedEntityBiomeRules = configuration.get(
+            Configuration.CATEGORY_GENERAL,
+            "addedEntityBiomeRules",
+            addedEntityBiomeRules,
+            "Natural spawn additions in the format "
+                + "entityName:biomeName:category:weight:minGroup:maxGroup. Biome IDs are also accepted. "
+                + "Categories are creature, monster, waterCreature, ambient, and LOTRAmbient when available. "
+                + "Entity names are exact and case-sensitive; enable printMobs and printBiomes to list valid names.")
+            .getStringList();
     }
 
     public static void populateGeneratedEnviromineBiomeTemperaturesIfNeeded() {

@@ -136,6 +136,16 @@ The explanation reports `BLOCKED`, `PRESENT`, or `ABSENT` for every matching LOT
 names any global block, biome-specific block, or War of the Ring cleanup setting responsible, and shows matching spawn
 entries and configured additions. Tab completion is available for biome and registered entity names.
 
+After editing the spawn settings in `hotncold.cfg`, an operator or the server console can apply them without restarting:
+```
+/hotncold spawns reload
+```
+
+Reload affects `removeAllWarOfTheRingAnimalSpawns`, `blockedEntitiesInAllLOTRBiomes`,
+`blockedEntityBiomeRules`, and `addedEntityBiomeRules`. Hot N Cold first undoes only the exact spawn-list changes it
+made previously, then applies the new rules once. Unrelated entries added by another mod are preserved, and the command
+prints a short summary of the changes.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

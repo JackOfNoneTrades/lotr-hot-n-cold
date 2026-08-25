@@ -6,7 +6,6 @@ import org.fentanylsolutions.hotncold.command.CommandHotNCold;
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnGuard;
-import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
 import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
 
@@ -45,11 +44,7 @@ public class CommonProxy {
         if (Config.printMobs) {
             MobUtil.printMobNames();
         }
-        LOTRSpawnControl.prepareSpawnBlockRules();
-        LOTRSpawnControl.addBiomeEntitySpawns();
-        WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured();
-        LOTRSpawnControl.removeGloballyBlockedEntities();
-        LOTRSpawnControl.removeBiomeBlockedEntities();
+        LOTRSpawnControl.applyConfiguredSpawnRules();
         event.registerServerCommand(new CommandHotNCold());
     }
 }

@@ -25,9 +25,32 @@ public final class LOTRSpawnControl {
     private static Set<Class> cachedGloballyBlockedClasses = Collections.emptySet();
     private static Map<BiomeGenBase, Set<Class>> cachedBlockedClassesByBiome = Collections.emptyMap();
     private static List<SpawnAddition> cachedConfiguredAdditions = Collections.emptyList();
+    private static final SpawnListJournal APPLIED_CHANGES = new SpawnListJournal();
     private static boolean cachedRemoveAllWarOfTheRingAnimals;
 
     private LOTRSpawnControl() {}
+
+    public static SpawnRuleResult applyConfiguredSpawnRules() {
+        int undoneChanges = APPLIED_CHANGES.undo();
+        prepareSpawnBlockRules();
+        int addedEntries = addBiomeEntitySpawns();
+        int removedWarOfTheRingEntries = WarOfTheRingSpawnCompat.removeAnimalSpawnsIfConfigured(APPLIED_CHANGES);
+        int removedGloballyBlockedEntries = removeGloballyBlockedEntities();
+        int removedBiomeBlockedEntries = removeBiomeBlockedEntities();
+        return new SpawnRuleResult(
+            undoneChanges,
+            addedEntries,
+            removedWarOfTheRingEntries,
+            removedGloballyBlockedEntries,
+            removedBiomeBlockedEntries);
+    }
+
+    public static SpawnRuleResult reloadConfiguredSpawnRules() {
+        if (!Config.reloadSpawnConfiguration()) {
+            return null;
+        }
+        return applyConfiguredSpawnRules();
+    }
 
     public static void prepareSpawnBlockRules() {
         Set<BiomeGenBase> lotrBiomes = WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes();
@@ -42,25 +65,27 @@ public final class LOTRSpawnControl {
         cachedRemoveAllWarOfTheRingAnimals = Config.removeAllWarOfTheRingAnimalSpawns;
     }
 
-    public static void addBiomeEntitySpawns() {
+    public static int addBiomeEntitySpawns() {
         List<SpawnAddition> additions = resolveBiomeSpawnAdditions(
             Config.addedEntityBiomeRules,
             WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes());
         cachedConfiguredAdditions = Collections.unmodifiableList(new ArrayList<>(additions));
         if (additions.isEmpty()) {
-            return;
+            return 0;
         }
 
         int addedEntries = 0;
         Set<BiomeGenBase> changedBiomes = Collections.newSetFromMap(new IdentityHashMap<BiomeGenBase, Boolean>());
         for (SpawnAddition addition : additions) {
             List spawnEntries = addition.biome.getSpawnableList(addition.creatureType);
-            if (addSpawnEntryIfAbsent(
+            BiomeGenBase.SpawnListEntry addedEntry = addSpawnEntryIfAbsentAndReturn(
                 spawnEntries,
                 addition.entityClass,
                 addition.weight,
                 addition.minimumGroupSize,
-                addition.maximumGroupSize)) {
+                addition.maximumGroupSize);
+            if (addedEntry != null) {
+                APPLIED_CHANGES.recordAdded(spawnEntries, addedEntry);
                 addedEntries++;
                 changedBiomes.add(addition.biome);
             } else {
@@ -74,12 +99,13 @@ public final class LOTRSpawnControl {
         }
 
         HotNCold.LOG.info("Added {} natural spawn entries to {} LOTR biomes", addedEntries, changedBiomes.size());
+        return addedEntries;
     }
 
-    public static void removeGloballyBlockedEntities() {
+    public static int removeGloballyBlockedEntities() {
         Set<Class> blockedEntityClasses = cachedGloballyBlockedClasses;
         if (blockedEntityClasses.isEmpty()) {
-            return;
+            return 0;
         }
 
         int removedEntries = 0;
@@ -88,7 +114,10 @@ public final class LOTRSpawnControl {
         for (BiomeGenBase biome : WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes()) {
             int removedFromBiome = 0;
             for (EnumCreatureType creatureType : EnumCreatureType.values()) {
-                removedFromBiome += removeBlockedEntries(biome.getSpawnableList(creatureType), blockedEntityClasses);
+                removedFromBiome += removeBlockedEntries(
+                    biome.getSpawnableList(creatureType),
+                    blockedEntityClasses,
+                    APPLIED_CHANGES);
             }
             if (removedFromBiome > 0) {
                 removedEntries += removedFromBiome;
@@ -100,12 +129,13 @@ public final class LOTRSpawnControl {
             "Removed {} globally blocked natural spawn entries from {} LOTR biomes",
             removedEntries,
             changedBiomes);
+        return removedEntries;
     }
 
-    public static void removeBiomeBlockedEntities() {
+    public static int removeBiomeBlockedEntities() {
         Map<BiomeGenBase, Set<Class>> blockedClassesByBiome = cachedBlockedClassesByBiome;
         if (blockedClassesByBiome.isEmpty()) {
-            return;
+            return 0;
         }
 
         int removedEntries = 0;
@@ -117,7 +147,8 @@ public final class LOTRSpawnControl {
                 removedFromBiome += removeBlockedEntries(
                     rule.getKey()
                         .getSpawnableList(creatureType),
-                    rule.getValue());
+                    rule.getValue(),
+                    APPLIED_CHANGES);
             }
             if (removedFromBiome > 0) {
                 removedEntries += removedFromBiome;
@@ -127,6 +158,7 @@ public final class LOTRSpawnControl {
 
         HotNCold.LOG
             .info("Removed {} biome-specific natural spawn entries from {} LOTR biomes", removedEntries, changedBiomes);
+        return removedEntries;
     }
 
     public static boolean isSpawnBlocked(Class entityClass, BiomeGenBase biome) {
@@ -365,15 +397,27 @@ public final class LOTRSpawnControl {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static boolean addSpawnEntryIfAbsent(List spawnEntries, Class<? extends EntityLiving> entityClass, int weight,
         int minimumGroupSize, int maximumGroupSize) {
+        return addSpawnEntryIfAbsentAndReturn(spawnEntries, entityClass, weight, minimumGroupSize, maximumGroupSize)
+            != null;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static BiomeGenBase.SpawnListEntry addSpawnEntryIfAbsentAndReturn(List spawnEntries,
+        Class<? extends EntityLiving> entityClass, int weight, int minimumGroupSize, int maximumGroupSize) {
         for (Object value : spawnEntries) {
             if (value instanceof BiomeGenBase.SpawnListEntry
                 && ((BiomeGenBase.SpawnListEntry) value).entityClass == entityClass) {
-                return false;
+                return null;
             }
         }
 
-        spawnEntries.add(new BiomeGenBase.SpawnListEntry(entityClass, weight, minimumGroupSize, maximumGroupSize));
-        return true;
+        BiomeGenBase.SpawnListEntry entry = new BiomeGenBase.SpawnListEntry(
+            entityClass,
+            weight,
+            minimumGroupSize,
+            maximumGroupSize);
+        spawnEntries.add(entry);
+        return entry;
     }
 
     static Map<BiomeGenBase, Set<Class>> resolveBiomeBlockedEntityClasses(String[] configuredRules,
@@ -473,23 +517,66 @@ public final class LOTRSpawnControl {
     }
 
     static int removeBlockedEntries(List spawnEntries, Set<Class> blockedEntityClasses) {
+        return removeBlockedEntries(spawnEntries, blockedEntityClasses, null);
+    }
+
+    private static int removeBlockedEntries(List spawnEntries, Set<Class> blockedEntityClasses,
+        SpawnListJournal journal) {
         int removedEntries = 0;
         Iterator iterator = spawnEntries.iterator();
+        int entryIndex = 0;
 
         while (iterator.hasNext()) {
             Object value = iterator.next();
             if (!(value instanceof BiomeGenBase.SpawnListEntry)) {
+                entryIndex++;
                 continue;
             }
 
             BiomeGenBase.SpawnListEntry entry = (BiomeGenBase.SpawnListEntry) value;
             if (blockedEntityClasses.contains(entry.entityClass)) {
+                if (journal != null) {
+                    journal.recordRemoved(spawnEntries, entry, entryIndex);
+                }
                 iterator.remove();
                 removedEntries++;
+            } else {
+                entryIndex++;
             }
         }
 
         return removedEntries;
+    }
+
+    public static final class SpawnRuleResult {
+
+        private final int undoneChanges;
+        private final int addedEntries;
+        private final int removedWarOfTheRingEntries;
+        private final int removedGloballyBlockedEntries;
+        private final int removedBiomeBlockedEntries;
+
+        private SpawnRuleResult(int undoneChanges, int addedEntries, int removedWarOfTheRingEntries,
+            int removedGloballyBlockedEntries, int removedBiomeBlockedEntries) {
+            this.undoneChanges = undoneChanges;
+            this.addedEntries = addedEntries;
+            this.removedWarOfTheRingEntries = removedWarOfTheRingEntries;
+            this.removedGloballyBlockedEntries = removedGloballyBlockedEntries;
+            this.removedBiomeBlockedEntries = removedBiomeBlockedEntries;
+        }
+
+        public String describeReload() {
+            return "Reloaded LOTR spawn rules: undid " + undoneChanges
+                + " previous change(s); added "
+                + addedEntries
+                + ", removed "
+                + removedWarOfTheRingEntries
+                + " War of the Ring, "
+                + removedGloballyBlockedEntries
+                + " globally blocked, and "
+                + removedBiomeBlockedEntries
+                + " biome-blocked spawn entry/entries.";
+        }
     }
 
     static final class SpawnAddition {

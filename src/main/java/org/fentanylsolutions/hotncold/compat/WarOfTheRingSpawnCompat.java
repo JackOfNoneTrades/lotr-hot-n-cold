@@ -24,16 +24,18 @@ public final class WarOfTheRingSpawnCompat {
 
     private WarOfTheRingSpawnCompat() {}
 
-    public static void removeAnimalSpawnsIfConfigured() {
+    static int removeAnimalSpawnsIfConfigured(SpawnListJournal journal) {
         if (!Config.removeAllWarOfTheRingAnimalSpawns) {
-            return;
+            return 0;
         }
 
         int removedEntries = 0;
         int changedBiomes = 0;
 
         for (BiomeGenBase biome : getAllLOTRSpawnBiomes()) {
-            int removedFromBiome = removeWarOfTheRingEntries(biome.getSpawnableList(EnumCreatureType.creature));
+            int removedFromBiome = removeWarOfTheRingEntries(
+                biome.getSpawnableList(EnumCreatureType.creature),
+                journal);
             if (removedFromBiome > 0) {
                 removedEntries += removedFromBiome;
                 changedBiomes++;
@@ -44,6 +46,7 @@ public final class WarOfTheRingSpawnCompat {
             "Removed {} War of the Ring natural animal spawn entries from {} LOTR biomes",
             removedEntries,
             changedBiomes);
+        return removedEntries;
     }
 
     public static int countWarOfTheRingAnimalSpawns() {
@@ -98,19 +101,30 @@ public final class WarOfTheRingSpawnCompat {
     }
 
     static int removeWarOfTheRingEntries(List spawnEntries) {
+        return removeWarOfTheRingEntries(spawnEntries, null);
+    }
+
+    private static int removeWarOfTheRingEntries(List spawnEntries, SpawnListJournal journal) {
         int removedEntries = 0;
         Iterator iterator = spawnEntries.iterator();
+        int entryIndex = 0;
 
         while (iterator.hasNext()) {
             Object value = iterator.next();
             if (!(value instanceof BiomeGenBase.SpawnListEntry)) {
+                entryIndex++;
                 continue;
             }
 
             BiomeGenBase.SpawnListEntry entry = (BiomeGenBase.SpawnListEntry) value;
             if (isWarOfTheRingEntity(entry.entityClass)) {
+                if (journal != null) {
+                    journal.recordRemoved(spawnEntries, entry, entryIndex);
+                }
                 iterator.remove();
                 removedEntries++;
+            } else {
+                entryIndex++;
             }
         }
 

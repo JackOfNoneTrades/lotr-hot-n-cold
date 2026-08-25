@@ -147,6 +147,7 @@ public final class WarOfTheRingServerFixture {
 
     @Mod.EventHandler
     public void serverStarted(FMLServerStartedEvent event) {
+        boolean ruleReapplicationPassed = verifyRuleReapplication();
         List spawnEntries = testBiome.getSpawnableList(EnumCreatureType.creature);
         boolean fixtureRemoved = !spawnEntries.contains(fixtureEntry);
         boolean blockedRemoved = true;
@@ -179,8 +180,13 @@ public final class WarOfTheRingServerFixture {
         boolean explainCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold spawns explain shire " + BLOCKED_ENTITY_NAME) == 1;
         boolean explainReportPassed = verifyExplainReport();
+        boolean reloadCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold spawns reload") == 1
+            && server.getCommandManager()
+                .executeCommand(server, "hotncold spawns reload") == 1;
 
-        if (!fixtureRemoved || !blockedRemoved
+        if (!ruleReapplicationPassed || !fixtureRemoved
+            || !blockedRemoved
             || !allowedPreserved
             || !biomeBlockedRemoved
             || !otherBiomePreserved
@@ -191,9 +197,12 @@ public final class WarOfTheRingServerFixture {
             || !dumpCommandPassed
             || !explainCommandPassed
             || !explainReportPassed
+            || !reloadCommandPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
-                "Spawn cleanup integration check failed: fixtureRemoved=" + fixtureRemoved
+                "Spawn cleanup integration check failed: ruleReapplicationPassed=" + ruleReapplicationPassed
+                    + ", fixtureRemoved="
+                    + fixtureRemoved
                     + ", blockedRemoved="
                     + blockedRemoved
                     + ", allowedPreserved="
@@ -216,12 +225,59 @@ public final class WarOfTheRingServerFixture {
                     + explainCommandPassed
                     + ", explainReportPassed="
                     + explainReportPassed
+                    + ", reloadCommandPassed="
+                    + reloadCommandPassed
                     + ", remainingWarOfTheRingEntries="
                     + remainingWarOfTheRingEntries);
         }
 
         LOG.info(
             "SERVER_FIXTURE_PASSED: additions and blocks changed only their targets; duplicates and controls handled");
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static boolean verifyRuleReapplication() {
+        boolean configuredRemoveAll = Config.removeAllWarOfTheRingAnimalSpawns;
+        String[] configuredGlobalBlocks = Config.blockedEntitiesInAllLOTRBiomes;
+        String[] configuredBiomeBlocks = Config.blockedEntityBiomeRules;
+        String[] configuredAdditions = Config.addedEntityBiomeRules;
+        BiomeGenBase.SpawnListEntry unrelatedLateEntry = new BiomeGenBase.SpawnListEntry(
+            AllowedTestAnimal.class,
+            3,
+            1,
+            1);
+        testBiome.getSpawnableList(EnumCreatureType.monster)
+            .add(unrelatedLateEntry);
+
+        boolean alternateRulesApplied;
+        try {
+            Config.removeAllWarOfTheRingAnimalSpawns = false;
+            Config.blockedEntitiesInAllLOTRBiomes = new String[0];
+            Config.blockedEntityBiomeRules = new String[0];
+            Config.addedEntityBiomeRules = new String[0];
+            LOTRSpawnControl.applyConfiguredSpawnRules();
+
+            alternateRulesApplied = testBiome.getSpawnableList(EnumCreatureType.creature)
+                .contains(fixtureEntry) && WarOfTheRingSpawnCompat.countWarOfTheRingAnimalSpawns() > 0
+                && testBiome.getSpawnableList(EnumCreatureType.monster)
+                    .contains(unrelatedLateEntry);
+            for (EnumCreatureType creatureType : EnumCreatureType.values()) {
+                List entries = testBiome.getSpawnableList(creatureType);
+                alternateRulesApplied &= entries.contains(blockedEntries.get(creatureType))
+                    && entries.contains(biomeBlockedEntries.get(creatureType))
+                    && countMatchingEntries(entries, AddedTestAnimal.class, 7, 2, 4) == 0;
+            }
+        } finally {
+            Config.removeAllWarOfTheRingAnimalSpawns = configuredRemoveAll;
+            Config.blockedEntitiesInAllLOTRBiomes = configuredGlobalBlocks;
+            Config.blockedEntityBiomeRules = configuredBiomeBlocks;
+            Config.addedEntityBiomeRules = configuredAdditions;
+            LOTRSpawnControl.applyConfiguredSpawnRules();
+            LOTRSpawnControl.applyConfiguredSpawnRules();
+        }
+
+        return alternateRulesApplied && testBiome.getSpawnableList(EnumCreatureType.monster)
+            .contains(unrelatedLateEntry);
     }
 
     private static boolean verifyExplainReport() {
