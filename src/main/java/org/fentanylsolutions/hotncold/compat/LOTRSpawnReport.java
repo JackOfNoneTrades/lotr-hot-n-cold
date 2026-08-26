@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.world.biome.BiomeGenBase;
 
@@ -30,6 +31,14 @@ public final class LOTRSpawnReport {
             LOTRSpawnControl.getGloballyBlockedClasses(),
             LOTRSpawnControl.getBlockedClassesByBiome(),
             LOTRSpawnControl.getConfiguredAdditions());
+    }
+
+    public static List<String> createRuleExamples(String biomeToken, String entityToken, String categoryToken) {
+        return createRuleExamples(
+            biomeToken,
+            entityToken,
+            categoryToken,
+            WarOfTheRingSpawnCompat.getAllLOTRSpawnBiomes());
     }
 
     static List<String> createBiomeDump(String biomeToken, String categoryToken, Set<BiomeGenBase> lotrBiomes) {
@@ -105,6 +114,59 @@ public final class LOTRSpawnReport {
                 globallyBlockedClasses,
                 blockedClassesByBiome,
                 configuredAdditions);
+        }
+        return lines;
+    }
+
+    static List<String> createRuleExamples(String biomeToken, String entityToken, String categoryToken,
+        Set<BiomeGenBase> lotrBiomes) {
+        Object mappedEntityClass = EntityList.stringToClassMapping.get(entityToken);
+        if (!(mappedEntityClass instanceof Class)) {
+            return Collections.singletonList(
+                "Entity '" + entityToken
+                    + "' was not found. Names are exact and case-sensitive; enable printMobs to list valid names.");
+        }
+        Class entityClass = (Class) mappedEntityClass;
+
+        Set<BiomeGenBase> matchingBiomes = LOTRSpawnControl.resolveLOTRSpawnBiomes(biomeToken, lotrBiomes);
+        if (matchingBiomes.isEmpty()) {
+            return Collections.singletonList(
+                "LOTR biome '" + biomeToken + "' was not found. Enable printBiomes to list valid names and IDs.");
+        }
+
+        String selectedCategory = categoryToken == null ? EnumCreatureType.creature.name() : categoryToken;
+        EnumCreatureType creatureType = LOTRSpawnControl.resolveCreatureType(selectedCategory);
+        if (creatureType == null) {
+            return Collections.singletonList(
+                "Unknown spawn category '" + selectedCategory
+                    + "'. Available: "
+                    + String.join(", ", getCreatureTypeNames()));
+        }
+
+        List<BiomeGenBase> sortedBiomes = getSortedBiomes(matchingBiomes);
+        String ruleEntityName = getEntityName(entityClass);
+        String ruleBiomeToken = getCanonicalRuleBiomeToken(biomeToken, sortedBiomes.get(0));
+        List<String> lines = new ArrayList<>();
+        lines.add(
+            "Ready-to-copy rules for " + ruleEntityName
+                + " in "
+                + ruleBiomeToken
+                + " ("
+                + sortedBiomes.size()
+                + " matching biome variant(s)):");
+        lines.add("  blockedEntitiesInAllLOTRBiomes: " + ruleEntityName);
+        lines.add("  blockedEntityBiomeRules: " + ruleEntityName + ":" + ruleBiomeToken);
+        if (EntityLiving.class.isAssignableFrom(entityClass)) {
+            lines.add(
+                "  addedEntityBiomeRules: " + ruleEntityName
+                    + ":"
+                    + ruleBiomeToken
+                    + ":"
+                    + creatureType.name()
+                    + ":10:1:3");
+            lines.add("  Addition defaults shown: weight 10, group 1-3; adjust them before use.");
+        } else {
+            lines.add("  This entity is not living and cannot be added as a natural spawn.");
         }
         return lines;
     }
@@ -248,6 +310,15 @@ public final class LOTRSpawnReport {
                     biome -> biome.getClass()
                         .getName()));
         return sortedBiomes;
+    }
+
+    private static String getCanonicalRuleBiomeToken(String requestedToken, BiomeGenBase matchingBiome) {
+        try {
+            Integer.parseInt(requestedToken);
+            return Integer.toString(matchingBiome.biomeID);
+        } catch (NumberFormatException ignored) {
+            return matchingBiome.biomeName;
+        }
     }
 
     private static void appendCategory(List<String> lines, BiomeGenBase biome, EnumCreatureType creatureType) {

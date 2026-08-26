@@ -182,6 +182,9 @@ public final class WarOfTheRingServerFixture {
         boolean explainCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold spawns explain shire " + BLOCKED_ENTITY_NAME) == 1;
         boolean explainReportPassed = verifyExplainReport();
+        boolean exampleCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold spawns example shire " + ADDED_ENTITY_NAME + " creature") == 1;
+        boolean exampleReportPassed = verifyExampleReport();
         boolean reloadCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold spawns reload") == 1
             && server.getCommandManager()
@@ -199,6 +202,8 @@ public final class WarOfTheRingServerFixture {
             || !dumpCommandPassed
             || !explainCommandPassed
             || !explainReportPassed
+            || !exampleCommandPassed
+            || !exampleReportPassed
             || !reloadCommandPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
@@ -227,6 +232,10 @@ public final class WarOfTheRingServerFixture {
                     + explainCommandPassed
                     + ", explainReportPassed="
                     + explainReportPassed
+                    + ", exampleCommandPassed="
+                    + exampleCommandPassed
+                    + ", exampleReportPassed="
+                    + exampleReportPassed
                     + ", reloadCommandPassed="
                     + reloadCommandPassed
                     + ", remainingWarOfTheRingEntries="
@@ -309,6 +318,14 @@ public final class WarOfTheRingServerFixture {
             && warOfTheRingBlock != null
             && containsLine(warOfTheRingBlock, "Status: BLOCKED")
             && containsLine(warOfTheRingBlock, "removeAllWarOfTheRingAnimalSpawns=true");
+    }
+
+    private static boolean verifyExampleReport() {
+        List<String> examples = LOTRSpawnReport
+            .createRuleExamples(testBiome.biomeName, ADDED_ENTITY_NAME, EnumCreatureType.creature.name());
+        return containsLine(examples, "2 matching biome variant(s)")
+            && containsLine(examples, "blockedEntitiesInAllLOTRBiomes: " + ADDED_ENTITY_NAME)
+            && containsLine(examples, "addedEntityBiomeRules: " + ADDED_ENTITY_NAME + ":shire:creature:10:1:3");
     }
 
     private static String findRegisteredWarOfTheRingEntity() {

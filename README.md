@@ -136,6 +136,16 @@ The explanation reports `BLOCKED`, `PRESENT`, or `ABSENT` for every matching LOT
 names any global block, biome-specific block, or War of the Ring cleanup setting responsible, and shows matching spawn
 entries and configured additions. Tab completion is available for biome and registered entity names.
 
+To generate ready-to-copy config values using entities, biomes, and categories from the installed modpack, use:
+```
+/hotncold spawns example shire MoCreatures.Elephant creature
+```
+
+The category is optional and defaults to `creature`. The command prints examples for
+`blockedEntitiesInAllLOTRBiomes`, `blockedEntityBiomeRules`, and `addedEntityBiomeRules`. Addition examples use
+weight `10` and group size `1-3` as clearly labelled starting values to edit. Biome IDs are accepted, and tab
+completion is available for every argument.
+
 After editing the spawn settings in `hotncold.cfg`, an operator or the server console can apply them without restarting:
 ```
 /hotncold spawns reload

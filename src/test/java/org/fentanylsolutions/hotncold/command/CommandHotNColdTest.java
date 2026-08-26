@@ -58,4 +58,15 @@ public class CommandHotNColdTest {
 
         assertTrue(completions.contains("reload"));
     }
+
+    @Test
+    public void offersExampleTabCompletion() {
+        List<String> actionCompletions = new CommandHotNCold()
+            .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "spawns", "exa" });
+        List<String> categoryCompletions = new CommandHotNCold()
+            .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "spawns", "example", "Plains", "Pig", "mon" });
+
+        assertTrue(actionCompletions.contains("example"));
+        assertTrue(categoryCompletions.contains("monster"));
+    }
 }

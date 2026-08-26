@@ -136,6 +136,34 @@ public class LOTRSpawnReportTest {
         assertContains(missingBiome, "LOTR biome 'missingBiome' was not found");
     }
 
+    @Test
+    public void generatesReadyToCopyRulesFromInstalledValues() {
+        Set<BiomeGenBase> biomes = singletonBiome(BiomeGenBase.plains);
+
+        List<String> lines = LOTRSpawnReport.createRuleExamples("pLaInS", "Pig", "MoNsTeR", biomes);
+        List<String> numericBiomeLines = LOTRSpawnReport
+            .createRuleExamples(Integer.toString(BiomeGenBase.plains.biomeID), "Pig", null, biomes);
+
+        assertContains(lines, "Ready-to-copy rules for Pig in Plains");
+        assertContains(lines, "blockedEntitiesInAllLOTRBiomes: Pig");
+        assertContains(lines, "blockedEntityBiomeRules: Pig:Plains");
+        assertContains(lines, "addedEntityBiomeRules: Pig:Plains:monster:10:1:3");
+        assertContains(numericBiomeLines, "Pig:" + BiomeGenBase.plains.biomeID + ":creature:10:1:3");
+    }
+
+    @Test
+    public void validatesRuleExampleInputs() {
+        Set<BiomeGenBase> biomes = singletonBiome(BiomeGenBase.plains);
+
+        List<String> missingEntity = LOTRSpawnReport.createRuleExamples("Plains", "missingEntity", "creature", biomes);
+        List<String> missingBiome = LOTRSpawnReport.createRuleExamples("missingBiome", "Pig", "creature", biomes);
+        List<String> missingCategory = LOTRSpawnReport.createRuleExamples("Plains", "Pig", "missingCategory", biomes);
+
+        assertContains(missingEntity, "Entity 'missingEntity' was not found");
+        assertContains(missingBiome, "LOTR biome 'missingBiome' was not found");
+        assertContains(missingCategory, "Unknown spawn category 'missingCategory'");
+    }
+
     private static Set<BiomeGenBase> singletonBiome(BiomeGenBase biome) {
         Set<BiomeGenBase> biomes = Collections.newSetFromMap(new IdentityHashMap<BiomeGenBase, Boolean>());
         biomes.add(biome);
