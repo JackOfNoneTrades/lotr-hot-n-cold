@@ -23,6 +23,7 @@ public final class LOTRSpawnGuard {
         BiomeGenBase biome = event.world
             .getBiomeGenForCoords(MathHelper.floor_double(event.x), MathHelper.floor_double(event.z));
         if (LOTRSpawnControl.isSpawnBlocked(event.entityLiving.getClass(), biome)) {
+            LOTRSpawnControl.recordBlockedSpawnAttempt(event.entityLiving.getClass(), biome, "natural");
             event.setResult(Event.Result.DENY);
         }
     }

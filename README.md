@@ -142,13 +142,23 @@ After editing the spawn settings in `hotncold.cfg`, an operator or the server co
 ```
 
 Reload affects `removeAllWarOfTheRingAnimalSpawns`, `blockedEntitiesInAllLOTRBiomes`,
-`blockedEntityBiomeRules`, and `addedEntityBiomeRules`. Hot N Cold first undoes only the exact spawn-list changes it
-made previously, then applies the new rules once. Unrelated entries added by another mod are preserved, and the command
-prints a short summary of the changes.
+`blockedEntityBiomeRules`, `addedEntityBiomeRules`, and the blocked-attempt logging settings described below. Hot N
+Cold first undoes only the exact spawn-list changes it made previously, then applies the new rules once. Unrelated
+entries added by another mod are preserved, and the command prints a short summary of the changes.
 
 Server startup also prints one `LOTR spawn summary` line with the number of entries added, the total removed with a
 breakdown by reason, and configured addition targets rejected because that entity was already present. Invalid rules
 still receive their specific warning messages.
+
+Blocked natural spawn attempts can optionally be summarized in the server log:
+```
+B:logBlockedSpawnAttempts=true
+I:blockedSpawnLogIntervalSeconds=60
+```
+
+The first blocked attempt is reported immediately. Further attempts are combined into at most one line per configured
+interval, including the total and the three most common entity, biome, and spawn-path combinations. Logging is disabled
+by default and can be enabled or disabled with `/hotncold spawns reload`.
 
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)

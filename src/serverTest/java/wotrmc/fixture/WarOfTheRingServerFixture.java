@@ -122,6 +122,8 @@ public final class WarOfTheRingServerFixture {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         Config.removeAllWarOfTheRingAnimalSpawns = true;
+        Config.logBlockedSpawnAttempts = true;
+        Config.blockedSpawnLogIntervalSeconds = 60;
         String[] configuredEntities = Config.blockedEntitiesInAllLOTRBiomes;
         Config.blockedEntitiesInAllLOTRBiomes = Arrays.copyOf(configuredEntities, configuredEntities.length + 3);
         Config.blockedEntitiesInAllLOTRBiomes[configuredEntities.length] = BLOCKED_ENTITY_NAME;

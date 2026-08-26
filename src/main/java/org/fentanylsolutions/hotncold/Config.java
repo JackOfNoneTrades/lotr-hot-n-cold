@@ -15,6 +15,8 @@ public class Config {
     public static boolean printBiomes = false;
     public static boolean autoPopulateEnviromineBiomeTemperatures = false;
     public static boolean removeAllWarOfTheRingAnimalSpawns = false;
+    public static boolean logBlockedSpawnAttempts = false;
+    public static int blockedSpawnLogIntervalSeconds = 60;
 
     public static String[] mobsImmuneToFrost = {};
     public static String[] mobsImmuneToHeat = {};
@@ -111,6 +113,21 @@ public class Config {
     }
 
     private static void readSpawnConfiguration(Configuration configuration) {
+        logBlockedSpawnAttempts = configuration.getBoolean(
+            "logBlockedSpawnAttempts",
+            Configuration.CATEGORY_GENERAL,
+            logBlockedSpawnAttempts,
+            "Log an aggregated summary of blocked natural spawn attempts. Disabled by default. At most one summary "
+                + "line is written per blockedSpawnLogIntervalSeconds.");
+
+        blockedSpawnLogIntervalSeconds = configuration.getInt(
+            "blockedSpawnLogIntervalSeconds",
+            Configuration.CATEGORY_GENERAL,
+            blockedSpawnLogIntervalSeconds,
+            1,
+            3600,
+            "Minimum number of seconds between aggregated blocked natural spawn summaries.");
+
         removeAllWarOfTheRingAnimalSpawns = configuration.getBoolean(
             "removeAllWarOfTheRingAnimalSpawns",
             Configuration.CATEGORY_GENERAL,

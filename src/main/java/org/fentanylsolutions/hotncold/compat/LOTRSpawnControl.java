@@ -26,12 +26,14 @@ public final class LOTRSpawnControl {
     private static Map<BiomeGenBase, Set<Class>> cachedBlockedClassesByBiome = Collections.emptyMap();
     private static List<SpawnAddition> cachedConfiguredAdditions = Collections.emptyList();
     private static final SpawnListJournal APPLIED_CHANGES = new SpawnListJournal();
+    private static final BlockedSpawnAttemptLog BLOCKED_ATTEMPT_LOG = new BlockedSpawnAttemptLog();
     private static boolean cachedRemoveAllWarOfTheRingAnimals;
 
     private LOTRSpawnControl() {}
 
     public static SpawnRuleResult applyConfiguredSpawnRules() {
         int undoneChanges = APPLIED_CHANGES.undo();
+        BLOCKED_ATTEMPT_LOG.reset();
         prepareSpawnBlockRules();
         int addedEntries = addBiomeEntitySpawns();
         int rejectedAdditionTargets = cachedConfiguredAdditions.size() - addedEntries;
@@ -216,10 +218,30 @@ public final class LOTRSpawnControl {
                 net.minecraft.util.MathHelper.floor_double(entity.posX),
                 net.minecraft.util.MathHelper.floor_double(entity.posZ));
             if (isSpawnBlocked(entity.getClass(), biome)) {
+                recordBlockedSpawnAttempt(entity.getClass(), biome, "LOTR world-gen");
                 return false;
             }
         }
         return world.spawnEntityInWorld(entity);
+    }
+
+    public static void recordBlockedSpawnAttempt(Class entityClass, BiomeGenBase biome, String spawnPath) {
+        if (!Config.logBlockedSpawnAttempts || entityClass == null || biome == null) {
+            return;
+        }
+
+        Object registeredName = EntityList.classToStringMapping.get(entityClass);
+        String entityName = registeredName instanceof String ? (String) registeredName : entityClass.getName();
+        String biomeName = biome.biomeName == null ? "<unnamed>" : biome.biomeName;
+        String summary = BLOCKED_ATTEMPT_LOG.record(
+            entityName,
+            biomeName + " (ID " + biome.biomeID + ")",
+            spawnPath,
+            System.currentTimeMillis(),
+            Config.blockedSpawnLogIntervalSeconds * 1000L);
+        if (summary != null) {
+            HotNCold.LOG.info(summary);
+        }
     }
 
     static Set<Class> resolveBlockedEntityClasses(String[] entityNames) {
