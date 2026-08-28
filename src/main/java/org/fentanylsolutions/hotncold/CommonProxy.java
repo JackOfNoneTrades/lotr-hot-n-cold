@@ -4,6 +4,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import org.fentanylsolutions.hotncold.command.CommandHotNCold;
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnGuard;
 import org.fentanylsolutions.hotncold.util.BiomeUtil;
@@ -46,6 +47,9 @@ public class CommonProxy {
         }
         HotNCold.LOG.info(
             LOTRSpawnControl.applyConfiguredSpawnRules()
+                .describeStartup());
+        HotNCold.LOG.info(
+            LOTREquipmentControl.prepareConfiguredWeaponRules()
                 .describeStartup());
         event.registerServerCommand(new CommandHotNCold());
     }

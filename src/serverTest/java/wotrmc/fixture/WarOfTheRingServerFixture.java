@@ -10,6 +10,7 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityCow;
+import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.BiomeGenBase;
@@ -19,6 +20,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fentanylsolutions.hotncold.Config;
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
@@ -35,6 +37,8 @@ import hotncold.fixture.entities.BiomeBlockedTestAnimal;
 import hotncold.fixture.entities.BlockedTestAnimal;
 import hotncold.fixture.entities.ExplodingSpawnCheckAnimal;
 import lotr.common.LOTRDimension;
+import lotr.common.LOTRMod;
+import lotr.common.entity.npc.LOTREntityGondorSoldier;
 import lotr.common.world.biome.LOTRBiome;
 import wotrmc.common.entities.ServerTestAnimal;
 
@@ -145,6 +149,18 @@ public final class WarOfTheRingServerFixture {
             Config.addedEntityBiomeRules[ruleIndex++] = additionRule;
             Config.addedEntityBiomeRules[ruleIndex++] = additionRule;
         }
+
+        Object gondorSoldierName = EntityList.classToStringMapping.get(LOTREntityGondorSoldier.class);
+        Object gondorSwordName = Item.itemRegistry.getNameForObject(LOTRMod.swordGondor);
+        if (!(gondorSoldierName instanceof String) || !(gondorSwordName instanceof String)) {
+            throw new AssertionError(
+                "Could not resolve genuine LOTR equipment fixture names: entity=" + gondorSoldierName
+                    + ", item="
+                    + gondorSwordName);
+        }
+        String[] configuredWeaponRules = Config.lotrNPCWeaponRules;
+        Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 1);
+        Config.lotrNPCWeaponRules[configuredWeaponRules.length] = gondorSoldierName + ";" + gondorSwordName + ";1";
     }
 
     @Mod.EventHandler
@@ -189,6 +205,7 @@ public final class WarOfTheRingServerFixture {
             .executeCommand(server, "hotncold spawns reload") == 1
             && server.getCommandManager()
                 .executeCommand(server, "hotncold spawns reload") == 1;
+        boolean equipmentRulePassed = verifyEquipmentRule();
 
         if (!ruleReapplicationPassed || !fixtureRemoved
             || !blockedRemoved
@@ -205,6 +222,7 @@ public final class WarOfTheRingServerFixture {
             || !exampleCommandPassed
             || !exampleReportPassed
             || !reloadCommandPassed
+            || !equipmentRulePassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
                 "Spawn cleanup integration check failed: ruleReapplicationPassed=" + ruleReapplicationPassed
@@ -238,6 +256,8 @@ public final class WarOfTheRingServerFixture {
                     + exampleReportPassed
                     + ", reloadCommandPassed="
                     + reloadCommandPassed
+                    + ", equipmentRulePassed="
+                    + equipmentRulePassed
                     + ", remainingWarOfTheRingEntries="
                     + remainingWarOfTheRingEntries);
         }
@@ -326,6 +346,28 @@ public final class WarOfTheRingServerFixture {
         return containsLine(examples, "2 matching biome variant(s)")
             && containsLine(examples, "blockedEntitiesInAllLOTRBiomes: " + ADDED_ENTITY_NAME)
             && containsLine(examples, "addedEntityBiomeRules: " + ADDED_ENTITY_NAME + ":shire:creature:10:1:3");
+    }
+
+    private static boolean verifyEquipmentRule() {
+        WorldServer world = DimensionManager.getWorld(LOTRDimension.MIDDLE_EARTH.dimensionID);
+        if (world == null) {
+            return false;
+        }
+
+        LOTREntityGondorSoldier soldier = new LOTREntityGondorSoldier(world);
+        if (!LOTREquipmentControl.applyConfiguredWeapon(soldier)) {
+            return false;
+        }
+        return soldier.npcItemsInv.getMeleeWeapon()
+            .getItem() == LOTRMod.swordGondor
+            && soldier.npcItemsInv.getMeleeWeaponMounted()
+                .getItem() == LOTRMod.swordGondor
+            && soldier.npcItemsInv.getIdleItem()
+                .getItem() == LOTRMod.swordGondor
+            && soldier.npcItemsInv.getIdleItemMounted()
+                .getItem() == LOTRMod.swordGondor
+            && soldier.getEquipmentInSlot(0)
+                .getItem() == LOTRMod.swordGondor;
     }
 
     private static String findRegisteredWarOfTheRingEntity() {

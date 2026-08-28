@@ -23,6 +23,7 @@ public class Config {
     public static String[] blockedEntitiesInAllLOTRBiomes = {};
     public static String[] blockedEntityBiomeRules = {};
     public static String[] addedEntityBiomeRules = {};
+    public static String[] lotrNPCWeaponRules = {};
 
     public static String[] frostBiomes = {};
     public static String[] heatBiomes = {};
@@ -48,6 +49,7 @@ public class Config {
             .getBoolean("printBiomes", Configuration.CATEGORY_GENERAL, printBiomes, "Print biome names");
 
         readSpawnConfiguration(configuration);
+        readNPCEquipmentConfiguration(configuration);
 
         mobsImmuneToFrost = configuration
             .get(
@@ -163,6 +165,18 @@ public class Config {
                 + "entityName:biomeName:category:weight:minGroup:maxGroup. Biome IDs are also accepted. "
                 + "Categories are creature, monster, waterCreature, ambient, and LOTRAmbient when available. "
                 + "Entity names are exact and case-sensitive; enable printMobs and printBiomes to list valid names.")
+            .getStringList();
+    }
+
+    private static void readNPCEquipmentConfiguration(Configuration configuration) {
+        lotrNPCWeaponRules = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "lotrNPCWeaponRules",
+                lotrNPCWeaponRules,
+                "Weighted weapon choices for exact LOTR NPC types in the format entityName;itemName;weight. Add "
+                    + "one line per possible weapon. Entity and item names are exact and case-sensitive. Example: "
+                    + "LOTR.GondorSoldier;lotr:swordGondor;10")
             .getStringList();
     }
 
