@@ -1,9 +1,13 @@
 package wotrmc.fixture;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -12,6 +16,7 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.SpawnerAnimals;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraftforge.common.DimensionManager;
@@ -20,7 +25,6 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fentanylsolutions.hotncold.Config;
-import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
@@ -40,6 +44,7 @@ import lotr.common.LOTRDimension;
 import lotr.common.LOTRMod;
 import lotr.common.entity.npc.LOTREntityGondorSoldier;
 import lotr.common.world.biome.LOTRBiome;
+import lotr.common.world.spawning.LOTRSpawnerAnimals;
 import wotrmc.common.entities.ServerTestAnimal;
 
 @Mod(
@@ -205,7 +210,7 @@ public final class WarOfTheRingServerFixture {
             .executeCommand(server, "hotncold spawns reload") == 1
             && server.getCommandManager()
                 .executeCommand(server, "hotncold spawns reload") == 1;
-        boolean equipmentRulePassed = verifyEquipmentRule();
+        boolean equipmentRulePassed = verifyAutomaticEquipmentRule();
 
         if (!ruleReapplicationPassed || !fixtureRemoved
             || !blockedRemoved
@@ -348,26 +353,69 @@ public final class WarOfTheRingServerFixture {
             && containsLine(examples, "addedEntityBiomeRules: " + ADDED_ENTITY_NAME + ":shire:creature:10:1:3");
     }
 
-    private static boolean verifyEquipmentRule() {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static boolean verifyAutomaticEquipmentRule() {
         WorldServer world = DimensionManager.getWorld(LOTRDimension.MIDDLE_EARTH.dimensionID);
         if (world == null) {
             return false;
         }
 
-        LOTREntityGondorSoldier soldier = new LOTREntityGondorSoldier(world);
-        if (!LOTREquipmentControl.applyConfiguredWeapon(soldier)) {
+        int[] spawnLocation = findCreatureSpawnLocation(world);
+        if (spawnLocation == null) {
             return false;
         }
-        return soldier.npcItemsInv.getMeleeWeapon()
-            .getItem() == LOTRMod.swordGondor
-            && soldier.npcItemsInv.getMeleeWeaponMounted()
+
+        List creatureSpawns = testBiome.getSpawnableList(EnumCreatureType.creature);
+        List originalSpawns = new ArrayList(creatureSpawns);
+        Set<Entity> existingEntities = Collections.newSetFromMap(new IdentityHashMap<Entity, Boolean>());
+        existingEntities.addAll(world.loadedEntityList);
+        LOTREntityGondorSoldier spawnedSoldier = null;
+        try {
+            creatureSpawns.clear();
+            creatureSpawns.add(new BiomeGenBase.SpawnListEntry(LOTREntityGondorSoldier.class, 1, 1, 1));
+            LOTRSpawnerAnimals.worldGenSpawnAnimals(
+                world,
+                (LOTRBiome) testBiome,
+                null,
+                spawnLocation[0],
+                spawnLocation[1],
+                new SingleWorldGenSpawnRandom());
+
+            for (Object value : world.loadedEntityList) {
+                if (value instanceof LOTREntityGondorSoldier && !existingEntities.contains(value)) {
+                    spawnedSoldier = (LOTREntityGondorSoldier) value;
+                    break;
+                }
+            }
+            return spawnedSoldier != null && spawnedSoldier.npcItemsInv.getMeleeWeapon()
                 .getItem() == LOTRMod.swordGondor
-            && soldier.npcItemsInv.getIdleItem()
-                .getItem() == LOTRMod.swordGondor
-            && soldier.npcItemsInv.getIdleItemMounted()
-                .getItem() == LOTRMod.swordGondor
-            && soldier.getEquipmentInSlot(0)
-                .getItem() == LOTRMod.swordGondor;
+                && spawnedSoldier.npcItemsInv.getMeleeWeaponMounted()
+                    .getItem() == LOTRMod.swordGondor
+                && spawnedSoldier.npcItemsInv.getIdleItem()
+                    .getItem() == LOTRMod.swordGondor
+                && spawnedSoldier.npcItemsInv.getIdleItemMounted()
+                    .getItem() == LOTRMod.swordGondor
+                && spawnedSoldier.getEquipmentInSlot(0)
+                    .getItem() == LOTRMod.swordGondor;
+        } finally {
+            creatureSpawns.clear();
+            creatureSpawns.addAll(originalSpawns);
+            if (spawnedSoldier != null) {
+                spawnedSoldier.setDead();
+            }
+        }
+    }
+
+    private static int[] findCreatureSpawnLocation(WorldServer world) {
+        for (int x = -32; x <= 32; x++) {
+            for (int z = -32; z <= 32; z++) {
+                int y = world.getTopSolidOrLiquidBlock(x, z);
+                if (SpawnerAnimals.canCreatureTypeSpawnAtLocation(EnumCreatureType.creature, world, x, y, z)) {
+                    return new int[] { x, z };
+                }
+            }
+        }
+        return null;
     }
 
     private static String findRegisteredWarOfTheRingEntity() {
@@ -466,5 +514,21 @@ public final class WarOfTheRingServerFixture {
             }
         }
         return matches;
+    }
+
+    private static final class SingleWorldGenSpawnRandom extends Random {
+
+        private static final long serialVersionUID = 1L;
+        private int floatCalls;
+
+        @Override
+        public int nextInt(int bound) {
+            return 0;
+        }
+
+        @Override
+        public float nextFloat() {
+            return floatCalls++ < 2 ? 0F : 0.999999F;
+        }
     }
 }

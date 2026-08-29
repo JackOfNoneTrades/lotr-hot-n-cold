@@ -10,6 +10,8 @@ import java.util.Random;
 import java.util.Set;
 
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
@@ -161,6 +163,14 @@ public final class LOTREquipmentControl {
         npc.npcItemsInv.setIdleItemMounted(weapon.copy());
         npc.setCurrentItemOrArmor(0, weapon.copy());
         return true;
+    }
+
+    public static IEntityLivingData finishNaturalSpawn(EntityLiving entity, IEntityLivingData livingData) {
+        IEntityLivingData result = entity.onSpawnWithEgg(livingData);
+        if (entity instanceof LOTREntityNPC) {
+            applyConfiguredWeapon((LOTREntityNPC) entity);
+        }
+        return result;
     }
 
     private static Integer parsePositiveWeight(String value, String rule) {

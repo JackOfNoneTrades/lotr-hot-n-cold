@@ -170,6 +170,25 @@ The first blocked attempt is reported immediately. Further attempts are combined
 interval, including the total and the three most common entity, biome, and spawn-path combinations. Logging is disabled
 by default and can be enabled or disabled with `/hotncold spawns reload`.
 
+## Configuring naturally spawned LOTR NPC weapons
+
+Use `entityName;itemName;weight` entries to replace the melee weapon chosen for an exact LOTR NPC type. Add one line
+for every possible weapon:
+```
+S:lotrNPCWeaponRules <
+    LOTR.GondorSoldier;lotr:swordGondor;10
+    LOTR.GondorSoldier;lotr:hammerGondor;3
+>
+```
+
+The weight controls relative likelihood: in this example, the sword has weight ten and the hammer has weight three.
+Entity and item names are exact and case-sensitive. Invalid names, non-LOTR entities, non-positive weights, and
+duplicate choices are rejected with a clear warning, and startup prints a short `LOTR NPC equipment summary`.
+
+Weapon rules run after LOTR finishes creating a naturally spawned NPC's normal equipment, including LOTR biome
+world-generation spawns. The selected item replaces the NPC's melee, mounted-melee, idle, and held weapon state.
+Existing NPCs and NPCs introduced through commands, spawn eggs, or unrelated scripted spawning are not changed.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->
