@@ -189,6 +189,21 @@ Weapon rules run after LOTR finishes creating a naturally spawned NPC's normal e
 world-generation spawns. The selected item replaces the NPC's melee, mounted-melee, idle, and held weapon state.
 Existing NPCs and NPCs introduced through commands, spawn eggs, or unrelated scripted spawning are not changed.
 
+Armor uses `entityName;slot;itemName;weight`, with independent choices for `boots`, `leggings`, `chest`, and
+`helmet`:
+```
+S:lotrNPCArmorRules <
+    LOTR.GondorSoldier;helmet;lotr:helmetGondor;10
+    LOTR.GondorSoldier;helmet;lotr:helmetGondorWinged;1
+    LOTR.GondorSoldier;chest;lotr:bodyGondor;10
+    LOTR.GondorSoldier;leggings;lotr:legsGondor;10
+    LOTR.GondorSoldier;boots;lotr:bootsGondor;10
+>
+```
+
+Each configured armor slot makes its own weighted selection. Items that are not armor, or armor assigned to the wrong
+slot, are rejected with a warning rather than equipped incorrectly.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

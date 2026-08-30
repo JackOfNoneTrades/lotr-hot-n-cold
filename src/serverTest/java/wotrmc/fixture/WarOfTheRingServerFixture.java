@@ -166,6 +166,20 @@ public final class WarOfTheRingServerFixture {
         String[] configuredWeaponRules = Config.lotrNPCWeaponRules;
         Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 1);
         Config.lotrNPCWeaponRules[configuredWeaponRules.length] = gondorSoldierName + ";" + gondorSwordName + ";1";
+
+        String[] armorSlots = { "boots", "leggings", "chest", "helmet" };
+        Item[] rohanArmor = { LOTRMod.bootsRohan, LOTRMod.legsRohan, LOTRMod.bodyRohan, LOTRMod.helmetRohan };
+        String[] configuredArmorRules = Config.lotrNPCArmorRules;
+        Config.lotrNPCArmorRules = Arrays.copyOf(configuredArmorRules, configuredArmorRules.length + armorSlots.length);
+        for (int armorIndex = 0; armorIndex < armorSlots.length; armorIndex++) {
+            Object itemName = Item.itemRegistry.getNameForObject(rohanArmor[armorIndex]);
+            if (!(itemName instanceof String)) {
+                throw new AssertionError(
+                    "Could not resolve genuine LOTR " + armorSlots[armorIndex] + " fixture item: " + itemName);
+            }
+            Config.lotrNPCArmorRules[configuredArmorRules.length
+                + armorIndex] = gondorSoldierName + ";" + armorSlots[armorIndex] + ";" + itemName + ";1";
+        }
     }
 
     @Mod.EventHandler
@@ -396,7 +410,15 @@ public final class WarOfTheRingServerFixture {
                 && spawnedSoldier.npcItemsInv.getIdleItemMounted()
                     .getItem() == LOTRMod.swordGondor
                 && spawnedSoldier.getEquipmentInSlot(0)
-                    .getItem() == LOTRMod.swordGondor;
+                    .getItem() == LOTRMod.swordGondor
+                && spawnedSoldier.getEquipmentInSlot(1)
+                    .getItem() == LOTRMod.bootsRohan
+                && spawnedSoldier.getEquipmentInSlot(2)
+                    .getItem() == LOTRMod.legsRohan
+                && spawnedSoldier.getEquipmentInSlot(3)
+                    .getItem() == LOTRMod.bodyRohan
+                && spawnedSoldier.getEquipmentInSlot(4)
+                    .getItem() == LOTRMod.helmetRohan;
         } finally {
             creatureSpawns.clear();
             creatureSpawns.addAll(originalSpawns);

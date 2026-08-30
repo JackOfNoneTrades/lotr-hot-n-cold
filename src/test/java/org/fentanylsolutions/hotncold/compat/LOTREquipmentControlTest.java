@@ -9,6 +9,7 @@ import java.util.Random;
 
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemArmor;
 
 import org.junit.Test;
 
@@ -20,6 +21,11 @@ public class LOTREquipmentControlTest {
     private static final Item IRON_SWORD = new Item();
     private static final Item STONE_SWORD = new Item();
     private static final Item BOW = new Item();
+    private static final ItemArmor IRON_HELMET = new ItemArmor(ItemArmor.ArmorMaterial.IRON, 0, 0);
+    private static final ItemArmor CHAIN_HELMET = new ItemArmor(ItemArmor.ArmorMaterial.CHAIN, 0, 0);
+    private static final ItemArmor IRON_CHEST = new ItemArmor(ItemArmor.ArmorMaterial.IRON, 0, 1);
+    private static final ItemArmor IRON_LEGGINGS = new ItemArmor(ItemArmor.ArmorMaterial.IRON, 0, 2);
+    private static final ItemArmor IRON_BOOTS = new ItemArmor(ItemArmor.ArmorMaterial.IRON, 0, 3);
 
     @Test
     public void groupsWeightedWeaponChoicesForExactLOTRNPCs() {
@@ -29,8 +35,8 @@ public class LOTREquipmentControlTest {
             entityResolver(),
             itemResolver());
 
-        LOTREquipmentControl.WeaponRule soldierRule = preparation.weaponRules.get(LOTREntityGondorSoldier.class);
-        LOTREquipmentControl.WeaponRule archerRule = preparation.weaponRules.get(LOTREntityGondorArcher.class);
+        LOTREquipmentControl.WeightedItemRule soldierRule = preparation.weaponRules.get(LOTREntityGondorSoldier.class);
+        LOTREquipmentControl.WeightedItemRule archerRule = preparation.weaponRules.get(LOTREntityGondorArcher.class);
         assertEquals(2, preparation.weaponRules.size());
         assertEquals(2, soldierRule.choices.size());
         assertEquals(4, soldierRule.totalWeight);
@@ -61,7 +67,7 @@ public class LOTREquipmentControlTest {
 
     @Test
     public void choosesItemsAtWeightedBoundaries() {
-        LOTREquipmentControl.WeaponRule rule = LOTREquipmentControl.resolveWeaponRules(
+        LOTREquipmentControl.WeightedItemRule rule = LOTREquipmentControl.resolveWeaponRules(
             new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;3", "LOTR.GondorSoldier;minecraft:stone_sword;1" },
             entityResolver(),
             itemResolver()).weaponRules.get(LOTREntityGondorSoldier.class);
@@ -69,6 +75,51 @@ public class LOTREquipmentControlTest {
         assertSame(IRON_SWORD, rule.choose(new FixedRandom(0)).item);
         assertSame(IRON_SWORD, rule.choose(new FixedRandom(2)).item);
         assertSame(STONE_SWORD, rule.choose(new FixedRandom(3)).item);
+    }
+
+    @Test
+    public void groupsWeightedArmorChoicesIndependentlyByNPCAndSlot() {
+        LOTREquipmentControl.ArmorRulePreparation preparation = LOTREquipmentControl.resolveArmorRules(
+            new String[] { " LOTR.GondorSoldier ; HeLmEt ; minecraft:iron_helmet ; 3 ",
+                "LOTR.GondorSoldier;helmet;minecraft:chainmail_helmet;1",
+                "LOTR.GondorSoldier;chest;minecraft:iron_chestplate;2",
+                "LOTR.GondorSoldier;leggings;minecraft:iron_leggings;2",
+                "LOTR.GondorSoldier;boots;minecraft:iron_boots;2", "LOTR.GondorArcher;helmet;minecraft:iron_helmet;5" },
+            entityResolver(),
+            itemResolver());
+
+        LOTREquipmentControl.ArmorRuleSet soldierRules = preparation.armorRules.get(LOTREntityGondorSoldier.class);
+        LOTREquipmentControl.WeightedItemRule helmetRule = soldierRules.slotRules
+            .get(LOTREquipmentControl.ArmorSlot.HELMET);
+        assertEquals(2, preparation.armorRules.size());
+        assertEquals(4, soldierRules.slotRules.size());
+        assertEquals(2, helmetRule.choices.size());
+        assertEquals(4, helmetRule.totalWeight);
+        assertEquals(
+            "LOTR NPC armor summary: prepared 6 choice(s) across 5 slot rule(s) for 2 exact NPC type(s); rejected 0 "
+                + "invalid or duplicate choice(s).",
+            preparation.describeStartup());
+    }
+
+    @Test
+    public void rejectsInvalidArmorSlotsItemsWeightsAndDuplicates() {
+        LOTREquipmentControl.ArmorRulePreparation preparation = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "invalid", ";helmet;minecraft:iron_helmet;1", "missing;helmet;minecraft:iron_helmet;1",
+                "Cow;helmet;minecraft:iron_helmet;1", "LOTR.GondorSoldier;hat;minecraft:iron_helmet;1",
+                "LOTR.GondorSoldier;helmet;missing;1", "LOTR.GondorSoldier;helmet;minecraft:bow;1",
+                "LOTR.GondorSoldier;helmet;minecraft:iron_chestplate;1",
+                "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;0",
+                "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;2",
+                "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;3", null, "" },
+            entityResolver(),
+            itemResolver());
+
+        assertEquals(1, preparation.armorRules.size());
+        assertEquals(1, preparation.armorRules.get(LOTREntityGondorSoldier.class).slotRules.size());
+        assertEquals(
+            "LOTR NPC armor summary: prepared 1 choice(s) across 1 slot rule(s) for 1 exact NPC type(s); rejected 10 "
+                + "invalid or duplicate choice(s).",
+            preparation.describeStartup());
     }
 
     private static LOTREquipmentControl.EntityResolver entityResolver() {
@@ -90,6 +141,11 @@ public class LOTREquipmentControlTest {
         items.put("minecraft:iron_sword", IRON_SWORD);
         items.put("minecraft:stone_sword", STONE_SWORD);
         items.put("minecraft:bow", BOW);
+        items.put("minecraft:iron_helmet", IRON_HELMET);
+        items.put("minecraft:chainmail_helmet", CHAIN_HELMET);
+        items.put("minecraft:iron_chestplate", IRON_CHEST);
+        items.put("minecraft:iron_leggings", IRON_LEGGINGS);
+        items.put("minecraft:iron_boots", IRON_BOOTS);
         return new LOTREquipmentControl.ItemResolver() {
 
             @Override

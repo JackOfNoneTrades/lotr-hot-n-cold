@@ -24,6 +24,7 @@ public class Config {
     public static String[] blockedEntityBiomeRules = {};
     public static String[] addedEntityBiomeRules = {};
     public static String[] lotrNPCWeaponRules = {};
+    public static String[] lotrNPCArmorRules = {};
 
     public static String[] frostBiomes = {};
     public static String[] heatBiomes = {};
@@ -177,6 +178,16 @@ public class Config {
                 "Weighted weapon choices for exact LOTR NPC types in the format entityName;itemName;weight. Add "
                     + "one line per possible weapon. Entity and item names are exact and case-sensitive. Example: "
                     + "LOTR.GondorSoldier;lotr:swordGondor;10")
+            .getStringList();
+
+        lotrNPCArmorRules = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "lotrNPCArmorRules",
+                lotrNPCArmorRules,
+                "Weighted armor choices for exact LOTR NPC types in the format entityName;slot;itemName;weight. "
+                    + "Slots are boots, leggings, chest, and helmet. Add one line per possible item. Example: "
+                    + "LOTR.GondorSoldier;helmet;lotr:helmetGondor;10")
             .getStringList();
     }
 
