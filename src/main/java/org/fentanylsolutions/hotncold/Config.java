@@ -17,6 +17,8 @@ public class Config {
     public static boolean removeAllWarOfTheRingAnimalSpawns = false;
     public static boolean logBlockedSpawnAttempts = false;
     public static boolean replaceExistingLOTREquipment = true;
+    public static boolean customizeHiredLOTREquipment = false;
+    public static boolean customizeNamedLOTREquipment = false;
     public static int blockedSpawnLogIntervalSeconds = 60;
 
     public static String[] mobsImmuneToFrost = {};
@@ -171,6 +173,20 @@ public class Config {
     }
 
     private static void readNPCEquipmentConfiguration(Configuration configuration) {
+        customizeHiredLOTREquipment = configuration.getBoolean(
+            "customizeHiredLOTREquipment",
+            Configuration.CATEGORY_GENERAL,
+            customizeHiredLOTREquipment,
+            "If true, configured equipment may be applied to hired LOTR NPCs. Disabled by default to preserve gear "
+                + "owned or managed by players.");
+
+        customizeNamedLOTREquipment = configuration.getBoolean(
+            "customizeNamedLOTREquipment",
+            Configuration.CATEGORY_GENERAL,
+            customizeNamedLOTREquipment,
+            "If true, configured equipment may be applied to LOTR NPCs with a custom name tag. Disabled by default "
+                + "to preserve deliberately customized NPCs. LOTR's ordinary generated NPC names are unaffected.");
+
         replaceExistingLOTREquipment = configuration.getBoolean(
             "replaceExistingLOTREquipment",
             Configuration.CATEGORY_GENERAL,

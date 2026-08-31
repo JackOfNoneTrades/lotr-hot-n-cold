@@ -312,7 +312,7 @@ public final class LOTREquipmentControl {
     }
 
     public static boolean applyConfiguredWeapon(LOTREntityNPC npc) {
-        if (npc == null || npc.worldObj == null || npc.worldObj.isRemote) {
+        if (npc == null || npc.worldObj == null || npc.worldObj.isRemote || !shouldApplyConfiguredEquipment(npc)) {
             return false;
         }
 
@@ -337,7 +337,7 @@ public final class LOTREquipmentControl {
     }
 
     public static int applyConfiguredArmor(LOTREntityNPC npc) {
-        if (npc == null || npc.worldObj == null || npc.worldObj.isRemote) {
+        if (npc == null || npc.worldObj == null || npc.worldObj.isRemote || !shouldApplyConfiguredEquipment(npc)) {
             return 0;
         }
 
@@ -369,6 +369,15 @@ public final class LOTREquipmentControl {
             applyConfiguredArmor(npc);
         }
         return result;
+    }
+
+    private static boolean shouldApplyConfiguredEquipment(LOTREntityNPC npc) {
+        boolean hired = npc.hiredNPCInfo != null && npc.hiredNPCInfo.isActive;
+        return shouldApplyConfiguredEquipment(hired, npc.hasCustomNameTag());
+    }
+
+    static boolean shouldApplyConfiguredEquipment(boolean hired, boolean customNamed) {
+        return (Config.customizeHiredLOTREquipment || !hired) && (Config.customizeNamedLOTREquipment || !customNamed);
     }
 
     private static Integer parsePositiveWeight(String value, String rule) {

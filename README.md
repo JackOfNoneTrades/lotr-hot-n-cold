@@ -218,6 +218,15 @@ B:replaceExistingLOTREquipment=true
 Set this to `false` to preserve every occupied weapon or armor slot and apply configured choices only to slots LOTR
 left empty. This setting affects newly spawned NPCs only.
 
+Hired NPCs and NPCs carrying an explicit custom name tag are protected by default:
+```
+B:customizeHiredLOTREquipment=false
+B:customizeNamedLOTREquipment=false
+```
+
+These protections do not treat LOTR's ordinary generated NPC names as custom names. Set either option to `true` only
+when that category of NPC should also receive configured equipment.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

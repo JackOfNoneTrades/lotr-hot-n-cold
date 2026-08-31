@@ -15,6 +15,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.item.Item;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.SpawnerAnimals;
 import net.minecraft.world.WorldServer;
@@ -133,6 +134,8 @@ public final class WarOfTheRingServerFixture {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         Config.removeAllWarOfTheRingAnimalSpawns = true;
+        Config.customizeHiredLOTREquipment = false;
+        Config.customizeNamedLOTREquipment = false;
         Config.replaceExistingLOTREquipment = true;
         Config.logBlockedSpawnAttempts = true;
         Config.blockedSpawnLogIntervalSeconds = 60;
@@ -429,7 +432,8 @@ public final class WarOfTheRingServerFixture {
                 && spawnedSoldier.getEquipmentInSlot(4)
                     .getItem() == LOTRMod.helmetRohan
                 && verifyEmptyArmorChoice(world)
-                && verifyFillEmptyMode(world);
+                && verifyFillEmptyMode(world)
+                && verifyProtectedEquipmentNPCs(world);
         } finally {
             creatureSpawns.clear();
             creatureSpawns.addAll(originalSpawns);
@@ -486,6 +490,55 @@ public final class WarOfTheRingServerFixture {
                     .getItem() == LOTRMod.helmetRohan;
         } finally {
             Config.replaceExistingLOTREquipment = configuredReplace;
+        }
+    }
+
+    private static boolean verifyProtectedEquipmentNPCs(WorldServer world) {
+        boolean configuredHired = Config.customizeHiredLOTREquipment;
+        boolean configuredNamed = Config.customizeNamedLOTREquipment;
+        try {
+            Config.customizeHiredLOTREquipment = false;
+            Config.customizeNamedLOTREquipment = false;
+
+            LOTREntityGondorSoldier hiredSoldier = new LOTREntityGondorSoldier(world);
+            hiredSoldier.onSpawnWithEgg(null);
+            Item hiredOriginalWeapon = hiredSoldier.npcItemsInv.getMeleeWeapon()
+                .getItem();
+            hiredSoldier.hiredNPCInfo.isActive = true;
+            boolean hiredProtected = !LOTREquipmentControl.applyConfiguredWeapon(hiredSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(hiredSoldier) == 0
+                && hiredSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == hiredOriginalWeapon;
+
+            Config.customizeHiredLOTREquipment = true;
+            boolean hiredOptInWorks = LOTREquipmentControl.applyConfiguredWeapon(hiredSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(hiredSoldier) == 4
+                && hiredSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == LOTRMod.swordRohan;
+
+            LOTREntityGondorSoldier namedSoldier = new LOTREntityGondorSoldier(world);
+            namedSoldier.onSpawnWithEgg(null);
+            Item namedOriginalWeapon = namedSoldier.npcItemsInv.getMeleeWeapon()
+                .getItem();
+            NBTTagCompound namedData = new NBTTagCompound();
+            namedSoldier.writeToNBT(namedData);
+            namedData.setString("CustomName", "Hot N Cold Fixture");
+            namedSoldier.readFromNBT(namedData);
+            boolean namedProtected = namedSoldier.hasCustomNameTag()
+                && !LOTREquipmentControl.applyConfiguredWeapon(namedSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(namedSoldier) == 0
+                && namedSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == namedOriginalWeapon;
+
+            Config.customizeNamedLOTREquipment = true;
+            boolean namedOptInWorks = LOTREquipmentControl.applyConfiguredWeapon(namedSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(namedSoldier) == 4
+                && namedSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == LOTRMod.swordRohan;
+            return hiredProtected && hiredOptInWorks && namedProtected && namedOptInWorks;
+        } finally {
+            Config.customizeHiredLOTREquipment = configuredHired;
+            Config.customizeNamedLOTREquipment = configuredNamed;
         }
     }
 

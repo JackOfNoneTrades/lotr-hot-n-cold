@@ -1,8 +1,10 @@
 package org.fentanylsolutions.hotncold.compat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +14,7 @@ import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 
+import org.fentanylsolutions.hotncold.Config;
 import org.junit.Test;
 
 import lotr.common.entity.npc.LOTREntityGondorArcher;
@@ -142,6 +145,30 @@ public class LOTREquipmentControlTest {
         assertNull(helmetRule.choose(new FixedRandom(2)).item);
         assertEquals(2, helmetRule.choices.size());
         assertEquals(3, helmetRule.totalWeight);
+    }
+
+    @Test
+    public void protectsHiredAndCustomNamedNPCsUnlessEnabled() {
+        boolean configuredHired = Config.customizeHiredLOTREquipment;
+        boolean configuredNamed = Config.customizeNamedLOTREquipment;
+        try {
+            Config.customizeHiredLOTREquipment = false;
+            Config.customizeNamedLOTREquipment = false;
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, true));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true));
+
+            Config.customizeHiredLOTREquipment = true;
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true));
+
+            Config.customizeNamedLOTREquipment = true;
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true));
+        } finally {
+            Config.customizeHiredLOTREquipment = configuredHired;
+            Config.customizeNamedLOTREquipment = configuredNamed;
+        }
     }
 
     private static LOTREquipmentControl.EntityResolver entityResolver() {
