@@ -1,6 +1,7 @@
 package org.fentanylsolutions.hotncold.compat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import java.util.HashMap;
@@ -120,6 +121,27 @@ public class LOTREquipmentControlTest {
             "LOTR NPC armor summary: prepared 1 choice(s) across 1 slot rule(s) for 1 exact NPC type(s); rejected 10 "
                 + "invalid or duplicate choice(s).",
             preparation.describeStartup());
+    }
+
+    @Test
+    public void supportsWeightedEmptyWeaponAndArmorChoices() {
+        LOTREquipmentControl.WeightedItemRule weaponRule = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;3", "LOTR.GondorSoldier;empty;1" },
+            entityResolver(),
+            itemResolver()).weaponRules.get(LOTREntityGondorSoldier.class);
+        LOTREquipmentControl.WeightedItemRule helmetRule = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;2", "LOTR.GondorSoldier;helmet;EMPTY;1",
+                "LOTR.GondorSoldier;helmet;empty;4" },
+            entityResolver(),
+            itemResolver()).armorRules.get(LOTREntityGondorSoldier.class).slotRules
+                .get(LOTREquipmentControl.ArmorSlot.HELMET);
+
+        assertSame(IRON_SWORD, weaponRule.choose(new FixedRandom(2)).item);
+        assertNull(weaponRule.choose(new FixedRandom(3)).item);
+        assertSame(IRON_HELMET, helmetRule.choose(new FixedRandom(1)).item);
+        assertNull(helmetRule.choose(new FixedRandom(2)).item);
+        assertEquals(2, helmetRule.choices.size());
+        assertEquals(3, helmetRule.totalWeight);
     }
 
     private static LOTREquipmentControl.EntityResolver entityResolver() {

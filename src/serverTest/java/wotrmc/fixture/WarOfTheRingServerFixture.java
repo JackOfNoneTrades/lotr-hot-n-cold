@@ -25,6 +25,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fentanylsolutions.hotncold.Config;
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
@@ -42,6 +43,7 @@ import hotncold.fixture.entities.BlockedTestAnimal;
 import hotncold.fixture.entities.ExplodingSpawnCheckAnimal;
 import lotr.common.LOTRDimension;
 import lotr.common.LOTRMod;
+import lotr.common.entity.npc.LOTREntityGondorArcher;
 import lotr.common.entity.npc.LOTREntityGondorSoldier;
 import lotr.common.world.biome.LOTRBiome;
 import lotr.common.world.spawning.LOTRSpawnerAnimals;
@@ -131,6 +133,7 @@ public final class WarOfTheRingServerFixture {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         Config.removeAllWarOfTheRingAnimalSpawns = true;
+        Config.replaceExistingLOTREquipment = true;
         Config.logBlockedSpawnAttempts = true;
         Config.blockedSpawnLogIntervalSeconds = 60;
         String[] configuredEntities = Config.blockedEntitiesInAllLOTRBiomes;
@@ -156,21 +159,22 @@ public final class WarOfTheRingServerFixture {
         }
 
         Object gondorSoldierName = EntityList.classToStringMapping.get(LOTREntityGondorSoldier.class);
-        Object gondorSwordName = Item.itemRegistry.getNameForObject(LOTRMod.swordGondor);
-        if (!(gondorSoldierName instanceof String) || !(gondorSwordName instanceof String)) {
+        Object rohanSwordName = Item.itemRegistry.getNameForObject(LOTRMod.swordRohan);
+        if (!(gondorSoldierName instanceof String) || !(rohanSwordName instanceof String)) {
             throw new AssertionError(
                 "Could not resolve genuine LOTR equipment fixture names: entity=" + gondorSoldierName
                     + ", item="
-                    + gondorSwordName);
+                    + rohanSwordName);
         }
         String[] configuredWeaponRules = Config.lotrNPCWeaponRules;
         Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 1);
-        Config.lotrNPCWeaponRules[configuredWeaponRules.length] = gondorSoldierName + ";" + gondorSwordName + ";1";
+        Config.lotrNPCWeaponRules[configuredWeaponRules.length] = gondorSoldierName + ";" + rohanSwordName + ";1";
 
         String[] armorSlots = { "boots", "leggings", "chest", "helmet" };
         Item[] rohanArmor = { LOTRMod.bootsRohan, LOTRMod.legsRohan, LOTRMod.bodyRohan, LOTRMod.helmetRohan };
         String[] configuredArmorRules = Config.lotrNPCArmorRules;
-        Config.lotrNPCArmorRules = Arrays.copyOf(configuredArmorRules, configuredArmorRules.length + armorSlots.length);
+        Config.lotrNPCArmorRules = Arrays
+            .copyOf(configuredArmorRules, configuredArmorRules.length + armorSlots.length + 1);
         for (int armorIndex = 0; armorIndex < armorSlots.length; armorIndex++) {
             Object itemName = Item.itemRegistry.getNameForObject(rohanArmor[armorIndex]);
             if (!(itemName instanceof String)) {
@@ -180,6 +184,11 @@ public final class WarOfTheRingServerFixture {
             Config.lotrNPCArmorRules[configuredArmorRules.length
                 + armorIndex] = gondorSoldierName + ";" + armorSlots[armorIndex] + ";" + itemName + ";1";
         }
+        Object gondorArcherName = EntityList.classToStringMapping.get(LOTREntityGondorArcher.class);
+        if (!(gondorArcherName instanceof String)) {
+            throw new AssertionError("Could not resolve genuine LOTR archer fixture entity: " + gondorArcherName);
+        }
+        Config.lotrNPCArmorRules[configuredArmorRules.length + armorSlots.length] = gondorArcherName + ";chest;empty;1";
     }
 
     @Mod.EventHandler
@@ -402,15 +411,15 @@ public final class WarOfTheRingServerFixture {
                 }
             }
             return spawnedSoldier != null && spawnedSoldier.npcItemsInv.getMeleeWeapon()
-                .getItem() == LOTRMod.swordGondor
+                .getItem() == LOTRMod.swordRohan
                 && spawnedSoldier.npcItemsInv.getMeleeWeaponMounted()
-                    .getItem() == LOTRMod.swordGondor
+                    .getItem() == LOTRMod.swordRohan
                 && spawnedSoldier.npcItemsInv.getIdleItem()
-                    .getItem() == LOTRMod.swordGondor
+                    .getItem() == LOTRMod.swordRohan
                 && spawnedSoldier.npcItemsInv.getIdleItemMounted()
-                    .getItem() == LOTRMod.swordGondor
+                    .getItem() == LOTRMod.swordRohan
                 && spawnedSoldier.getEquipmentInSlot(0)
-                    .getItem() == LOTRMod.swordGondor
+                    .getItem() == LOTRMod.swordRohan
                 && spawnedSoldier.getEquipmentInSlot(1)
                     .getItem() == LOTRMod.bootsRohan
                 && spawnedSoldier.getEquipmentInSlot(2)
@@ -418,13 +427,65 @@ public final class WarOfTheRingServerFixture {
                 && spawnedSoldier.getEquipmentInSlot(3)
                     .getItem() == LOTRMod.bodyRohan
                 && spawnedSoldier.getEquipmentInSlot(4)
-                    .getItem() == LOTRMod.helmetRohan;
+                    .getItem() == LOTRMod.helmetRohan
+                && verifyEmptyArmorChoice(world)
+                && verifyFillEmptyMode(world);
         } finally {
             creatureSpawns.clear();
             creatureSpawns.addAll(originalSpawns);
             if (spawnedSoldier != null) {
                 spawnedSoldier.setDead();
             }
+        }
+    }
+
+    private static boolean verifyEmptyArmorChoice(WorldServer world) {
+        LOTREntityGondorArcher archer = new LOTREntityGondorArcher(world);
+        archer.onSpawnWithEgg(null);
+        if (archer.getEquipmentInSlot(3) == null) {
+            return false;
+        }
+        return LOTREquipmentControl.applyConfiguredArmor(archer) == 1 && archer.getEquipmentInSlot(3) == null;
+    }
+
+    private static boolean verifyFillEmptyMode(WorldServer world) {
+        LOTREntityGondorSoldier soldier = new LOTREntityGondorSoldier(world);
+        soldier.onSpawnWithEgg(null);
+        if (soldier.npcItemsInv.getMeleeWeapon() == null || soldier.getEquipmentInSlot(1) == null
+            || soldier.getEquipmentInSlot(2) == null
+            || soldier.getEquipmentInSlot(3) == null
+            || soldier.getEquipmentInSlot(4) == null) {
+            return false;
+        }
+
+        Item originalWeapon = soldier.npcItemsInv.getMeleeWeapon()
+            .getItem();
+        Item originalBoots = soldier.getEquipmentInSlot(1)
+            .getItem();
+        Item originalLeggings = soldier.getEquipmentInSlot(2)
+            .getItem();
+        Item originalChest = soldier.getEquipmentInSlot(3)
+            .getItem();
+        soldier.setCurrentItemOrArmor(4, null);
+
+        boolean configuredReplace = Config.replaceExistingLOTREquipment;
+        try {
+            Config.replaceExistingLOTREquipment = false;
+            boolean weaponSkipped = !LOTREquipmentControl.applyConfiguredWeapon(soldier);
+            int appliedArmorSlots = LOTREquipmentControl.applyConfiguredArmor(soldier);
+            return weaponSkipped && appliedArmorSlots == 1
+                && soldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == originalWeapon
+                && soldier.getEquipmentInSlot(1)
+                    .getItem() == originalBoots
+                && soldier.getEquipmentInSlot(2)
+                    .getItem() == originalLeggings
+                && soldier.getEquipmentInSlot(3)
+                    .getItem() == originalChest
+                && soldier.getEquipmentInSlot(4)
+                    .getItem() == LOTRMod.helmetRohan;
+        } finally {
+            Config.replaceExistingLOTREquipment = configuredReplace;
         }
     }
 

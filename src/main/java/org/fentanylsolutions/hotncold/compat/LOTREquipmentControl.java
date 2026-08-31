@@ -112,8 +112,9 @@ public final class LOTREquipmentControl {
                 continue;
             }
 
-            Item item = itemResolver.resolve(fields[1]);
-            if (item == null) {
+            boolean emptyChoice = isEmptyChoice(fields[1]);
+            Item item = emptyChoice ? null : itemResolver.resolve(fields[1]);
+            if (!emptyChoice && item == null) {
                 HotNCold.LOG.warn(
                     "Item '{}' in LOTR NPC weapon rule '{}' was not found; names are exact and case-sensitive",
                     fields[1],
@@ -135,7 +136,8 @@ public final class LOTREquipmentControl {
                 mutableRule = new MutableItemRule(fields[0]);
                 rules.put(npcClass, mutableRule);
             }
-            if (!mutableRule.itemNames.add(fields[1])) {
+            String choiceKey = emptyChoice ? "empty" : fields[1];
+            if (!mutableRule.itemNames.add(choiceKey)) {
                 HotNCold.LOG.warn(
                     "Duplicate item '{}' for LOTR NPC '{}' in weapon rule '{}'; ignoring duplicate",
                     fields[1],
@@ -223,8 +225,9 @@ public final class LOTREquipmentControl {
                 continue;
             }
 
-            Item item = itemResolver.resolve(fields[2]);
-            if (item == null) {
+            boolean emptyChoice = isEmptyChoice(fields[2]);
+            Item item = emptyChoice ? null : itemResolver.resolve(fields[2]);
+            if (!emptyChoice && item == null) {
                 HotNCold.LOG.warn(
                     "Item '{}' in LOTR NPC armor rule '{}' was not found; names are exact and case-sensitive",
                     fields[2],
@@ -232,7 +235,7 @@ public final class LOTREquipmentControl {
                 rejectedChoices++;
                 continue;
             }
-            if (!(item instanceof ItemArmor) || ((ItemArmor) item).armorType != slot.armorType) {
+            if (!emptyChoice && (!(item instanceof ItemArmor) || ((ItemArmor) item).armorType != slot.armorType)) {
                 HotNCold.LOG.warn(
                     "Item '{}' in LOTR NPC armor rule '{}' is not compatible with the {} slot",
                     fields[2],
@@ -260,7 +263,8 @@ public final class LOTREquipmentControl {
                 mutableRule = new MutableItemRule(fields[0]);
                 npcRules.put(slot, mutableRule);
             }
-            if (!mutableRule.itemNames.add(fields[2])) {
+            String choiceKey = emptyChoice ? "empty" : fields[2];
+            if (!mutableRule.itemNames.add(choiceKey)) {
                 HotNCold.LOG.warn(
                     "Duplicate {} item '{}' for LOTR NPC '{}' in armor rule '{}'; ignoring duplicate",
                     slot.configName,
@@ -317,13 +321,18 @@ public final class LOTREquipmentControl {
         if (rule == null) {
             return false;
         }
+        if (!Config.replaceExistingLOTREquipment
+            && (npc.npcItemsInv.getMeleeWeapon() != null || npc.getEquipmentInSlot(0) != null)) {
+            return false;
+        }
 
-        ItemStack weapon = new ItemStack(rule.choose(npc.getRNG()).item);
-        npc.npcItemsInv.setMeleeWeapon(weapon.copy());
-        npc.npcItemsInv.setMeleeWeaponMounted(weapon.copy());
-        npc.npcItemsInv.setIdleItem(weapon.copy());
-        npc.npcItemsInv.setIdleItemMounted(weapon.copy());
-        npc.setCurrentItemOrArmor(0, weapon.copy());
+        Item chosenItem = rule.choose(npc.getRNG()).item;
+        ItemStack weapon = chosenItem == null ? null : new ItemStack(chosenItem);
+        npc.npcItemsInv.setMeleeWeapon(copyOrNull(weapon));
+        npc.npcItemsInv.setMeleeWeaponMounted(copyOrNull(weapon));
+        npc.npcItemsInv.setIdleItem(copyOrNull(weapon));
+        npc.npcItemsInv.setIdleItemMounted(copyOrNull(weapon));
+        npc.setCurrentItemOrArmor(0, copyOrNull(weapon));
         return true;
     }
 
@@ -340,9 +349,12 @@ public final class LOTREquipmentControl {
 
         int appliedSlots = 0;
         for (Map.Entry<ArmorSlot, WeightedItemRule> entry : ruleSet.slotRules.entrySet()) {
-            ItemStack armor = new ItemStack(
-                entry.getValue()
-                    .choose(npc.getRNG()).item);
+            if (!Config.replaceExistingLOTREquipment && npc.getEquipmentInSlot(entry.getKey().equipmentSlot) != null) {
+                continue;
+            }
+            Item chosenItem = entry.getValue()
+                .choose(npc.getRNG()).item;
+            ItemStack armor = chosenItem == null ? null : new ItemStack(chosenItem);
             npc.setCurrentItemOrArmor(entry.getKey().equipmentSlot, armor);
             appliedSlots++;
         }
@@ -372,6 +384,14 @@ public final class LOTREquipmentControl {
             value,
             rule);
         return null;
+    }
+
+    private static boolean isEmptyChoice(String itemName) {
+        return "empty".equalsIgnoreCase(itemName);
+    }
+
+    private static ItemStack copyOrNull(ItemStack itemStack) {
+        return itemStack == null ? null : itemStack.copy();
     }
 
     interface EntityResolver {

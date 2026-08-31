@@ -170,7 +170,7 @@ The first blocked attempt is reported immediately. Further attempts are combined
 interval, including the total and the three most common entity, biome, and spawn-path combinations. Logging is disabled
 by default and can be enabled or disabled with `/hotncold spawns reload`.
 
-## Configuring naturally spawned LOTR NPC weapons
+## Configuring naturally spawned LOTR NPC equipment
 
 Use `entityName;itemName;weight` entries to replace the melee weapon chosen for an exact LOTR NPC type. Add one line
 for every possible weapon:
@@ -178,6 +178,7 @@ for every possible weapon:
 S:lotrNPCWeaponRules <
     LOTR.GondorSoldier;lotr:swordGondor;10
     LOTR.GondorSoldier;lotr:hammerGondor;3
+    LOTR.GondorSoldier;empty;1
 >
 ```
 
@@ -195,6 +196,7 @@ Armor uses `entityName;slot;itemName;weight`, with independent choices for `boot
 S:lotrNPCArmorRules <
     LOTR.GondorSoldier;helmet;lotr:helmetGondor;10
     LOTR.GondorSoldier;helmet;lotr:helmetGondorWinged;1
+    LOTR.GondorSoldier;helmet;empty;1
     LOTR.GondorSoldier;chest;lotr:bodyGondor;10
     LOTR.GondorSoldier;leggings;lotr:legsGondor;10
     LOTR.GondorSoldier;boots;lotr:bootsGondor;10
@@ -203,6 +205,18 @@ S:lotrNPCArmorRules <
 
 Each configured armor slot makes its own weighted selection. Items that are not armor, or armor assigned to the wrong
 slot, are rejected with a warning rather than equipped incorrectly.
+
+The special item name `empty` gives weapons and armor slots a weighted chance to remain empty. Its likelihood is
+calculated like any other choice: a helmet rule with item weights `10` and `1`, plus an empty weight of `1`, has a
+one-in-twelve empty chance.
+
+By default, configured choices replace the NPC's normal equipment:
+```
+B:replaceExistingLOTREquipment=true
+```
+
+Set this to `false` to preserve every occupied weapon or armor slot and apply configured choices only to slots LOTR
+left empty. This setting affects newly spawned NPCs only.
 
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)

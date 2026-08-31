@@ -16,6 +16,7 @@ public class Config {
     public static boolean autoPopulateEnviromineBiomeTemperatures = false;
     public static boolean removeAllWarOfTheRingAnimalSpawns = false;
     public static boolean logBlockedSpawnAttempts = false;
+    public static boolean replaceExistingLOTREquipment = true;
     public static int blockedSpawnLogIntervalSeconds = 60;
 
     public static String[] mobsImmuneToFrost = {};
@@ -170,13 +171,21 @@ public class Config {
     }
 
     private static void readNPCEquipmentConfiguration(Configuration configuration) {
+        replaceExistingLOTREquipment = configuration.getBoolean(
+            "replaceExistingLOTREquipment",
+            Configuration.CATEGORY_GENERAL,
+            replaceExistingLOTREquipment,
+            "If true, configured LOTR NPC equipment replaces normal gear. If false, rules apply only to equipment "
+                + "slots that are empty after LOTR initializes the NPC. Existing NPCs are never changed.");
+
         lotrNPCWeaponRules = configuration
             .get(
                 Configuration.CATEGORY_GENERAL,
                 "lotrNPCWeaponRules",
                 lotrNPCWeaponRules,
-                "Weighted weapon choices for exact LOTR NPC types in the format entityName;itemName;weight. Add "
-                    + "one line per possible weapon. Entity and item names are exact and case-sensitive. Example: "
+                "Weighted weapon choices for exact LOTR NPC types in the format entityName;itemName;weight. Use "
+                    + "empty as an item name for a weighted empty-hand chance. Add one line per possible weapon. "
+                    + "Entity and item names are exact and case-sensitive. Example: "
                     + "LOTR.GondorSoldier;lotr:swordGondor;10")
             .getStringList();
 
@@ -186,7 +195,8 @@ public class Config {
                 "lotrNPCArmorRules",
                 lotrNPCArmorRules,
                 "Weighted armor choices for exact LOTR NPC types in the format entityName;slot;itemName;weight. "
-                    + "Slots are boots, leggings, chest, and helmet. Add one line per possible item. Example: "
+                    + "Slots are boots, leggings, chest, and helmet. Use empty as an item name for a weighted empty "
+                    + "slot chance. Add one line per possible item. Example: "
                     + "LOTR.GondorSoldier;helmet;lotr:helmetGondor;10")
             .getStringList();
     }
