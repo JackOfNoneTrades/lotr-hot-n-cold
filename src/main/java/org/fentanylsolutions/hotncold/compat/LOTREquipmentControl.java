@@ -76,6 +76,14 @@ public final class LOTREquipmentControl {
         return new EquipmentRuleReloadResult(prepareConfiguredWeaponRules(), prepareConfiguredArmorRules());
     }
 
+    static Map<Class<? extends LOTREntityNPC>, WeightedItemRule> getPreparedWeaponRules() {
+        return cachedWeaponRules;
+    }
+
+    static Map<Class<? extends LOTREntityNPC>, ArmorRuleSet> getPreparedArmorRules() {
+        return cachedArmorRules;
+    }
+
     static RulePreparation resolveWeaponRules(String[] configuredRules, EntityResolver entityResolver,
         ItemResolver itemResolver) {
         Map<Class<? extends LOTREntityNPC>, MutableItemRule> rules = new LinkedHashMap<>();

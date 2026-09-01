@@ -7,6 +7,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -188,6 +189,66 @@ public class LOTREquipmentControlTest {
                 + "choice(s) across 2 slot rule(s) for 2 exact NPC type(s); rejected 1 invalid or duplicate "
                 + "choice(s). Existing NPCs were not changed.",
             new LOTREquipmentControl.EquipmentRuleReloadResult(weapons, armor).describeReload());
+    }
+
+    @Test
+    public void explainsConfiguredChoicesAndSafetySettings() {
+        LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;3", "LOTR.GondorSoldier;empty;1" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;2" },
+            entityResolver(),
+            itemResolver());
+
+        List<String> lines = LOTREquipmentReport.createEquipmentExplanation(
+            "LOTR.GondorSoldier",
+            LOTREntityGondorSoldier.class,
+            weapons.weaponRules,
+            armor.armorRules,
+            false,
+            false,
+            true);
+
+        assertEquals(
+            "Equipment rules for LOTR.GondorSoldier (lotr.common.entity.npc.LOTREntityGondorSoldier):",
+            lines.get(0));
+        assertEquals("  Weapon choices (total weight 4):", lines.get(1));
+        assertEquals("    minecraft:iron_sword - weight 3 (75.0%)", lines.get(2));
+        assertEquals("    empty - weight 1 (25.0%)", lines.get(3));
+        assertEquals("  Helmet choices (total weight 2):", lines.get(4));
+        assertEquals("    minecraft:iron_helmet - weight 2 (100.0%)", lines.get(5));
+        assertEquals("  Mode: configured choices fill only empty slots.", lines.get(6));
+        assertEquals("  Hired NPCs: protected.", lines.get(7));
+        assertEquals("  NPCs with custom name tags: included.", lines.get(8));
+        assertEquals("  Existing NPCs are not changed; these rules apply to future natural spawns.", lines.get(9));
+    }
+
+    @Test
+    public void explainsUnknownAndNonLOTRNPCNames() {
+        assertEquals(
+            "Entity 'missing' was not found. Names are exact and case-sensitive.",
+            LOTREquipmentReport.createEquipmentExplanation(
+                "missing",
+                null,
+                new HashMap<Class<? extends lotr.common.entity.npc.LOTREntityNPC>, LOTREquipmentControl.WeightedItemRule>(),
+                new HashMap<Class<? extends lotr.common.entity.npc.LOTREntityNPC>, LOTREquipmentControl.ArmorRuleSet>(),
+                true,
+                false,
+                false)
+                .get(0));
+        assertEquals(
+            "Entity 'Cow' is not a LOTR NPC.",
+            LOTREquipmentReport.createEquipmentExplanation(
+                "Cow",
+                EntityCow.class,
+                new HashMap<Class<? extends lotr.common.entity.npc.LOTREntityNPC>, LOTREquipmentControl.WeightedItemRule>(),
+                new HashMap<Class<? extends lotr.common.entity.npc.LOTREntityNPC>, LOTREquipmentControl.ArmorRuleSet>(),
+                true,
+                false,
+                false)
+                .get(0));
     }
 
     private static LOTREquipmentControl.EntityResolver entityResolver() {

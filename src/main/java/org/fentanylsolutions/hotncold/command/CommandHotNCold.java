@@ -9,6 +9,7 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.util.ChatComponentText;
 
 import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentReport;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 
@@ -25,7 +26,8 @@ public final class CommandHotNCold extends CommandBase {
             + " OR /hotncold spawns explain <LOTR biome name or ID> <entity name>"
             + " OR /hotncold spawns example <LOTR biome name or ID> <entity name> [category]"
             + " OR /hotncold spawns reload"
-            + " OR /hotncold equipment reload";
+            + " OR /hotncold equipment reload"
+            + " OR /hotncold equipment explain <LOTR NPC name>";
     }
 
     @Override
@@ -40,7 +42,7 @@ public final class CommandHotNCold extends CommandBase {
         }
 
         if ("equipment".equalsIgnoreCase(args[0])) {
-            reloadEquipmentRules(sender, args);
+            processEquipmentCommand(sender, args);
             return;
         }
         if (!"spawns".equalsIgnoreCase(args[0])) {
@@ -76,7 +78,10 @@ public final class CommandHotNCold extends CommandBase {
             return getListOfStringsMatchingLastWord(args, "equipment", "spawns");
         }
         if (args.length == 2 && "equipment".equalsIgnoreCase(args[0])) {
-            return getListOfStringsMatchingLastWord(args, "reload");
+            return getListOfStringsMatchingLastWord(args, "explain", "reload");
+        }
+        if (args.length == 3 && "equipment".equalsIgnoreCase(args[0]) && "explain".equalsIgnoreCase(args[1])) {
+            return getListOfStringsMatchingLastWord(args, LOTREquipmentReport.getLOTRNPCEntityNames());
         }
         if (args.length == 2 && "spawns".equalsIgnoreCase(args[0])) {
             return getListOfStringsMatchingLastWord(args, "dump", "example", "explain", "reload");
@@ -129,5 +134,19 @@ public final class CommandHotNCold extends CommandBase {
             throw new CommandException("Hot N Cold's configuration file is not available.");
         }
         sender.addChatMessage(new ChatComponentText(result.describeReload()));
+    }
+
+    private void processEquipmentCommand(ICommandSender sender, String[] args) {
+        if ("reload".equalsIgnoreCase(args[1])) {
+            reloadEquipmentRules(sender, args);
+            return;
+        }
+        if ("explain".equalsIgnoreCase(args[1]) && args.length == 3) {
+            for (String line : LOTREquipmentReport.createEquipmentExplanation(args[2])) {
+                sender.addChatMessage(new ChatComponentText(line));
+            }
+            return;
+        }
+        throw new WrongUsageException(getCommandUsage(sender));
     }
 }

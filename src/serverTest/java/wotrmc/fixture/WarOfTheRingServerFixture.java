@@ -27,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fentanylsolutions.hotncold.Config;
 import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentReport;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
@@ -237,6 +238,14 @@ public final class WarOfTheRingServerFixture {
             && server.getCommandManager()
                 .executeCommand(server, "hotncold spawns reload") == 1;
         boolean equipmentRulePassed = verifyAutomaticEquipmentRule();
+        String gondorSoldierName = (String) EntityList.classToStringMapping.get(LOTREntityGondorSoldier.class);
+        List<String> equipmentReport = LOTREquipmentReport.createEquipmentExplanation(gondorSoldierName);
+        boolean equipmentExplainCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold equipment explain " + gondorSoldierName) == 1;
+        boolean equipmentExplainReportPassed = containsLine(equipmentReport, "swordRohan")
+            && containsLine(equipmentReport, "Helmet choices")
+            && containsLine(equipmentReport, "Hired NPCs: protected")
+            && containsLine(equipmentReport, "Existing NPCs are not changed");
         boolean equipmentReloadCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold equipment reload") == 1
             && server.getCommandManager()
@@ -258,6 +267,8 @@ public final class WarOfTheRingServerFixture {
             || !exampleReportPassed
             || !reloadCommandPassed
             || !equipmentRulePassed
+            || !equipmentExplainCommandPassed
+            || !equipmentExplainReportPassed
             || !equipmentReloadCommandPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
@@ -294,6 +305,10 @@ public final class WarOfTheRingServerFixture {
                     + reloadCommandPassed
                     + ", equipmentRulePassed="
                     + equipmentRulePassed
+                    + ", equipmentExplainCommandPassed="
+                    + equipmentExplainCommandPassed
+                    + ", equipmentExplainReportPassed="
+                    + equipmentExplainReportPassed
                     + ", equipmentReloadCommandPassed="
                     + equipmentReloadCommandPassed
                     + ", remainingWarOfTheRingEntries="

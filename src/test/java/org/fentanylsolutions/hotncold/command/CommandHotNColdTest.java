@@ -76,6 +76,14 @@ public class CommandHotNColdTest {
     }
 
     @Test
+    public void offersEquipmentExplainTabCompletion() {
+        List<String> actionCompletions = new CommandHotNCold()
+            .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "equipment", "ex" });
+
+        assertTrue(actionCompletions.contains("explain"));
+    }
+
+    @Test
     public void offersExampleTabCompletion() {
         List<String> actionCompletions = new CommandHotNCold()
             .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "spawns", "exa" });
