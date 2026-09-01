@@ -227,6 +227,14 @@ B:customizeNamedLOTREquipment=false
 These protections do not treat LOTR's ordinary generated NPC names as custom names. Set either option to `true` only
 when that category of NPC should also receive configured equipment.
 
+After editing any equipment setting, an operator can reload and validate the rules without restarting:
+```
+/hotncold equipment reload
+```
+
+The command prints the number of accepted and rejected choices. Reloading changes only the rules used for future NPC
+spawns; it does not alter NPCs already in the world.
+
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)
 * [Modrinth ![modrinth](images/icons/modrinth.png)](https://modrinth.com/mod/fentlib)-->

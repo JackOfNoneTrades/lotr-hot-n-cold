@@ -69,6 +69,13 @@ public final class LOTREquipmentControl {
         return preparation;
     }
 
+    public static EquipmentRuleReloadResult reloadConfiguredRules() {
+        if (!Config.reloadNPCEquipmentConfiguration()) {
+            return null;
+        }
+        return new EquipmentRuleReloadResult(prepareConfiguredWeaponRules(), prepareConfiguredArmorRules());
+    }
+
     static RulePreparation resolveWeaponRules(String[] configuredRules, EntityResolver entityResolver,
         ItemResolver itemResolver) {
         Map<Class<? extends LOTREntityNPC>, MutableItemRule> rules = new LinkedHashMap<>();
@@ -460,6 +467,32 @@ public final class LOTREquipmentControl {
                 + " exact NPC type(s); rejected "
                 + rejectedChoices
                 + " invalid or duplicate choice(s).";
+        }
+    }
+
+    public static final class EquipmentRuleReloadResult {
+
+        private final RulePreparation weaponPreparation;
+        private final ArmorRulePreparation armorPreparation;
+
+        EquipmentRuleReloadResult(RulePreparation weaponPreparation, ArmorRulePreparation armorPreparation) {
+            this.weaponPreparation = weaponPreparation;
+            this.armorPreparation = armorPreparation;
+        }
+
+        public String describeReload() {
+            return "Reloaded LOTR NPC equipment rules: prepared " + weaponPreparation.acceptedChoices
+                + " weapon choice(s) for "
+                + weaponPreparation.weaponRules.size()
+                + " exact NPC type(s), and "
+                + armorPreparation.acceptedChoices
+                + " armor choice(s) across "
+                + armorPreparation.slotRuleCount
+                + " slot rule(s) for "
+                + armorPreparation.armorRules.size()
+                + " exact NPC type(s); rejected "
+                + (weaponPreparation.rejectedChoices + armorPreparation.rejectedChoices)
+                + " invalid or duplicate choice(s). Existing NPCs were not changed.";
         }
     }
 

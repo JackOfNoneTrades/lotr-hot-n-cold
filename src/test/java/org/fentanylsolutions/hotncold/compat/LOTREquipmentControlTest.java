@@ -171,6 +171,25 @@ public class LOTREquipmentControlTest {
         }
     }
 
+    @Test
+    public void summarizesReloadedWeaponAndArmorRules() {
+        LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;3", "LOTR.GondorSoldier;missing;1" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;2",
+                "LOTR.GondorArcher;chest;minecraft:iron_chestplate;1" },
+            entityResolver(),
+            itemResolver());
+
+        assertEquals(
+            "Reloaded LOTR NPC equipment rules: prepared 1 weapon choice(s) for 1 exact NPC type(s), and 2 armor "
+                + "choice(s) across 2 slot rule(s) for 2 exact NPC type(s); rejected 1 invalid or duplicate "
+                + "choice(s). Existing NPCs were not changed.",
+            new LOTREquipmentControl.EquipmentRuleReloadResult(weapons, armor).describeReload());
+    }
+
     private static LOTREquipmentControl.EntityResolver entityResolver() {
         final Map<String, Class> entities = new HashMap<>();
         entities.put("LOTR.GondorSoldier", LOTREntityGondorSoldier.class);

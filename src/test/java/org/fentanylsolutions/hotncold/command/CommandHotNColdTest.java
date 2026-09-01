@@ -51,12 +51,28 @@ public class CommandHotNColdTest {
         new CommandHotNCold().processCommand(UNPRIVILEGED_SENDER, new String[] { "spawns", "reload" });
     }
 
+    @Test(expected = CommandException.class)
+    public void rejectsEquipmentReloadWithoutOperatorPermission() {
+        new CommandHotNCold().processCommand(UNPRIVILEGED_SENDER, new String[] { "equipment", "reload" });
+    }
+
     @Test
     public void offersReloadTabCompletion() {
         List<String> completions = new CommandHotNCold()
             .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "spawns", "re" });
 
         assertTrue(completions.contains("reload"));
+    }
+
+    @Test
+    public void offersEquipmentReloadTabCompletion() {
+        List<String> sectionCompletions = new CommandHotNCold()
+            .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "equ" });
+        List<String> actionCompletions = new CommandHotNCold()
+            .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "equipment", "re" });
+
+        assertTrue(sectionCompletions.contains("equipment"));
+        assertTrue(actionCompletions.contains("reload"));
     }
 
     @Test

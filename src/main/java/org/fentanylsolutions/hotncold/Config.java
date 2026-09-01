@@ -118,6 +118,19 @@ public class Config {
         return true;
     }
 
+    public static boolean reloadNPCEquipmentConfiguration() {
+        if (loadedConfigFile == null) {
+            return false;
+        }
+
+        Configuration configuration = new Configuration(loadedConfigFile);
+        readNPCEquipmentConfiguration(configuration);
+        if (configuration.hasChanged()) {
+            configuration.save();
+        }
+        return true;
+    }
+
     private static void readSpawnConfiguration(Configuration configuration) {
         logBlockedSpawnAttempts = configuration.getBoolean(
             "logBlockedSpawnAttempts",

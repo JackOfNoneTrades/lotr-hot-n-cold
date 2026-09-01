@@ -237,6 +237,10 @@ public final class WarOfTheRingServerFixture {
             && server.getCommandManager()
                 .executeCommand(server, "hotncold spawns reload") == 1;
         boolean equipmentRulePassed = verifyAutomaticEquipmentRule();
+        boolean equipmentReloadCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold equipment reload") == 1
+            && server.getCommandManager()
+                .executeCommand(server, "hotncold equipment reload") == 1;
 
         if (!ruleReapplicationPassed || !fixtureRemoved
             || !blockedRemoved
@@ -254,6 +258,7 @@ public final class WarOfTheRingServerFixture {
             || !exampleReportPassed
             || !reloadCommandPassed
             || !equipmentRulePassed
+            || !equipmentReloadCommandPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
                 "Spawn cleanup integration check failed: ruleReapplicationPassed=" + ruleReapplicationPassed
@@ -289,6 +294,8 @@ public final class WarOfTheRingServerFixture {
                     + reloadCommandPassed
                     + ", equipmentRulePassed="
                     + equipmentRulePassed
+                    + ", equipmentReloadCommandPassed="
+                    + equipmentReloadCommandPassed
                     + ", remainingWarOfTheRingEntries="
                     + remainingWarOfTheRingEntries);
         }

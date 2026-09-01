@@ -8,6 +8,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.util.ChatComponentText;
 
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 
@@ -23,7 +24,8 @@ public final class CommandHotNCold extends CommandBase {
         return "/hotncold spawns dump <LOTR biome name or ID> [category]"
             + " OR /hotncold spawns explain <LOTR biome name or ID> <entity name>"
             + " OR /hotncold spawns example <LOTR biome name or ID> <entity name> [category]"
-            + " OR /hotncold spawns reload";
+            + " OR /hotncold spawns reload"
+            + " OR /hotncold equipment reload";
     }
 
     @Override
@@ -33,7 +35,15 @@ public final class CommandHotNCold extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length < 2 || args.length > 5 || !"spawns".equalsIgnoreCase(args[0])) {
+        if (args.length < 2 || args.length > 5) {
+            throw new WrongUsageException(getCommandUsage(sender));
+        }
+
+        if ("equipment".equalsIgnoreCase(args[0])) {
+            reloadEquipmentRules(sender, args);
+            return;
+        }
+        if (!"spawns".equalsIgnoreCase(args[0])) {
             throw new WrongUsageException(getCommandUsage(sender));
         }
 
@@ -63,7 +73,10 @@ public final class CommandHotNCold extends CommandBase {
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "spawns");
+            return getListOfStringsMatchingLastWord(args, "equipment", "spawns");
+        }
+        if (args.length == 2 && "equipment".equalsIgnoreCase(args[0])) {
+            return getListOfStringsMatchingLastWord(args, "reload");
         }
         if (args.length == 2 && "spawns".equalsIgnoreCase(args[0])) {
             return getListOfStringsMatchingLastWord(args, "dump", "example", "explain", "reload");
@@ -97,6 +110,21 @@ public final class CommandHotNCold extends CommandBase {
         }
 
         LOTRSpawnControl.SpawnRuleResult result = LOTRSpawnControl.reloadConfiguredSpawnRules();
+        if (result == null) {
+            throw new CommandException("Hot N Cold's configuration file is not available.");
+        }
+        sender.addChatMessage(new ChatComponentText(result.describeReload()));
+    }
+
+    private void reloadEquipmentRules(ICommandSender sender, String[] args) {
+        if (args.length != 2 || !"reload".equalsIgnoreCase(args[1])) {
+            throw new WrongUsageException(getCommandUsage(sender));
+        }
+        if (!sender.canCommandSenderUseCommand(2, getCommandName())) {
+            throw new CommandException("commands.generic.permission");
+        }
+
+        LOTREquipmentControl.EquipmentRuleReloadResult result = LOTREquipmentControl.reloadConfiguredRules();
         if (result == null) {
             throw new CommandException("Hot N Cold's configuration file is not available.");
         }
