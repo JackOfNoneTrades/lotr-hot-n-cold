@@ -292,6 +292,14 @@ registered LOTR NPCs, faction targets, and `all`.
 
 `./gradlew build`.
 
+To start a dedicated development server with LOTR but without the optional WOTR, Mo' Creatures, IVToolkit, or
+EnviroMine integrations, use:
+```
+./gradlew runServer -PlotrOnlyRuntime -PrunServerWorkingDirectory=run/lotr-only-server
+```
+
+This separate working directory keeps the LOTR-only smoke test isolated from the full WOTR server fixture.
+
 For a development client, use `./gradlew runClient` or `./gradlew runClient25`. These tasks include development-only
 compatibility for the War of the Ring 1.3.1 mod bundle; the compatibility fixture is not included in published jars.
 
