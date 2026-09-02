@@ -45,6 +45,7 @@ import hotncold.fixture.entities.BlockedTestAnimal;
 import hotncold.fixture.entities.ExplodingSpawnCheckAnimal;
 import lotr.common.LOTRDimension;
 import lotr.common.LOTRMod;
+import lotr.common.LOTRShields;
 import lotr.common.entity.npc.LOTREntityGondorArcher;
 import lotr.common.entity.npc.LOTREntityGondorSoldier;
 import lotr.common.entity.npc.LOTREntityRohanMan;
@@ -191,6 +192,10 @@ public final class WarOfTheRingServerFixture {
         Config.lotrNPCRangedWeaponRules[configuredRangedWeaponRules.length] = "faction:GONDOR;" + urukCrossbowName
             + ";1";
 
+        String[] configuredShieldRules = Config.lotrNPCShieldRules;
+        Config.lotrNPCShieldRules = Arrays.copyOf(configuredShieldRules, configuredShieldRules.length + 1);
+        Config.lotrNPCShieldRules[configuredShieldRules.length] = gondorSoldierName + ";ALIGNMENT_ROHAN;1";
+
         String[] armorSlots = { "boots", "leggings", "chest", "helmet" };
         Item[] rohanArmor = { LOTRMod.bootsRohan, LOTRMod.legsRohan, LOTRMod.bodyRohan, LOTRMod.helmetRohan };
         String[] configuredArmorRules = Config.lotrNPCArmorRules;
@@ -285,6 +290,7 @@ public final class WarOfTheRingServerFixture {
             rohanManName,
             DimensionManager.getWorld(LOTRDimension.MIDDLE_EARTH.dimensionID));
         boolean equipmentExplainReportPassed = containsLine(equipmentReport, "swordRohan")
+            && containsLine(equipmentReport, "ALIGNMENT_ROHAN")
             && containsLine(equipmentReport, "Helmet choices")
             && containsLine(equipmentReport, "Hired NPCs: protected")
             && containsLine(equipmentReport, "Existing NPCs are not changed")
@@ -512,8 +518,10 @@ public final class WarOfTheRingServerFixture {
                     .getItem() == LOTRMod.bodyRohan
                 && spawnedSoldier.getEquipmentInSlot(4)
                     .getItem() == LOTRMod.helmetRohan
+                && spawnedSoldier.npcShield == LOTRShields.ALIGNMENT_ROHAN
                 && verifyEmptyArmorChoice(world)
                 && verifyRangedWeaponRule(world)
+                && verifyShieldFillEmptyMode(world)
                 && verifyAllEquipmentFallback(world)
                 && verifyFillEmptyMode(world)
                 && verifyProtectedEquipmentNPCs(world);
@@ -559,6 +567,20 @@ public final class WarOfTheRingServerFixture {
             return replaced && !LOTREquipmentControl.applyConfiguredRangedWeapon(preservedArcher)
                 && preservedArcher.npcItemsInv.getRangedWeapon()
                     .getItem() == LOTRMod.gondorBow;
+        } finally {
+            Config.replaceExistingLOTREquipment = configuredReplace;
+        }
+    }
+
+    private static boolean verifyShieldFillEmptyMode(WorldServer world) {
+        LOTREntityGondorSoldier soldier = new LOTREntityGondorSoldier(world);
+        soldier.onSpawnWithEgg(null);
+        LOTRShields originalShield = soldier.npcShield;
+        boolean configuredReplace = Config.replaceExistingLOTREquipment;
+        try {
+            Config.replaceExistingLOTREquipment = false;
+            return originalShield != null && !LOTREquipmentControl.applyConfiguredShield(soldier)
+                && soldier.npcShield == originalShield;
         } finally {
             Config.replaceExistingLOTREquipment = configuredReplace;
         }

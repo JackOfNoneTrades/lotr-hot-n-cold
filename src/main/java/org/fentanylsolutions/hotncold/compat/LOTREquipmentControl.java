@@ -20,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import org.fentanylsolutions.hotncold.Config;
 import org.fentanylsolutions.hotncold.HotNCold;
 
+import lotr.common.LOTRShields;
 import lotr.common.entity.npc.LOTREntityNPC;
 import lotr.common.fac.LOTRFaction;
 
@@ -32,6 +33,9 @@ public final class LOTREquipmentControl {
         .emptyMap();
     private static Map<LOTRFaction, WeightedItemRule> cachedFactionRangedWeaponRules = Collections.emptyMap();
     private static WeightedItemRule cachedAllRangedWeaponRule;
+    private static Map<Class<? extends LOTREntityNPC>, WeightedShieldRule> cachedShieldRules = Collections.emptyMap();
+    private static Map<LOTRFaction, WeightedShieldRule> cachedFactionShieldRules = Collections.emptyMap();
+    private static WeightedShieldRule cachedAllShieldRule;
     private static Map<Class<? extends LOTREntityNPC>, ArmorRuleSet> cachedArmorRules = Collections.emptyMap();
     private static Map<LOTRFaction, ArmorRuleSet> cachedFactionArmorRules = Collections.emptyMap();
     private static ArmorRuleSet cachedAllArmorRules;
@@ -104,6 +108,27 @@ public final class LOTREquipmentControl {
         return preparation;
     }
 
+    public static ShieldRulePreparation prepareConfiguredShieldRules() {
+        ShieldRulePreparation preparation = resolveShieldRules(Config.lotrNPCShieldRules, new EntityResolver() {
+
+            @Override
+            public Class resolve(String entityName) {
+                Object value = EntityList.stringToClassMapping.get(entityName);
+                return value instanceof Class ? (Class) value : null;
+            }
+        }, new ShieldResolver() {
+
+            @Override
+            public LOTRShields resolve(String shieldName) {
+                return LOTRShields.shieldForName(shieldName);
+            }
+        });
+        cachedShieldRules = preparation.shieldRules;
+        cachedFactionShieldRules = preparation.factionShieldRules;
+        cachedAllShieldRule = preparation.allShieldRule;
+        return preparation;
+    }
+
     public static EquipmentRuleReloadResult reloadConfiguredRules() {
         if (!Config.reloadNPCEquipmentConfiguration()) {
             return null;
@@ -111,6 +136,7 @@ public final class LOTREquipmentControl {
         return new EquipmentRuleReloadResult(
             prepareConfiguredWeaponRules(),
             prepareConfiguredRangedWeaponRules(),
+            prepareConfiguredShieldRules(),
             prepareConfiguredArmorRules());
     }
 
@@ -148,6 +174,18 @@ public final class LOTREquipmentControl {
 
     static WeightedItemRule getPreparedAllRangedWeaponRule() {
         return cachedAllRangedWeaponRule;
+    }
+
+    static Map<Class<? extends LOTREntityNPC>, WeightedShieldRule> getPreparedShieldRules() {
+        return cachedShieldRules;
+    }
+
+    static Map<LOTRFaction, WeightedShieldRule> getPreparedFactionShieldRules() {
+        return cachedFactionShieldRules;
+    }
+
+    static WeightedShieldRule getPreparedAllShieldRule() {
+        return cachedAllShieldRule;
     }
 
     static RulePreparation resolveWeaponRules(String[] configuredRules, EntityResolver entityResolver,
@@ -272,6 +310,107 @@ public final class LOTREquipmentControl {
             acceptedChoices,
             rejectedChoices,
             equipmentType);
+    }
+
+    static ShieldRulePreparation resolveShieldRules(String[] configuredRules, EntityResolver entityResolver,
+        ShieldResolver shieldResolver) {
+        Map<EquipmentTarget, MutableShieldRule> rules = new LinkedHashMap<>();
+        int acceptedChoices = 0;
+        int rejectedChoices = 0;
+
+        for (String configuredRule : configuredRules) {
+            String rule = configuredRule == null ? "" : configuredRule.trim();
+            if (rule.isEmpty()) {
+                continue;
+            }
+
+            String[] fields = rule.split(";", -1);
+            if (fields.length != 3) {
+                HotNCold.LOG.warn("Invalid LOTR NPC shield rule '{}'; expected target;shieldName;weight", rule);
+                rejectedChoices++;
+                continue;
+            }
+            for (int fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+                fields[fieldIndex] = fields[fieldIndex].trim();
+            }
+            if (fields[0].isEmpty() || fields[1].isEmpty() || fields[2].isEmpty()) {
+                HotNCold.LOG
+                    .warn("Invalid LOTR NPC shield rule '{}'; target, shield name, and weight are required", rule);
+                rejectedChoices++;
+                continue;
+            }
+
+            EquipmentTarget target = resolveTarget(fields[0], rule, "shield", entityResolver);
+            if (target == null) {
+                rejectedChoices++;
+                continue;
+            }
+            boolean emptyChoice = isEmptyChoice(fields[1]);
+            LOTRShields shield = emptyChoice ? null : shieldResolver.resolve(fields[1]);
+            if (!emptyChoice && shield == null) {
+                HotNCold.LOG.warn(
+                    "LOTR shield '{}' in NPC shield rule '{}' was not found; names are exact and case-sensitive",
+                    fields[1],
+                    rule);
+                rejectedChoices++;
+                continue;
+            }
+            Integer weight = parsePositiveWeight(fields[2], rule);
+            if (weight == null) {
+                rejectedChoices++;
+                continue;
+            }
+
+            MutableShieldRule mutableRule = rules.get(target);
+            if (mutableRule == null) {
+                mutableRule = new MutableShieldRule(fields[0]);
+                rules.put(target, mutableRule);
+            }
+            String choiceKey = emptyChoice ? "empty" : fields[1];
+            if (!mutableRule.shieldNames.add(choiceKey)) {
+                HotNCold.LOG.warn(
+                    "Duplicate shield '{}' for LOTR NPC '{}' in rule '{}'; ignoring duplicate",
+                    fields[1],
+                    fields[0],
+                    rule);
+                rejectedChoices++;
+                continue;
+            }
+            if ((long) mutableRule.totalWeight + weight > Integer.MAX_VALUE) {
+                HotNCold.LOG.warn(
+                    "LOTR NPC shield choices for '{}' exceed the maximum combined weight; rejecting rule '{}'",
+                    fields[0],
+                    rule);
+                rejectedChoices++;
+                continue;
+            }
+
+            mutableRule.choices.add(new WeightedShield(fields[1], shield, weight));
+            mutableRule.totalWeight += weight;
+            acceptedChoices++;
+        }
+
+        Map<Class<? extends LOTREntityNPC>, WeightedShieldRule> resolved = new LinkedHashMap<>();
+        Map<LOTRFaction, WeightedShieldRule> resolvedFactions = new LinkedHashMap<>();
+        WeightedShieldRule resolvedAll = null;
+        for (Map.Entry<EquipmentTarget, MutableShieldRule> entry : rules.entrySet()) {
+            MutableShieldRule value = entry.getValue();
+            if (value.choices.isEmpty()) {
+                continue;
+            }
+            WeightedShieldRule resolvedRule = new WeightedShieldRule(
+                value.targetName,
+                value.choices,
+                value.totalWeight);
+            if (entry.getKey().npcClass != null) {
+                resolved.put(entry.getKey().npcClass, resolvedRule);
+            } else if (entry.getKey().faction != null) {
+                resolvedFactions.put(entry.getKey().faction, resolvedRule);
+            } else {
+                resolvedAll = resolvedRule;
+            }
+        }
+        return new ShieldRulePreparation(resolved, resolvedFactions, resolvedAll, acceptedChoices, rejectedChoices);
     }
 
     static ArmorRulePreparation resolveArmorRules(String[] configuredRules, EntityResolver entityResolver,
@@ -517,6 +656,27 @@ public final class LOTREquipmentControl {
         return appliedSlots;
     }
 
+    public static boolean applyConfiguredShield(LOTREntityNPC npc) {
+        if (npc == null || npc.worldObj == null || npc.worldObj.isRemote || !shouldApplyConfiguredEquipment(npc)) {
+            return false;
+        }
+
+        @SuppressWarnings("unchecked")
+        WeightedShieldRule rule = cachedShieldRules.get((Class<? extends LOTREntityNPC>) npc.getClass());
+        if (rule == null) {
+            rule = cachedFactionShieldRules.get(npc.getFaction());
+        }
+        if (rule == null) {
+            rule = cachedAllShieldRule;
+        }
+        if (rule == null || !Config.replaceExistingLOTREquipment && npc.npcShield != null) {
+            return false;
+        }
+
+        npc.npcShield = rule.choose(npc.getRNG()).shield;
+        return true;
+    }
+
     public static IEntityLivingData finishNaturalSpawn(EntityLiving entity, IEntityLivingData livingData) {
         IEntityLivingData result = entity.onSpawnWithEgg(livingData);
         if (entity instanceof LOTREntityNPC) {
@@ -524,6 +684,7 @@ public final class LOTREquipmentControl {
             applyConfiguredWeapon(npc);
             applyConfiguredRangedWeapon(npc);
             applyConfiguredArmor(npc);
+            applyConfiguredShield(npc);
         }
         return result;
     }
@@ -619,6 +780,11 @@ public final class LOTREquipmentControl {
         Item resolve(String itemName);
     }
 
+    interface ShieldResolver {
+
+        LOTRShields resolve(String shieldName);
+    }
+
     public static final class RulePreparation {
 
         final Map<Class<? extends LOTREntityNPC>, WeightedItemRule> weaponRules;
@@ -692,16 +858,49 @@ public final class LOTREquipmentControl {
         }
     }
 
+    public static final class ShieldRulePreparation {
+
+        final Map<Class<? extends LOTREntityNPC>, WeightedShieldRule> shieldRules;
+        final Map<LOTRFaction, WeightedShieldRule> factionShieldRules;
+        final WeightedShieldRule allShieldRule;
+        private final int acceptedChoices;
+        private final int rejectedChoices;
+
+        private ShieldRulePreparation(Map<Class<? extends LOTREntityNPC>, WeightedShieldRule> shieldRules,
+            Map<LOTRFaction, WeightedShieldRule> factionShieldRules, WeightedShieldRule allShieldRule,
+            int acceptedChoices, int rejectedChoices) {
+            this.shieldRules = Collections.unmodifiableMap(new LinkedHashMap<>(shieldRules));
+            this.factionShieldRules = Collections.unmodifiableMap(new LinkedHashMap<>(factionShieldRules));
+            this.allShieldRule = allShieldRule;
+            this.acceptedChoices = acceptedChoices;
+            this.rejectedChoices = rejectedChoices;
+        }
+
+        public String describeStartup() {
+            return "LOTR NPC shield summary: prepared " + acceptedChoices
+                + " choice(s) for "
+                + shieldRules.size()
+                + " exact NPC type(s)"
+                + describeFactionCount(factionShieldRules.size())
+                + describeAllTarget(allShieldRule != null)
+                + "; rejected "
+                + rejectedChoices
+                + " invalid or duplicate choice(s).";
+        }
+    }
+
     public static final class EquipmentRuleReloadResult {
 
         private final RulePreparation weaponPreparation;
         private final RulePreparation rangedWeaponPreparation;
+        private final ShieldRulePreparation shieldPreparation;
         private final ArmorRulePreparation armorPreparation;
 
         EquipmentRuleReloadResult(RulePreparation weaponPreparation, RulePreparation rangedWeaponPreparation,
-            ArmorRulePreparation armorPreparation) {
+            ShieldRulePreparation shieldPreparation, ArmorRulePreparation armorPreparation) {
             this.weaponPreparation = weaponPreparation;
             this.rangedWeaponPreparation = rangedWeaponPreparation;
+            this.shieldPreparation = shieldPreparation;
             this.armorPreparation = armorPreparation;
         }
 
@@ -713,6 +912,13 @@ public final class LOTREquipmentControl {
                 + describeFactionCount(weaponPreparation.factionWeaponRules.size())
                 + describeAllTarget(weaponPreparation.allWeaponRule != null)
                 + describeRangedReload(rangedWeaponPreparation)
+                + ", "
+                + shieldPreparation.acceptedChoices
+                + " shield choice(s) for "
+                + shieldPreparation.shieldRules.size()
+                + " exact NPC type(s)"
+                + describeFactionCount(shieldPreparation.factionShieldRules.size())
+                + describeAllTarget(shieldPreparation.allShieldRule != null)
                 + ", and "
                 + armorPreparation.acceptedChoices
                 + " armor choice(s) across "
@@ -724,6 +930,7 @@ public final class LOTREquipmentControl {
                 + describeAllTarget(armorPreparation.allArmorRules != null)
                 + "; rejected "
                 + (weaponPreparation.rejectedChoices + rejectedChoices(rangedWeaponPreparation)
+                    + shieldPreparation.rejectedChoices
                     + armorPreparation.rejectedChoices)
                 + " invalid or duplicate choice(s). Existing NPCs were not changed.";
         }
@@ -837,6 +1044,43 @@ public final class LOTREquipmentControl {
         }
     }
 
+    static final class WeightedShieldRule {
+
+        final String targetName;
+        final List<WeightedShield> choices;
+        final int totalWeight;
+
+        private WeightedShieldRule(String targetName, List<WeightedShield> choices, int totalWeight) {
+            this.targetName = targetName;
+            this.choices = Collections.unmodifiableList(new ArrayList<>(choices));
+            this.totalWeight = totalWeight;
+        }
+
+        WeightedShield choose(Random random) {
+            int selection = random.nextInt(totalWeight);
+            for (WeightedShield choice : choices) {
+                selection -= choice.weight;
+                if (selection < 0) {
+                    return choice;
+                }
+            }
+            throw new IllegalStateException("Weighted LOTR NPC shield selection fell outside its configured range");
+        }
+    }
+
+    static final class WeightedShield {
+
+        final String shieldName;
+        final LOTRShields shield;
+        final int weight;
+
+        private WeightedShield(String shieldName, LOTRShields shield, int weight) {
+            this.shieldName = shieldName;
+            this.shield = shield;
+            this.weight = weight;
+        }
+    }
+
     private static final class MutableItemRule {
 
         private final String entityName;
@@ -846,6 +1090,18 @@ public final class LOTREquipmentControl {
 
         private MutableItemRule(String entityName) {
             this.entityName = entityName;
+        }
+    }
+
+    private static final class MutableShieldRule {
+
+        private final String targetName;
+        private final List<WeightedShield> choices = new ArrayList<>();
+        private final Set<String> shieldNames = new LinkedHashSet<>();
+        private int totalWeight;
+
+        private MutableShieldRule(String targetName) {
+            this.targetName = targetName;
         }
     }
 

@@ -18,6 +18,7 @@ import net.minecraft.item.ItemArmor;
 import org.fentanylsolutions.hotncold.Config;
 import org.junit.Test;
 
+import lotr.common.LOTRShields;
 import lotr.common.entity.npc.LOTREntityGondorArcher;
 import lotr.common.entity.npc.LOTREntityGondorSoldier;
 import lotr.common.fac.LOTRFaction;
@@ -226,6 +227,27 @@ public class LOTREquipmentControlTest {
     }
 
     @Test
+    public void groupsAndValidatesWeightedShieldRules() {
+        LOTREquipmentControl.ShieldRulePreparation preparation = LOTREquipmentControl.resolveShieldRules(
+            new String[] { "LOTR.GondorSoldier;ALIGNMENT_GONDOR;3", "faction:GONDOR;empty;1", "all;ALIGNMENT_ROHAN;2",
+                "ALL;ALIGNMENT_ROHAN;4", "LOTR.GondorArcher;missing;1" },
+            entityResolver(),
+            shieldResolver());
+
+        assertEquals(1, preparation.shieldRules.size());
+        assertEquals(1, preparation.factionShieldRules.size());
+        assertSame(
+            LOTRShields.ALIGNMENT_GONDOR,
+            preparation.shieldRules.get(LOTREntityGondorSoldier.class).choices.get(0).shield);
+        assertNull(preparation.factionShieldRules.get(LOTRFaction.GONDOR).choices.get(0).shield);
+        assertSame(LOTRShields.ALIGNMENT_ROHAN, preparation.allShieldRule.choose(new FixedRandom(0)).shield);
+        assertEquals(
+            "LOTR NPC shield summary: prepared 3 choice(s) for 1 exact NPC type(s) and 1 faction(s) and an all-NPC "
+                + "fallback; rejected 2 invalid or duplicate choice(s).",
+            preparation.describeStartup());
+    }
+
+    @Test
     public void protectsHiredAndCustomNamedNPCsUnlessEnabled() {
         boolean configuredHired = Config.customizeHiredLOTREquipment;
         boolean configuredNamed = Config.customizeNamedLOTREquipment;
@@ -264,13 +286,16 @@ public class LOTREquipmentControlTest {
                 "LOTR.GondorArcher;chest;minecraft:iron_chestplate;1" },
             entityResolver(),
             itemResolver());
+        LOTREquipmentControl.ShieldRulePreparation shields = LOTREquipmentControl
+            .resolveShieldRules(new String[] { "all;ALIGNMENT_GONDOR;1" }, entityResolver(), shieldResolver());
 
         assertEquals(
             "Reloaded LOTR NPC equipment rules: prepared 1 weapon choice(s) for 1 exact NPC type(s), 1 ranged "
-                + "weapon choice(s) for 0 exact NPC type(s) and 1 faction(s), and 2 armor choice(s) across 2 slot "
-                + "rule(s) for 2 exact NPC type(s); rejected 1 invalid or duplicate choice(s). Existing NPCs were "
-                + "not changed.",
-            new LOTREquipmentControl.EquipmentRuleReloadResult(weapons, rangedWeapons, armor).describeReload());
+                + "weapon choice(s) for 0 exact NPC type(s) and 1 faction(s), 1 shield choice(s) for 0 exact NPC "
+                + "type(s) and an all-NPC fallback, and 2 armor choice(s) across 2 slot rule(s) for 2 exact NPC "
+                + "type(s); rejected 1 invalid or duplicate choice(s). Existing NPCs were not changed.",
+            new LOTREquipmentControl.EquipmentRuleReloadResult(weapons, rangedWeapons, shields, armor)
+                .describeReload());
     }
 
     @Test
@@ -477,6 +502,22 @@ public class LOTREquipmentControlTest {
             @Override
             public Item resolve(String itemName) {
                 return items.get(itemName);
+            }
+        };
+    }
+
+    private static LOTREquipmentControl.ShieldResolver shieldResolver() {
+        return new LOTREquipmentControl.ShieldResolver() {
+
+            @Override
+            public LOTRShields resolve(String shieldName) {
+                if ("ALIGNMENT_GONDOR".equals(shieldName)) {
+                    return LOTRShields.ALIGNMENT_GONDOR;
+                }
+                if ("ALIGNMENT_ROHAN".equals(shieldName)) {
+                    return LOTRShields.ALIGNMENT_ROHAN;
+                }
+                return null;
             }
         };
     }

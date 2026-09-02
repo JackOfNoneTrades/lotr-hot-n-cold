@@ -55,6 +55,9 @@ public class CommonProxy {
             LOTREquipmentControl.prepareConfiguredRangedWeaponRules()
                 .describeStartup());
         HotNCold.LOG.info(
+            LOTREquipmentControl.prepareConfiguredShieldRules()
+                .describeStartup());
+        HotNCold.LOG.info(
             LOTREquipmentControl.prepareConfiguredArmorRules()
                 .describeStartup());
         event.registerServerCommand(new CommandHotNCold());

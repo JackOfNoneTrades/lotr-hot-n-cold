@@ -28,6 +28,7 @@ public class Config {
     public static String[] addedEntityBiomeRules = {};
     public static String[] lotrNPCWeaponRules = {};
     public static String[] lotrNPCRangedWeaponRules = {};
+    public static String[] lotrNPCShieldRules = {};
     public static String[] lotrNPCArmorRules = {};
 
     public static String[] frostBiomes = {};
@@ -230,6 +231,18 @@ public class Config {
                     + "a weighted chance to have no ranged weapon. Priority is exact NPC, then faction, then all. "
                     + "Entity and item names are exact and case-sensitive. Example: "
                     + "LOTR.GondorArcher;lotr:item.gondorBow;10")
+            .getStringList();
+
+        lotrNPCShieldRules = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "lotrNPCShieldRules",
+                lotrNPCShieldRules,
+                "Weighted LOTR shield choices in the format target;shieldName;weight. A target can be an exact "
+                    + "LOTR NPC name, faction:FACTION_CODE such as faction:GONDOR, or all. Shield names are LOTR "
+                    + "shield codes such as ALIGNMENT_GONDOR. Use empty for a weighted no-shield chance. Priority "
+                    + "is exact NPC, then faction, then all. Example: "
+                    + "LOTR.GondorSoldier;ALIGNMENT_GONDOR;10")
             .getStringList();
 
         lotrNPCArmorRules = configuration

@@ -23,20 +23,23 @@ public final class LOTREquipmentReport {
 
     public static List<String> createEquipmentExplanation(String entityName) {
         if (isAllTarget(entityName)) {
-            return createAllExplanation(
+            List<String> lines = createAllExplanation(
                 LOTREquipmentControl.getPreparedAllWeaponRule(),
                 LOTREquipmentControl.getPreparedAllRangedWeaponRule(),
                 LOTREquipmentControl.getPreparedAllArmorRules(),
                 Config.replaceExistingLOTREquipment,
                 Config.customizeHiredLOTREquipment,
                 Config.customizeNamedLOTREquipment);
+            appendShieldExplanation(lines, null, null, true);
+            return lines;
         }
         if (isFactionTarget(entityName)) {
             String factionName = entityName.substring("faction:".length())
                 .trim();
-            return createFactionExplanation(
+            LOTRFaction faction = LOTREquipmentControl.resolveFaction(factionName);
+            List<String> lines = createFactionExplanation(
                 factionName,
-                LOTREquipmentControl.resolveFaction(factionName),
+                faction,
                 LOTREquipmentControl.getPreparedFactionWeaponRules(),
                 LOTREquipmentControl.getPreparedFactionArmorRules(),
                 LOTREquipmentControl.getPreparedAllWeaponRule(),
@@ -46,10 +49,13 @@ public final class LOTREquipmentReport {
                 Config.replaceExistingLOTREquipment,
                 Config.customizeHiredLOTREquipment,
                 Config.customizeNamedLOTREquipment);
+            appendShieldExplanation(lines, null, faction, false);
+            return lines;
         }
-        return createEquipmentExplanation(
+        Object mappedEntityClass = EntityList.stringToClassMapping.get(entityName);
+        List<String> lines = createEquipmentExplanation(
             entityName,
-            EntityList.stringToClassMapping.get(entityName),
+            mappedEntityClass,
             LOTREquipmentControl.getPreparedWeaponRules(),
             LOTREquipmentControl.getPreparedArmorRules(),
             null,
@@ -63,6 +69,8 @@ public final class LOTREquipmentReport {
             Config.replaceExistingLOTREquipment,
             Config.customizeHiredLOTREquipment,
             Config.customizeNamedLOTREquipment);
+        appendShieldExplanation(lines, asNPCClass(mappedEntityClass), null, false);
+        return lines;
     }
 
     public static List<String> createEquipmentExplanation(String entityName, World world) {
@@ -78,7 +86,7 @@ public final class LOTREquipmentReport {
                 faction = ((LOTREntityNPC) entity).getFaction();
             }
         }
-        return createEquipmentExplanation(
+        List<String> lines = createEquipmentExplanation(
             entityName,
             mappedEntityClass,
             LOTREquipmentControl.getPreparedWeaponRules(),
@@ -94,6 +102,8 @@ public final class LOTREquipmentReport {
             Config.replaceExistingLOTREquipment,
             Config.customizeHiredLOTREquipment,
             Config.customizeNamedLOTREquipment);
+        appendShieldExplanation(lines, asNPCClass(mappedEntityClass), faction, false);
+        return lines;
     }
 
     static List<String> createEquipmentExplanation(String entityName, Object mappedEntityClass,
@@ -471,6 +481,72 @@ public final class LOTREquipmentReport {
                     + String.format(Locale.ROOT, "%.1f", percentage)
                     + "%)");
         }
+    }
+
+    private static void appendShieldExplanation(List<String> lines, Class<? extends LOTREntityNPC> npcClass,
+        LOTRFaction faction, boolean allTarget) {
+        Map<Class<? extends LOTREntityNPC>, LOTREquipmentControl.WeightedShieldRule> exactRules = LOTREquipmentControl
+            .getPreparedShieldRules();
+        Map<LOTRFaction, LOTREquipmentControl.WeightedShieldRule> factionRules = LOTREquipmentControl
+            .getPreparedFactionShieldRules();
+        LOTREquipmentControl.WeightedShieldRule allRule = LOTREquipmentControl.getPreparedAllShieldRule();
+        if (exactRules.isEmpty() && factionRules.isEmpty() && allRule == null) {
+            return;
+        }
+
+        LOTREquipmentControl.WeightedShieldRule rule = allTarget || npcClass == null ? null : exactRules.get(npcClass);
+        String source = null;
+        if (!allTarget && rule == null && faction != null) {
+            rule = factionRules.get(faction);
+            if (rule != null && npcClass != null) {
+                source = "faction:" + faction.codeName();
+            }
+        }
+        if (rule == null) {
+            rule = allRule;
+            if (rule != null && !allTarget) {
+                source = "all";
+            }
+        }
+
+        List<String> shieldLines = new ArrayList<>();
+        if (rule == null) {
+            shieldLines.add("  Shield: no configured rule.");
+        } else {
+            appendShieldChoices(shieldLines, "Shield" + sourceSuffix(source), rule);
+        }
+        int insertionIndex = lines.size();
+        for (int index = 0; index < lines.size(); index++) {
+            if (lines.get(index)
+                .startsWith("  Mode:")) {
+                insertionIndex = index;
+                break;
+            }
+        }
+        lines.addAll(insertionIndex, shieldLines);
+    }
+
+    private static void appendShieldChoices(List<String> lines, String label,
+        LOTREquipmentControl.WeightedShieldRule rule) {
+        lines.add("  " + label + " choices (total weight " + rule.totalWeight + "):");
+        for (LOTREquipmentControl.WeightedShield choice : rule.choices) {
+            double percentage = choice.weight * 100D / rule.totalWeight;
+            lines.add(
+                "    " + choice.shieldName
+                    + " - weight "
+                    + choice.weight
+                    + " ("
+                    + String.format(Locale.ROOT, "%.1f", percentage)
+                    + "%)");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends LOTREntityNPC> asNPCClass(Object mappedEntityClass) {
+        if (mappedEntityClass instanceof Class && LOTREntityNPC.class.isAssignableFrom((Class) mappedEntityClass)) {
+            return (Class<? extends LOTREntityNPC>) mappedEntityClass;
+        }
+        return null;
     }
 
     private static String capitalize(String value) {

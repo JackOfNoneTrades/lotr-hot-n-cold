@@ -200,10 +200,24 @@ S:lotrNPCRangedWeaponRules <
 These choices replace LOTR's separate ranged-weapon inventory slot. In fill-empty mode, an NPC that already has a
 bow or other ranged weapon keeps it.
 
+LOTR shields use their built-in shield codes rather than item registry names:
+```
+S:lotrNPCShieldRules <
+    LOTR.GondorSoldier;ALIGNMENT_GONDOR;10
+    LOTR.GondorSoldier;ALIGNMENT_ROHAN;2
+    LOTR.GondorSoldier;empty;1
+    faction:GONDOR;ALIGNMENT_GONDOR;10
+>
+```
+
+Shield codes are exact and case-sensitive. Common codes follow `ALIGNMENT_FACTION`, such as `ALIGNMENT_GONDOR` and
+`ALIGNMENT_ROHAN`; an invalid code is rejected with a warning.
+
 Weapon rules run after LOTR finishes creating a naturally spawned NPC's normal equipment, including LOTR biome
 world-generation spawns. A selected melee item replaces the NPC's melee, mounted-melee, idle, and held weapon state;
-a selected ranged item replaces its ranged-weapon inventory slot. Existing NPCs and NPCs introduced through commands,
-spawn eggs, or unrelated scripted spawning are not changed.
+a selected ranged item replaces its ranged-weapon inventory slot, and a selected shield replaces its displayed LOTR
+shield. Existing NPCs and NPCs introduced through commands, spawn eggs, or unrelated scripted spawning are not
+changed.
 
 Armor uses `target;slot;itemName;weight`, with independent choices for `boots`, `leggings`, `chest`, and
 `helmet`:
@@ -235,8 +249,8 @@ By default, configured choices replace the NPC's normal equipment:
 B:replaceExistingLOTREquipment=true
 ```
 
-Set this to `false` to preserve every occupied weapon or armor slot and apply configured choices only to slots LOTR
-left empty. This setting affects newly spawned NPCs only.
+Set this to `false` to preserve every occupied weapon, armor, ranged-weapon, or shield slot and apply configured
+choices only to slots LOTR left empty. This setting affects newly spawned NPCs only.
 
 Hired NPCs and NPCs carrying an explicit custom name tag are protected by default:
 ```
