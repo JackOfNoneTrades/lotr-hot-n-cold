@@ -52,6 +52,9 @@ public final class LOTREquipmentReport {
             appendShieldExplanation(lines, null, faction, false);
             return lines;
         }
+        if (isGroupTarget(entityName)) {
+            return createGroupExplanation(entityName.substring("group:".length()));
+        }
         Object mappedEntityClass = EntityList.stringToClassMapping.get(entityName);
         List<String> lines = createEquipmentExplanation(
             entityName,
@@ -74,7 +77,7 @@ public final class LOTREquipmentReport {
     }
 
     public static List<String> createEquipmentExplanation(String entityName, World world) {
-        if (isFactionTarget(entityName) || isAllTarget(entityName)) {
+        if (isFactionTarget(entityName) || isGroupTarget(entityName) || isAllTarget(entityName)) {
             return createEquipmentExplanation(entityName);
         }
 
@@ -201,6 +204,15 @@ public final class LOTREquipmentReport {
         Class<? extends LOTREntityNPC> npcClass = (Class<? extends LOTREntityNPC>) entityClass;
         LOTREquipmentControl.WeightedItemRule weaponRule = weaponRules.get(npcClass);
         String weaponSource = null;
+        if (weaponRule == null) {
+            String group = LOTREquipmentControl
+                .findGroupSource(npcClass, LOTREquipmentControl.getPreparedGroupWeaponRules());
+            if (group != null) {
+                weaponRule = LOTREquipmentControl.getPreparedGroupWeaponRules()
+                    .get(group);
+                weaponSource = "group:" + group;
+            }
+        }
         if (weaponRule == null && faction != null) {
             weaponRule = factionWeaponRules.get(faction);
             if (weaponRule != null) {
@@ -226,6 +238,15 @@ public final class LOTREquipmentReport {
 
         LOTREquipmentControl.WeightedItemRule rangedWeaponRule = rangedWeaponRules.get(npcClass);
         String rangedWeaponSource = null;
+        if (rangedWeaponRule == null) {
+            String group = LOTREquipmentControl
+                .findGroupSource(npcClass, LOTREquipmentControl.getPreparedGroupRangedWeaponRules());
+            if (group != null) {
+                rangedWeaponRule = LOTREquipmentControl.getPreparedGroupRangedWeaponRules()
+                    .get(group);
+                rangedWeaponSource = "group:" + group;
+            }
+        }
         if (rangedWeaponRule == null && faction != null) {
             rangedWeaponRule = factionRangedWeaponRules.get(faction);
             if (rangedWeaponRule != null) {
@@ -238,7 +259,10 @@ public final class LOTREquipmentReport {
                 rangedWeaponSource = "all";
             }
         }
-        boolean rangedRulesConfigured = !rangedWeaponRules.isEmpty() || !factionRangedWeaponRules.isEmpty()
+        boolean rangedRulesConfigured = !rangedWeaponRules.isEmpty()
+            || !LOTREquipmentControl.getPreparedGroupRangedWeaponRules()
+                .isEmpty()
+            || !factionRangedWeaponRules.isEmpty()
             || allRangedWeaponRule != null;
         if (rangedRulesConfigured) {
             if (rangedWeaponRule == null) {
@@ -256,6 +280,14 @@ public final class LOTREquipmentReport {
                 LOTREquipmentControl.WeightedItemRule slotRule = exactArmorRuleSet == null ? null
                     : exactArmorRuleSet.slotRules.get(slot);
                 String slotSource = null;
+                if (slotRule == null) {
+                    String group = LOTREquipmentControl.findGroupArmorSlotSource(npcClass, slot);
+                    if (group != null) {
+                        slotRule = LOTREquipmentControl.getPreparedGroupArmorRules()
+                            .get(group).slotRules.get(slot);
+                        slotSource = "group:" + group;
+                    }
+                }
                 if (slotRule == null && factionArmorRuleSet != null) {
                     slotRule = factionArmorRuleSet.slotRules.get(slot);
                     if (slotRule != null) {
@@ -298,6 +330,72 @@ public final class LOTREquipmentReport {
             replaceExisting,
             customizeHired,
             customizeNamed);
+    }
+
+    static List<String> createGroupExplanation(String configuredName) {
+        String groupName = LOTREquipmentControl.normalizeGroupName(configuredName);
+        Set<Class<? extends LOTREntityNPC>> members = LOTREquipmentControl.getPreparedNPCGroups()
+            .get(groupName);
+        if (members == null) {
+            return Collections.singletonList(
+                "LOTR NPC group '" + configuredName + "' was not found. Define it in lotrNPCGroupMembers.");
+        }
+
+        List<String> lines = new ArrayList<>();
+        lines.add("Equipment rules for group:" + groupName + " (" + members.size() + " NPC type(s)):");
+        LOTREquipmentControl.WeightedItemRule weaponRule = LOTREquipmentControl.getPreparedGroupWeaponRules()
+            .get(groupName);
+        if (weaponRule == null) {
+            weaponRule = LOTREquipmentControl.getPreparedAllWeaponRule();
+        }
+        if (weaponRule == null) {
+            lines.add("  Weapon: no configured rule.");
+        } else {
+            appendChoices(lines, "Weapon", weaponRule);
+        }
+
+        LOTREquipmentControl.WeightedItemRule rangedRule = LOTREquipmentControl.getPreparedGroupRangedWeaponRules()
+            .get(groupName);
+        if (rangedRule == null) {
+            rangedRule = LOTREquipmentControl.getPreparedAllRangedWeaponRule();
+        }
+        if (rangedRule != null) {
+            appendChoices(lines, "Ranged weapon", rangedRule);
+        }
+
+        LOTREquipmentControl.WeightedShieldRule shieldRule = LOTREquipmentControl.getPreparedGroupShieldRules()
+            .get(groupName);
+        if (shieldRule == null) {
+            shieldRule = LOTREquipmentControl.getPreparedAllShieldRule();
+        }
+        if (shieldRule != null) {
+            appendShieldChoices(lines, "Shield", shieldRule);
+        }
+
+        LOTREquipmentControl.ArmorRuleSet groupArmor = LOTREquipmentControl.getPreparedGroupArmorRules()
+            .get(groupName);
+        LOTREquipmentControl.ArmorRuleSet allArmor = LOTREquipmentControl.getPreparedAllArmorRules();
+        if (groupArmor == null && allArmor == null) {
+            lines.add("  Armor: no configured rules.");
+        } else {
+            for (LOTREquipmentControl.ArmorSlot slot : LOTREquipmentControl.ArmorSlot.values()) {
+                LOTREquipmentControl.WeightedItemRule slotRule = groupArmor == null ? null
+                    : groupArmor.slotRules.get(slot);
+                if (slotRule == null && allArmor != null) {
+                    slotRule = allArmor.slotRules.get(slot);
+                }
+                if (slotRule != null) {
+                    appendChoices(lines, capitalize(slot.configName), slotRule);
+                }
+            }
+        }
+        appendPriority(lines, true);
+        appendSettings(
+            lines,
+            Config.replaceExistingLOTREquipment,
+            Config.customizeHiredLOTREquipment,
+            Config.customizeNamedLOTREquipment);
+        return lines;
     }
 
     static List<String> createFactionExplanation(String configuredName, LOTRFaction faction,
@@ -434,12 +532,20 @@ public final class LOTREquipmentReport {
         for (LOTRFaction faction : LOTRFaction.values()) {
             names.add("faction:" + faction.codeName());
         }
+        for (String groupName : LOTREquipmentControl.getPreparedNPCGroups()
+            .keySet()) {
+            names.add("group:" + groupName);
+        }
         names.add("all");
         return names.toArray(new String[0]);
     }
 
     private static boolean isFactionTarget(String configuredTarget) {
         return configuredTarget != null && configuredTarget.regionMatches(true, 0, "faction:", 0, "faction:".length());
+    }
+
+    private static boolean isGroupTarget(String configuredTarget) {
+        return configuredTarget != null && configuredTarget.regionMatches(true, 0, "group:", 0, "group:".length());
     }
 
     private static boolean isAllTarget(String configuredTarget) {
@@ -465,11 +571,10 @@ public final class LOTREquipmentReport {
 
     private static void appendPriority(List<String> lines, boolean hasAllRules) {
         if (hasAllRules) {
-            lines.add(
-                "  Exact NPC rules take priority over faction rules, and faction rules take priority over all-NPC "
-                    + "rules, for the same equipment slot.");
+            lines
+                .add("  Priority for the same equipment slot is exact NPC, custom group, faction, then all-NPC rules.");
         } else {
-            lines.add("  Exact NPC rules take priority over faction rules for the same equipment slot.");
+            lines.add("  Exact NPC rules take priority over custom group and faction rules for the same slot.");
         }
     }
 
@@ -500,6 +605,15 @@ public final class LOTREquipmentReport {
 
         LOTREquipmentControl.WeightedShieldRule rule = allTarget || npcClass == null ? null : exactRules.get(npcClass);
         String source = null;
+        if (!allTarget && rule == null && npcClass != null) {
+            String group = LOTREquipmentControl
+                .findGroupSource(npcClass, LOTREquipmentControl.getPreparedGroupShieldRules());
+            if (group != null) {
+                rule = LOTREquipmentControl.getPreparedGroupShieldRules()
+                    .get(group);
+                source = "group:" + group;
+            }
+        }
         if (!allTarget && rule == null && faction != null) {
             rule = factionRules.get(faction);
             if (rule != null && npcClass != null) {

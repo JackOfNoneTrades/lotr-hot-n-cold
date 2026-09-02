@@ -49,6 +49,9 @@ public class CommonProxy {
             LOTRSpawnControl.applyConfiguredSpawnRules()
                 .describeStartup());
         HotNCold.LOG.info(
+            LOTREquipmentControl.prepareConfiguredNPCGroups()
+                .describeStartup());
+        HotNCold.LOG.info(
             LOTREquipmentControl.prepareConfiguredWeaponRules()
                 .describeStartup());
         HotNCold.LOG.info(

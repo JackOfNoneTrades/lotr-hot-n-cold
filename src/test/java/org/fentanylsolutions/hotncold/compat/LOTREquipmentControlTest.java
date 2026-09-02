@@ -181,6 +181,56 @@ public class LOTREquipmentControlTest {
     }
 
     @Test
+    public void supportsNamedCustomGroupsAcrossEveryEquipmentType() {
+        try {
+            LOTREquipmentControl.GroupPreparation groups = LOTREquipmentControl.prepareNPCGroups(
+                new String[] { "guards;LOTR.GondorSoldier", "GUARDS;LOTR.GondorArcher", "guards;LOTR.GondorSoldier",
+                    "bad group;LOTR.GondorSoldier", "guards;missing", "guards;Cow" },
+                entityResolver());
+            assertEquals(1, groups.groups.size());
+            assertEquals(
+                2,
+                groups.groups.get("guards")
+                    .size());
+            assertEquals(
+                "LOTR NPC group summary: prepared 2 member(s) across 1 custom group(s); rejected 4 invalid or "
+                    + "duplicate member(s).",
+                groups.describeStartup());
+
+            LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+                new String[] { "group:guards;minecraft:iron_sword;2", "group:missing;minecraft:bow;1" },
+                entityResolver(),
+                itemResolver());
+            LOTREquipmentControl.RulePreparation ranged = LOTREquipmentControl.resolveRangedWeaponRules(
+                new String[] { "GROUP:GUARDS;minecraft:bow;1" },
+                entityResolver(),
+                itemResolver());
+            LOTREquipmentControl.ShieldRulePreparation shields = LOTREquipmentControl.resolveShieldRules(
+                new String[] { "group:guards;ALIGNMENT_GONDOR;1" },
+                entityResolver(),
+                shieldResolver());
+            LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+                new String[] { "group:guards;helmet;minecraft:iron_helmet;1" },
+                entityResolver(),
+                itemResolver());
+
+            assertSame(IRON_SWORD, weapons.groupWeaponRules.get("guards").choices.get(0).item);
+            assertSame(BOW, ranged.groupWeaponRules.get("guards").choices.get(0).item);
+            assertSame(LOTRShields.ALIGNMENT_GONDOR, shields.groupShieldRules.get("guards").choices.get(0).shield);
+            assertSame(
+                IRON_HELMET,
+                armor.groupArmorRules.get("guards").slotRules.get(LOTREquipmentControl.ArmorSlot.HELMET).choices
+                    .get(0).item);
+            assertEquals(
+                "LOTR NPC equipment summary: prepared 1 weapon choice(s) for 0 exact NPC type(s) and 1 custom "
+                    + "group(s); rejected 1 invalid or duplicate choice(s).",
+                weapons.describeStartup());
+        } finally {
+            LOTREquipmentControl.prepareNPCGroups(new String[0], entityResolver());
+        }
+    }
+
+    @Test
     public void groupsCaseInsensitiveAllNPCFallbackRules() {
         LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
             new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;1", "faction:GONDOR;minecraft:stone_sword;1",
@@ -305,7 +355,8 @@ public class LOTREquipmentControlTest {
             .resolveShieldRules(new String[] { "all;ALIGNMENT_GONDOR;1" }, entityResolver(), shieldResolver());
 
         assertEquals(
-            "Reloaded LOTR NPC equipment rules: prepared 1 weapon choice(s) for 1 exact NPC type(s), 1 ranged "
+            "Reloaded LOTR NPC equipment rules: prepared 0 member(s) across 0 custom group(s), 1 weapon choice(s) "
+                + "for 1 exact NPC type(s), 1 ranged "
                 + "weapon choice(s) for 0 exact NPC type(s) and 1 faction(s), 1 shield choice(s) for 0 exact NPC "
                 + "type(s) and an all-NPC fallback, and 2 armor choice(s) across 2 slot rule(s) for 2 exact NPC "
                 + "type(s); rejected 1 invalid or duplicate choice(s). Existing NPCs were not changed.",
@@ -432,7 +483,9 @@ public class LOTREquipmentControlTest {
         assertEquals("    empty - weight 1 (25.0%)", lines.get(3));
         assertEquals("  Helmet choices (total weight 2):", lines.get(4));
         assertEquals("    minecraft:iron_helmet - weight 2 (100.0%)", lines.get(5));
-        assertEquals("  Exact NPC rules take priority over faction rules for the same equipment slot.", lines.get(6));
+        assertEquals(
+            "  Exact NPC rules take priority over custom group and faction rules for the same slot.",
+            lines.get(6));
         assertEquals(
             "LOTR faction 'missing' was not found. Use a faction code such as GONDOR or ROHAN.",
             LOTREquipmentReport

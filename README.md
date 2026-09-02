@@ -67,6 +67,18 @@ B:removeAllWarOfTheRingAnimalSpawns=true
 This affects future natural animal spawning only. It does not remove existing entities or disable spawn eggs, commands,
 breeding, mounts, or scripted spawns.
 
+### Rules that apply everywhere
+
+Hot N Cold uses explicit global settings instead of a literal `*` wildcard:
+
+- To remove every animal spawn contributed by War of the Ring from every LOTR biome, enable
+  `removeAllWarOfTheRingAnimalSpawns`.
+- To block one entity in every LOTR biome, put its name in `blockedEntitiesInAllLOTRBiomes`.
+- To add an entity everywhere, add one `addedEntityBiomeRules` line for each desired LOTR biome. The
+  `/hotncold spawns example` command generates a valid line for each biome you choose.
+
+A literal `*` in a biome or entity field is rejected, so a typo cannot unexpectedly affect the whole dimension.
+
 ## Blocking selected entities in LOTR biomes
 
 Specific entities can be prevented from spawning naturally in every LOTR biome by adding their registered names to:
@@ -172,13 +184,15 @@ by default and can be enabled or disabled with `/hotncold spawns reload`.
 
 ## Configuring naturally spawned LOTR NPC equipment
 
-Use `target;itemName;weight` entries to replace melee weapons. A target can be an exact NPC name, a faction, or `all`.
+Use `target;itemName;weight` entries to replace melee weapons. A target can be an exact NPC name, a custom group, a
+faction, or `all`.
 Add one line for every possible weapon:
 ```
 S:lotrNPCWeaponRules <
     LOTR.GondorSoldier;lotr:swordGondor;10
     LOTR.GondorSoldier;lotr:hammerGondor;3
     LOTR.GondorSoldier;empty;1
+    group:guards;lotr:swordGondor;5
     faction:ROHAN;lotr:swordRohan;10
     all;lotr:swordBronze;1
 >
@@ -235,10 +249,25 @@ S:lotrNPCArmorRules <
 Each configured armor slot makes its own weighted selection. Items that are not armor, or armor assigned to the wrong
 slot, are rejected with a warning rather than equipped incorrectly.
 
+Define your own cross-faction or profession-style groups by listing one exact NPC name per member:
+```
+S:lotrNPCGroupMembers <
+    guards;LOTR.GondorSoldier
+    guards;LOTR.GondorArcher
+    guards;LOTR.RohanWarrior
+    archers;LOTR.GondorArcher
+    archers;LOTR.RohanArcher
+>
+```
+
+Then use `group:guards` or `group:archers` as the target in any melee, ranged, shield, or armor rule. Group names ignore
+capitalization. If an NPC belongs to several groups that define the same slot, the first matching group listed in
+`lotrNPCGroupMembers` wins.
+
 A target beginning with `faction:` applies to every NPC whose LOTR faction matches that code. For example,
 `faction:GONDOR` can provide a common equipment pool for Gondor soldiers, archers, and other Gondor NPCs. The target
-`all` provides a fallback for every LOTR NPC. Priority is exact NPC rule, then faction rule, then `all`, independently
-for the weapon and each armor slot. This allows broad defaults with specific exceptions.
+`all` provides a fallback for every LOTR NPC. Priority is exact NPC rule, custom group, faction, then `all`,
+independently for every equipment slot. This allows broad defaults with specific exceptions.
 
 The special item name `empty` gives weapons and armor slots a weighted chance to remain empty. Its likelihood is
 calculated like any other choice: a helmet rule with item weights `10` and `1`, plus an empty weight of `1`, has a
@@ -277,12 +306,13 @@ spawns; it does not alter NPCs already in the world.
 To inspect the prepared choices, weights, mode, and safety settings for an exact NPC type, use:
 ```
 /hotncold equipment explain LOTR.GondorSoldier
+/hotncold equipment explain group:guards
 /hotncold equipment explain faction:GONDOR
 /hotncold equipment explain all
 ```
 
-NPC names are exact and case-sensitive. Faction codes and `all` are case-insensitive. Tab completion is available for
-registered LOTR NPCs, faction targets, and `all`.
+NPC names are exact and case-sensitive. Group names, faction codes, and `all` are case-insensitive. Tab completion is
+available for registered LOTR NPCs, configured groups, faction targets, and `all`.
 
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)

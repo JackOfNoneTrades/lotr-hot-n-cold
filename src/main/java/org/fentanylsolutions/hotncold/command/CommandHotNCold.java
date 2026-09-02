@@ -27,7 +27,7 @@ public final class CommandHotNCold extends CommandBase {
             + " OR /hotncold spawns example <LOTR biome name or ID> <entity name> [category]"
             + " OR /hotncold spawns reload"
             + " OR /hotncold equipment reload"
-            + " OR /hotncold equipment explain <LOTR NPC name, faction:CODE, or all>";
+            + " OR /hotncold equipment explain <LOTR NPC name, group:NAME, faction:CODE, or all>";
     }
 
     @Override

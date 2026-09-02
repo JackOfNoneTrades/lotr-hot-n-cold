@@ -181,25 +181,42 @@ public final class WarOfTheRingServerFixture {
                     + ", fallbackItem="
                     + gondorSwordName);
         }
+        Object gondorArcherName = EntityList.classToStringMapping.get(LOTREntityGondorArcher.class);
+        if (!(gondorArcherName instanceof String)) {
+            throw new AssertionError("Could not resolve genuine LOTR archer fixture entity: " + gondorArcherName);
+        }
+        String[] configuredGroupMembers = Config.lotrNPCGroupMembers;
+        Config.lotrNPCGroupMembers = Arrays.copyOf(configuredGroupMembers, configuredGroupMembers.length + 1);
+        Config.lotrNPCGroupMembers[configuredGroupMembers.length] = "fixtureguards;" + gondorArcherName;
+
         String[] configuredWeaponRules = Config.lotrNPCWeaponRules;
-        Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 3);
+        Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 4);
         Config.lotrNPCWeaponRules[configuredWeaponRules.length] = gondorSoldierName + ";" + rohanSwordName + ";1";
         Config.lotrNPCWeaponRules[configuredWeaponRules.length + 1] = "faction:GONDOR;" + rohanSwordName + ";1";
         Config.lotrNPCWeaponRules[configuredWeaponRules.length + 2] = "all;" + gondorSwordName + ";1";
+        Object highElvenSwordName = Item.itemRegistry.getNameForObject(LOTRMod.swordHighElven);
+        Config.lotrNPCWeaponRules[configuredWeaponRules.length + 3] = "group:fixtureguards;" + highElvenSwordName
+            + ";1";
 
         Object urukCrossbowName = Item.itemRegistry.getNameForObject(LOTRMod.urukCrossbow);
-        if (!(urukCrossbowName instanceof String)) {
-            throw new AssertionError("Could not resolve genuine LOTR ranged fixture item: " + urukCrossbowName);
+        Object ironCrossbowName = Item.itemRegistry.getNameForObject(LOTRMod.ironCrossbow);
+        if (!(urukCrossbowName instanceof String) || !(ironCrossbowName instanceof String)) {
+            throw new AssertionError(
+                "Could not resolve genuine LOTR ranged fixture items: " + urukCrossbowName + ", " + ironCrossbowName);
         }
         String[] configuredRangedWeaponRules = Config.lotrNPCRangedWeaponRules;
         Config.lotrNPCRangedWeaponRules = Arrays
-            .copyOf(configuredRangedWeaponRules, configuredRangedWeaponRules.length + 1);
+            .copyOf(configuredRangedWeaponRules, configuredRangedWeaponRules.length + 2);
         Config.lotrNPCRangedWeaponRules[configuredRangedWeaponRules.length] = "faction:GONDOR;" + urukCrossbowName
+            + ";1";
+        Config.lotrNPCRangedWeaponRules[configuredRangedWeaponRules.length + 1] = "group:fixtureguards;"
+            + ironCrossbowName
             + ";1";
 
         String[] configuredShieldRules = Config.lotrNPCShieldRules;
-        Config.lotrNPCShieldRules = Arrays.copyOf(configuredShieldRules, configuredShieldRules.length + 1);
+        Config.lotrNPCShieldRules = Arrays.copyOf(configuredShieldRules, configuredShieldRules.length + 2);
         Config.lotrNPCShieldRules[configuredShieldRules.length] = gondorSoldierName + ";ALIGNMENT_ROHAN;1";
+        Config.lotrNPCShieldRules[configuredShieldRules.length + 1] = "group:fixtureguards;ALIGNMENT_ROHAN;1";
 
         String[] armorSlots = { "boots", "leggings", "chest", "helmet" };
         Item[] rohanArmor = { LOTRMod.bootsRohan, LOTRMod.legsRohan, LOTRMod.bodyRohan, LOTRMod.helmetRohan };
@@ -215,10 +232,6 @@ public final class WarOfTheRingServerFixture {
             Config.lotrNPCArmorRules[configuredArmorRules.length
                 + armorIndex] = gondorSoldierName + ";" + armorSlots[armorIndex] + ";" + itemName + ";1";
         }
-        Object gondorArcherName = EntityList.classToStringMapping.get(LOTREntityGondorArcher.class);
-        if (!(gondorArcherName instanceof String)) {
-            throw new AssertionError("Could not resolve genuine LOTR archer fixture entity: " + gondorArcherName);
-        }
         Config.lotrNPCArmorRules[configuredArmorRules.length + armorSlots.length] = gondorArcherName + ";chest;empty;1";
         Object rohanHelmetName = Item.itemRegistry.getNameForObject(LOTRMod.helmetRohan);
         Object rohanBodyName = Item.itemRegistry.getNameForObject(LOTRMod.bodyRohan);
@@ -230,6 +243,10 @@ public final class WarOfTheRingServerFixture {
             + ";1";
         Object gondorHelmetName = Item.itemRegistry.getNameForObject(LOTRMod.helmetGondor);
         Config.lotrNPCArmorRules[configuredArmorRules.length + armorSlots.length + 3] = "all;helmet;" + gondorHelmetName
+            + ";1";
+        Object rangerHelmetName = Item.itemRegistry.getNameForObject(LOTRMod.helmetRanger);
+        Config.lotrNPCArmorRules = Arrays.copyOf(Config.lotrNPCArmorRules, Config.lotrNPCArmorRules.length + 1);
+        Config.lotrNPCArmorRules[Config.lotrNPCArmorRules.length - 1] = "group:fixtureguards;helmet;" + rangerHelmetName
             + ";1";
     }
 
@@ -286,6 +303,9 @@ public final class WarOfTheRingServerFixture {
         List<String> allEquipmentReport = LOTREquipmentReport.createEquipmentExplanation("all");
         boolean allEquipmentExplainCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold equipment explain all") == 1;
+        List<String> groupEquipmentReport = LOTREquipmentReport.createEquipmentExplanation("group:fixtureguards");
+        boolean groupEquipmentExplainCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold equipment explain group:fixtureguards") == 1;
         String gondorArcherName = (String) EntityList.classToStringMapping.get(LOTREntityGondorArcher.class);
         List<String> inheritedEquipmentReport = LOTREquipmentReport.createEquipmentExplanation(
             gondorArcherName,
@@ -300,14 +320,16 @@ public final class WarOfTheRingServerFixture {
             && containsLine(equipmentReport, "Hired NPCs: protected")
             && containsLine(equipmentReport, "Existing NPCs are not changed")
             && containsLine(factionEquipmentReport, "faction:GONDOR")
-            && containsLine(factionEquipmentReport, "Exact NPC rules take priority")
+            && containsLine(factionEquipmentReport, "Priority for the same equipment slot")
             && containsLine(allEquipmentReport, "Equipment rules for all LOTR NPCs")
             && containsLine(allEquipmentReport, "swordGondor")
-            && containsLine(inheritedEquipmentReport, "Weapon (from faction:GONDOR)")
-            && containsLine(inheritedEquipmentReport, "Ranged weapon (from faction:GONDOR)")
-            && containsLine(inheritedEquipmentReport, "urukCrossbow")
+            && containsLine(groupEquipmentReport, "group:fixtureguards")
+            && containsLine(groupEquipmentReport, "swordHighElven")
+            && containsLine(inheritedEquipmentReport, "Weapon (from group:fixtureguards)")
+            && containsLine(inheritedEquipmentReport, "Ranged weapon (from group:fixtureguards)")
+            && containsLine(inheritedEquipmentReport, "ironCrossbow")
             && containsLine(inheritedEquipmentReport, "Chest choices")
-            && containsLine(inheritedEquipmentReport, "Helmet (from faction:GONDOR)")
+            && containsLine(inheritedEquipmentReport, "Helmet (from group:fixtureguards)")
             && containsLine(allFallbackReport, "Weapon (from all)")
             && containsLine(allFallbackReport, "Helmet (from all)");
         boolean equipmentReloadCommandPassed = server.getCommandManager()
@@ -334,6 +356,7 @@ public final class WarOfTheRingServerFixture {
             || !equipmentExplainCommandPassed
             || !factionEquipmentExplainCommandPassed
             || !allEquipmentExplainCommandPassed
+            || !groupEquipmentExplainCommandPassed
             || !equipmentExplainReportPassed
             || !equipmentReloadCommandPassed
             || remainingWarOfTheRingEntries != 0) {
@@ -377,8 +400,14 @@ public final class WarOfTheRingServerFixture {
                     + factionEquipmentExplainCommandPassed
                     + ", allEquipmentExplainCommandPassed="
                     + allEquipmentExplainCommandPassed
+                    + ", groupEquipmentExplainCommandPassed="
+                    + groupEquipmentExplainCommandPassed
                     + ", equipmentExplainReportPassed="
                     + equipmentExplainReportPassed
+                    + ", groupEquipmentReport="
+                    + groupEquipmentReport
+                    + ", inheritedEquipmentReport="
+                    + inheritedEquipmentReport
                     + ", equipmentReloadCommandPassed="
                     + equipmentReloadCommandPassed
                     + ", remainingWarOfTheRingEntries="
@@ -549,10 +578,12 @@ public final class WarOfTheRingServerFixture {
         int appliedArmorSlots = LOTREquipmentControl.applyConfiguredArmor(archer);
         return factionWeaponApplied && appliedArmorSlots == 2
             && archer.npcItemsInv.getMeleeWeapon()
-                .getItem() == LOTRMod.swordRohan
+                .getItem() == LOTRMod.swordHighElven
             && archer.getEquipmentInSlot(3) == null
             && archer.getEquipmentInSlot(4)
-                .getItem() == LOTRMod.helmetRohan;
+                .getItem() == LOTRMod.helmetRanger
+            && LOTREquipmentControl.applyConfiguredShield(archer)
+            && archer.npcShield == LOTRShields.ALIGNMENT_ROHAN;
     }
 
     private static boolean verifyRangedWeaponRule(WorldServer world) {
@@ -560,9 +591,9 @@ public final class WarOfTheRingServerFixture {
         replacedArcher.onSpawnWithEgg(null);
         boolean replaced = LOTREquipmentControl.applyConfiguredRangedWeapon(replacedArcher)
             && replacedArcher.npcItemsInv.getRangedWeapon()
-                .getItem() == LOTRMod.urukCrossbow
+                .getItem() == LOTRMod.ironCrossbow
             && replacedArcher.npcItemsInv.getIdleItem()
-                .getItem() == LOTRMod.urukCrossbow;
+                .getItem() == LOTRMod.ironCrossbow;
 
         LOTREntityGondorArcher preservedArcher = new LOTREntityGondorArcher(world);
         preservedArcher.onSpawnWithEgg(null);
