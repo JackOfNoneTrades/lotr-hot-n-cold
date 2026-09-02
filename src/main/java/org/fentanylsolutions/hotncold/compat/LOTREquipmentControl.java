@@ -16,6 +16,7 @@ import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 
 import org.fentanylsolutions.hotncold.Config;
 import org.fentanylsolutions.hotncold.HotNCold;
@@ -691,11 +692,34 @@ public final class LOTREquipmentControl {
 
     private static boolean shouldApplyConfiguredEquipment(LOTREntityNPC npc) {
         boolean hired = npc.hiredNPCInfo != null && npc.hiredNPCInfo.isActive;
-        return shouldApplyConfiguredEquipment(hired, npc.hasCustomNameTag());
+        boolean questLinked = isQuestLinked(npc);
+        boolean persistent = npc.isNPCPersistent || npc.getHasSpecificLocationName();
+        return shouldApplyConfiguredEquipment(hired, npc.hasCustomNameTag(), questLinked, persistent);
     }
 
     static boolean shouldApplyConfiguredEquipment(boolean hired, boolean customNamed) {
-        return (Config.customizeHiredLOTREquipment || !hired) && (Config.customizeNamedLOTREquipment || !customNamed);
+        return shouldApplyConfiguredEquipment(hired, customNamed, false, false);
+    }
+
+    static boolean shouldApplyConfiguredEquipment(boolean hired, boolean customNamed, boolean questLinked,
+        boolean persistent) {
+        return (Config.customizeHiredLOTREquipment || !hired) && (Config.customizeNamedLOTREquipment || !customNamed)
+            && (Config.customizeQuestLOTREquipment || !questLinked)
+            && (Config.customizePersistentLOTREquipment || !persistent);
+    }
+
+    private static boolean isQuestLinked(LOTREntityNPC npc) {
+        if (npc.questInfo == null) {
+            return false;
+        }
+        if (npc.questInfo.anyActiveQuestPlayers() || npc.questInfo.anyOpenOfferPlayers()) {
+            return true;
+        }
+
+        NBTTagCompound questData = new NBTTagCompound();
+        npc.questInfo.writeToNBT(questData);
+        return questData.hasKey("MQOffer", 10) || questData.getTagList("MQSpecificOffers", 10)
+            .tagCount() > 0;
     }
 
     private static EquipmentTarget resolveTarget(String configuredTarget, String rule, String equipmentType,

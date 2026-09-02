@@ -251,23 +251,38 @@ public class LOTREquipmentControlTest {
     public void protectsHiredAndCustomNamedNPCsUnlessEnabled() {
         boolean configuredHired = Config.customizeHiredLOTREquipment;
         boolean configuredNamed = Config.customizeNamedLOTREquipment;
+        boolean configuredQuest = Config.customizeQuestLOTREquipment;
+        boolean configuredPersistent = Config.customizePersistentLOTREquipment;
         try {
             Config.customizeHiredLOTREquipment = false;
             Config.customizeNamedLOTREquipment = false;
-            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, false));
-            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, false));
-            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, true));
-            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true));
+            Config.customizeQuestLOTREquipment = false;
+            Config.customizePersistentLOTREquipment = false;
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, false, false, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, false, false, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, true, false, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, false, true, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(false, false, false, true));
 
             Config.customizeHiredLOTREquipment = true;
-            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, false));
-            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true));
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, false, false, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true, false, false));
 
             Config.customizeNamedLOTREquipment = true;
-            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true));
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true, false, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true, true, false));
+
+            Config.customizeQuestLOTREquipment = true;
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true, true, false));
+            assertFalse(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true, true, true));
+
+            Config.customizePersistentLOTREquipment = true;
+            assertTrue(LOTREquipmentControl.shouldApplyConfiguredEquipment(true, true, true, true));
         } finally {
             Config.customizeHiredLOTREquipment = configuredHired;
             Config.customizeNamedLOTREquipment = configuredNamed;
+            Config.customizeQuestLOTREquipment = configuredQuest;
+            Config.customizePersistentLOTREquipment = configuredPersistent;
         }
     }
 
@@ -329,7 +344,9 @@ public class LOTREquipmentControlTest {
         assertEquals("  Mode: configured choices fill only empty slots.", lines.get(6));
         assertEquals("  Hired NPCs: protected.", lines.get(7));
         assertEquals("  NPCs with custom name tags: included.", lines.get(8));
-        assertEquals("  Existing NPCs are not changed; these rules apply to future natural spawns.", lines.get(9));
+        assertEquals("  Quest-linked NPCs: protected.", lines.get(9));
+        assertEquals("  Persistent or location-specific NPCs: protected.", lines.get(10));
+        assertEquals("  Existing NPCs are not changed; these rules apply to future natural spawns.", lines.get(11));
     }
 
     @Test

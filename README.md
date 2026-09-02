@@ -252,14 +252,19 @@ B:replaceExistingLOTREquipment=true
 Set this to `false` to preserve every occupied weapon, armor, ranged-weapon, or shield slot and apply configured
 choices only to slots LOTR left empty. This setting affects newly spawned NPCs only.
 
-Hired NPCs and NPCs carrying an explicit custom name tag are protected by default:
+Hired NPCs, NPCs carrying an explicit custom name tag, quest-linked NPCs, and persistent or location-specific NPCs
+are protected by default:
 ```
 B:customizeHiredLOTREquipment=false
 B:customizeNamedLOTREquipment=false
+B:customizeQuestLOTREquipment=false
+B:customizePersistentLOTREquipment=false
 ```
 
-These protections do not treat LOTR's ordinary generated NPC names as custom names. Set either option to `true` only
-when that category of NPC should also receive configured equipment.
+The persistent/location-specific protection covers LOTR's named characters and NPCs tied to special locations or
+structures. The quest protection covers NPCs with a current shared or player-specific quest offer, an open offer, or
+an active quest participant. LOTR's ordinary generated NPC names do not count as custom names. Set an option to `true`
+only when that category should also receive configured equipment.
 
 After editing any equipment setting, an operator can reload and validate the rules without restarting:
 ```

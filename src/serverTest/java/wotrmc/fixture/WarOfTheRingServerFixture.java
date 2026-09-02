@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -16,6 +17,8 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.SpawnerAnimals;
 import net.minecraft.world.WorldServer;
@@ -139,6 +142,8 @@ public final class WarOfTheRingServerFixture {
         Config.removeAllWarOfTheRingAnimalSpawns = true;
         Config.customizeHiredLOTREquipment = false;
         Config.customizeNamedLOTREquipment = false;
+        Config.customizeQuestLOTREquipment = false;
+        Config.customizePersistentLOTREquipment = false;
         Config.replaceExistingLOTREquipment = true;
         Config.logBlockedSpawnAttempts = true;
         Config.blockedSpawnLogIntervalSeconds = 60;
@@ -642,9 +647,13 @@ public final class WarOfTheRingServerFixture {
     private static boolean verifyProtectedEquipmentNPCs(WorldServer world) {
         boolean configuredHired = Config.customizeHiredLOTREquipment;
         boolean configuredNamed = Config.customizeNamedLOTREquipment;
+        boolean configuredQuest = Config.customizeQuestLOTREquipment;
+        boolean configuredPersistent = Config.customizePersistentLOTREquipment;
         try {
             Config.customizeHiredLOTREquipment = false;
             Config.customizeNamedLOTREquipment = false;
+            Config.customizeQuestLOTREquipment = false;
+            Config.customizePersistentLOTREquipment = false;
 
             LOTREntityGondorSoldier hiredSoldier = new LOTREntityGondorSoldier(world);
             hiredSoldier.onSpawnWithEgg(null);
@@ -681,10 +690,66 @@ public final class WarOfTheRingServerFixture {
                 && LOTREquipmentControl.applyConfiguredArmor(namedSoldier) == 4
                 && namedSoldier.npcItemsInv.getMeleeWeapon()
                     .getItem() == LOTRMod.swordRohan;
-            return hiredProtected && hiredOptInWorks && namedProtected && namedOptInWorks;
+
+            LOTREntityGondorSoldier persistentSoldier = new LOTREntityGondorSoldier(world);
+            persistentSoldier.onSpawnWithEgg(null);
+            Item persistentOriginalWeapon = persistentSoldier.npcItemsInv.getMeleeWeapon()
+                .getItem();
+            persistentSoldier.isNPCPersistent = true;
+            boolean persistentProtected = !LOTREquipmentControl.applyConfiguredWeapon(persistentSoldier)
+                && !LOTREquipmentControl.applyConfiguredRangedWeapon(persistentSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(persistentSoldier) == 0
+                && !LOTREquipmentControl.applyConfiguredShield(persistentSoldier)
+                && persistentSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == persistentOriginalWeapon;
+
+            Config.customizePersistentLOTREquipment = true;
+            boolean persistentOptInWorks = LOTREquipmentControl.applyConfiguredWeapon(persistentSoldier)
+                && LOTREquipmentControl.applyConfiguredRangedWeapon(persistentSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(persistentSoldier) == 4
+                && LOTREquipmentControl.applyConfiguredShield(persistentSoldier)
+                && persistentSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == LOTRMod.swordRohan;
+
+            LOTREntityGondorSoldier questSoldier = new LOTREntityGondorSoldier(world);
+            questSoldier.onSpawnWithEgg(null);
+            Item questOriginalWeapon = questSoldier.npcItemsInv.getMeleeWeapon()
+                .getItem();
+            NBTTagCompound questData = new NBTTagCompound();
+            NBTTagList activeQuestPlayers = new NBTTagList();
+            activeQuestPlayers.appendTag(
+                new NBTTagString(
+                    UUID.randomUUID()
+                        .toString()));
+            questData.setTag("ActiveQuestPlayers", activeQuestPlayers);
+            questSoldier.questInfo.readFromNBT(questData);
+            boolean questProtected = questSoldier.questInfo.anyActiveQuestPlayers()
+                && !LOTREquipmentControl.applyConfiguredWeapon(questSoldier)
+                && !LOTREquipmentControl.applyConfiguredRangedWeapon(questSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(questSoldier) == 0
+                && !LOTREquipmentControl.applyConfiguredShield(questSoldier)
+                && questSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == questOriginalWeapon;
+
+            Config.customizeQuestLOTREquipment = true;
+            boolean questOptInWorks = LOTREquipmentControl.applyConfiguredWeapon(questSoldier)
+                && LOTREquipmentControl.applyConfiguredRangedWeapon(questSoldier)
+                && LOTREquipmentControl.applyConfiguredArmor(questSoldier) == 4
+                && LOTREquipmentControl.applyConfiguredShield(questSoldier)
+                && questSoldier.npcItemsInv.getMeleeWeapon()
+                    .getItem() == LOTRMod.swordRohan;
+            return hiredProtected && hiredOptInWorks
+                && namedProtected
+                && namedOptInWorks
+                && persistentProtected
+                && persistentOptInWorks
+                && questProtected
+                && questOptInWorks;
         } finally {
             Config.customizeHiredLOTREquipment = configuredHired;
             Config.customizeNamedLOTREquipment = configuredNamed;
+            Config.customizeQuestLOTREquipment = configuredQuest;
+            Config.customizePersistentLOTREquipment = configuredPersistent;
         }
     }
 

@@ -452,6 +452,10 @@ public final class LOTREquipmentReport {
             .add("  Mode: configured choices " + (replaceExisting ? "replace normal gear." : "fill only empty slots."));
         lines.add("  Hired NPCs: " + (customizeHired ? "included." : "protected."));
         lines.add("  NPCs with custom name tags: " + (customizeNamed ? "included." : "protected."));
+        lines.add("  Quest-linked NPCs: " + (Config.customizeQuestLOTREquipment ? "included." : "protected."));
+        lines.add(
+            "  Persistent or location-specific NPCs: "
+                + (Config.customizePersistentLOTREquipment ? "included." : "protected."));
         lines.add("  Existing NPCs are not changed; these rules apply to future natural spawns.");
     }
 

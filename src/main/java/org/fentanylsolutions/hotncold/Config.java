@@ -19,6 +19,8 @@ public class Config {
     public static boolean replaceExistingLOTREquipment = true;
     public static boolean customizeHiredLOTREquipment = false;
     public static boolean customizeNamedLOTREquipment = false;
+    public static boolean customizeQuestLOTREquipment = false;
+    public static boolean customizePersistentLOTREquipment = false;
     public static int blockedSpawnLogIntervalSeconds = 60;
 
     public static String[] mobsImmuneToFrost = {};
@@ -201,6 +203,21 @@ public class Config {
             customizeNamedLOTREquipment,
             "If true, configured equipment may be applied to LOTR NPCs with a custom name tag. Disabled by default "
                 + "to preserve deliberately customized NPCs. LOTR's ordinary generated NPC names are unaffected.");
+
+        customizeQuestLOTREquipment = configuration.getBoolean(
+            "customizeQuestLOTREquipment",
+            Configuration.CATEGORY_GENERAL,
+            customizeQuestLOTREquipment,
+            "If true, configured equipment may be applied to LOTR NPCs that currently offer or participate in a "
+                + "miniquest. Disabled by default so quest-linked NPCs keep their intended gear.");
+
+        customizePersistentLOTREquipment = configuration.getBoolean(
+            "customizePersistentLOTREquipment",
+            Configuration.CATEGORY_GENERAL,
+            customizePersistentLOTREquipment,
+            "If true, configured equipment may be applied to persistent or location-specific LOTR NPCs, including "
+                + "named characters and structure-bound NPCs. Disabled by default so special NPCs keep their "
+                + "intended gear.");
 
         replaceExistingLOTREquipment = configuration.getBoolean(
             "replaceExistingLOTREquipment",
