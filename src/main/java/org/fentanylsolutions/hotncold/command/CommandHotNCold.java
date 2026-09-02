@@ -27,7 +27,7 @@ public final class CommandHotNCold extends CommandBase {
             + " OR /hotncold spawns example <LOTR biome name or ID> <entity name> [category]"
             + " OR /hotncold spawns reload"
             + " OR /hotncold equipment reload"
-            + " OR /hotncold equipment explain <LOTR NPC name>";
+            + " OR /hotncold equipment explain <LOTR NPC name or faction:CODE>";
     }
 
     @Override
@@ -142,7 +142,7 @@ public final class CommandHotNCold extends CommandBase {
             return;
         }
         if ("explain".equalsIgnoreCase(args[1]) && args.length == 3) {
-            for (String line : LOTREquipmentReport.createEquipmentExplanation(args[2])) {
+            for (String line : LOTREquipmentReport.createEquipmentExplanation(args[2], sender.getEntityWorld())) {
                 sender.addChatMessage(new ChatComponentText(line));
             }
             return;

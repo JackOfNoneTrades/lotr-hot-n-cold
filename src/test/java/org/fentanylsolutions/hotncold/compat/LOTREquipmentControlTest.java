@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import lotr.common.entity.npc.LOTREntityGondorArcher;
 import lotr.common.entity.npc.LOTREntityGondorSoldier;
+import lotr.common.fac.LOTRFaction;
 
 public class LOTREquipmentControlTest {
 
@@ -149,6 +150,36 @@ public class LOTREquipmentControlTest {
     }
 
     @Test
+    public void groupsFactionRulesAndRejectsUnknownFactions() {
+        LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;3", "faction:GONDOR;minecraft:stone_sword;2",
+                "Faction:rohan;minecraft:bow;1", "faction:missing;minecraft:bow;1" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;3",
+                "faction:GONDOR;helmet;minecraft:chainmail_helmet;2",
+                "faction:GONDOR;chest;minecraft:iron_chestplate;1" },
+            entityResolver(),
+            itemResolver());
+
+        assertEquals(1, weapons.weaponRules.size());
+        assertEquals(2, weapons.factionWeaponRules.size());
+        assertEquals(2, weapons.factionWeaponRules.get(LOTRFaction.GONDOR).totalWeight);
+        assertEquals(
+            "LOTR NPC equipment summary: prepared 3 weapon choice(s) for 1 exact NPC type(s) and 2 faction(s); "
+                + "rejected 1 invalid or duplicate choice(s).",
+            weapons.describeStartup());
+        assertEquals(1, armor.armorRules.size());
+        assertEquals(1, armor.factionArmorRules.size());
+        assertEquals(2, armor.factionArmorRules.get(LOTRFaction.GONDOR).slotRules.size());
+        assertEquals(
+            "LOTR NPC armor summary: prepared 3 choice(s) across 3 slot rule(s) for 1 exact NPC type(s) and 1 "
+                + "faction(s); rejected 0 invalid or duplicate choice(s).",
+            armor.describeStartup());
+    }
+
+    @Test
     public void protectsHiredAndCustomNamedNPCsUnlessEnabled() {
         boolean configuredHired = Config.customizeHiredLOTREquipment;
         boolean configuredNamed = Config.customizeNamedLOTREquipment;
@@ -248,6 +279,78 @@ public class LOTREquipmentControlTest {
                 true,
                 false,
                 false)
+                .get(0));
+    }
+
+    @Test
+    public void explainsEffectiveExactAndFactionRules() {
+        LOTREquipmentControl.RulePreparation combinedWeapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;1", "faction:GONDOR;minecraft:stone_sword;1" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation combinedArmor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;1",
+                "faction:GONDOR;helmet;minecraft:chainmail_helmet;1",
+                "faction:GONDOR;chest;minecraft:iron_chestplate;1" },
+            entityResolver(),
+            itemResolver());
+        List<String> combinedLines = LOTREquipmentReport.createEquipmentExplanation(
+            "LOTR.GondorSoldier",
+            LOTREntityGondorSoldier.class,
+            combinedWeapons.weaponRules,
+            combinedArmor.armorRules,
+            LOTRFaction.GONDOR,
+            combinedWeapons.factionWeaponRules,
+            combinedArmor.factionArmorRules,
+            true,
+            false,
+            false);
+        assertTrue(combinedLines.contains("  Weapon choices (total weight 1):"));
+        assertTrue(combinedLines.contains("    minecraft:iron_sword - weight 1 (100.0%)"));
+        assertFalse(combinedLines.contains("    minecraft:stone_sword - weight 1 (100.0%)"));
+        assertTrue(combinedLines.contains("  Chest (from faction:GONDOR) choices (total weight 1):"));
+        assertTrue(combinedLines.contains("  Helmet choices (total weight 1):"));
+        assertFalse(combinedLines.contains("    minecraft:chainmail_helmet - weight 1 (100.0%)"));
+    }
+
+    @Test
+    public void explainsFactionRulesAndExactRulePriority() {
+        LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "faction:GONDOR;minecraft:iron_sword;3", "faction:GONDOR;empty;1" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "faction:GONDOR;helmet;minecraft:iron_helmet;2" },
+            entityResolver(),
+            itemResolver());
+
+        List<String> lines = LOTREquipmentReport.createFactionExplanation(
+            "gondor",
+            LOTRFaction.GONDOR,
+            weapons.factionWeaponRules,
+            armor.factionArmorRules,
+            true,
+            false,
+            false);
+
+        assertEquals("Equipment rules for faction:GONDOR:", lines.get(0));
+        assertEquals("  Weapon choices (total weight 4):", lines.get(1));
+        assertEquals("    minecraft:iron_sword - weight 3 (75.0%)", lines.get(2));
+        assertEquals("    empty - weight 1 (25.0%)", lines.get(3));
+        assertEquals("  Helmet choices (total weight 2):", lines.get(4));
+        assertEquals("    minecraft:iron_helmet - weight 2 (100.0%)", lines.get(5));
+        assertEquals("  Exact NPC rules take priority over faction rules for the same equipment slot.", lines.get(6));
+        assertEquals(
+            "LOTR faction 'missing' was not found. Use a faction code such as GONDOR or ROHAN.",
+            LOTREquipmentReport
+                .createFactionExplanation(
+                    "missing",
+                    null,
+                    weapons.factionWeaponRules,
+                    armor.factionArmorRules,
+                    true,
+                    false,
+                    false)
                 .get(0));
     }
 

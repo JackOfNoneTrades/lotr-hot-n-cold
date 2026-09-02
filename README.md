@@ -172,13 +172,14 @@ by default and can be enabled or disabled with `/hotncold spawns reload`.
 
 ## Configuring naturally spawned LOTR NPC equipment
 
-Use `entityName;itemName;weight` entries to replace the melee weapon chosen for an exact LOTR NPC type. Add one line
-for every possible weapon:
+Use `target;itemName;weight` entries to replace melee weapons. A target can be an exact NPC name or a faction. Add one
+line for every possible weapon:
 ```
 S:lotrNPCWeaponRules <
     LOTR.GondorSoldier;lotr:swordGondor;10
     LOTR.GondorSoldier;lotr:hammerGondor;3
     LOTR.GondorSoldier;empty;1
+    faction:ROHAN;lotr:swordRohan;10
 >
 ```
 
@@ -190,7 +191,7 @@ Weapon rules run after LOTR finishes creating a naturally spawned NPC's normal e
 world-generation spawns. The selected item replaces the NPC's melee, mounted-melee, idle, and held weapon state.
 Existing NPCs and NPCs introduced through commands, spawn eggs, or unrelated scripted spawning are not changed.
 
-Armor uses `entityName;slot;itemName;weight`, with independent choices for `boots`, `leggings`, `chest`, and
+Armor uses `target;slot;itemName;weight`, with independent choices for `boots`, `leggings`, `chest`, and
 `helmet`:
 ```
 S:lotrNPCArmorRules <
@@ -205,6 +206,11 @@ S:lotrNPCArmorRules <
 
 Each configured armor slot makes its own weighted selection. Items that are not armor, or armor assigned to the wrong
 slot, are rejected with a warning rather than equipped incorrectly.
+
+A target beginning with `faction:` applies to every NPC whose LOTR faction matches that code. For example,
+`faction:GONDOR` can provide a common equipment pool for Gondor soldiers, archers, and other Gondor NPCs. An exact NPC
+rule takes priority over its faction rule for the same weapon or armor slot, allowing broad defaults with specific
+exceptions.
 
 The special item name `empty` gives weapons and armor slots a weighted chance to remain empty. Its likelihood is
 calculated like any other choice: a helmet rule with item weights `10` and `1`, plus an empty weight of `1`, has a
@@ -238,9 +244,11 @@ spawns; it does not alter NPCs already in the world.
 To inspect the prepared choices, weights, mode, and safety settings for an exact NPC type, use:
 ```
 /hotncold equipment explain LOTR.GondorSoldier
+/hotncold equipment explain faction:GONDOR
 ```
 
-NPC names are exact and case-sensitive, with tab completion available for registered LOTR NPCs.
+NPC names are exact and case-sensitive. Faction codes are case-insensitive. Tab completion is available for registered
+LOTR NPCs and faction targets.
 
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)

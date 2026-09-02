@@ -79,8 +79,11 @@ public class CommandHotNColdTest {
     public void offersEquipmentExplainTabCompletion() {
         List<String> actionCompletions = new CommandHotNCold()
             .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "equipment", "ex" });
+        List<String> factionCompletions = new CommandHotNCold()
+            .addTabCompletionOptions(UNPRIVILEGED_SENDER, new String[] { "equipment", "explain", "faction:GO" });
 
         assertTrue(actionCompletions.contains("explain"));
+        assertTrue(factionCompletions.contains("faction:GONDOR"));
     }
 
     @Test
