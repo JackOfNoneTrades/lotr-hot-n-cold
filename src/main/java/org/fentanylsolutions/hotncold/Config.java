@@ -27,6 +27,7 @@ public class Config {
     public static String[] blockedEntityBiomeRules = {};
     public static String[] addedEntityBiomeRules = {};
     public static String[] lotrNPCWeaponRules = {};
+    public static String[] lotrNPCRangedWeaponRules = {};
     public static String[] lotrNPCArmorRules = {};
 
     public static String[] frostBiomes = {};
@@ -217,6 +218,18 @@ public class Config {
                     + "weighted empty-hand chance. Priority is exact NPC, then faction, then all. Entity and item "
                     + "names are exact and case-sensitive. Example: "
                     + "LOTR.GondorSoldier;lotr:swordGondor;10")
+            .getStringList();
+
+        lotrNPCRangedWeaponRules = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "lotrNPCRangedWeaponRules",
+                lotrNPCRangedWeaponRules,
+                "Weighted ranged-weapon choices in the format target;itemName;weight. A target can be an exact LOTR "
+                    + "NPC name, faction:FACTION_CODE such as faction:GONDOR, or all. Use empty as an item name for "
+                    + "a weighted chance to have no ranged weapon. Priority is exact NPC, then faction, then all. "
+                    + "Entity and item names are exact and case-sensitive. Example: "
+                    + "LOTR.GondorArcher;lotr:item.gondorBow;10")
             .getStringList();
 
         lotrNPCArmorRules = configuration

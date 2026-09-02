@@ -172,8 +172,8 @@ by default and can be enabled or disabled with `/hotncold spawns reload`.
 
 ## Configuring naturally spawned LOTR NPC equipment
 
-Use `target;itemName;weight` entries to replace melee weapons. A target can be an exact NPC name or a faction. Add one
-line for every possible weapon:
+Use `target;itemName;weight` entries to replace melee weapons. A target can be an exact NPC name, a faction, or `all`.
+Add one line for every possible weapon:
 ```
 S:lotrNPCWeaponRules <
     LOTR.GondorSoldier;lotr:swordGondor;10
@@ -188,9 +188,22 @@ The weight controls relative likelihood: in this example, the sword has weight t
 Entity and item names are exact and case-sensitive. Invalid names, non-LOTR entities, non-positive weights, and
 duplicate choices are rejected with a clear warning, and startup prints a short `LOTR NPC equipment summary`.
 
+Ranged weapons use the same target, item, and weight format in their own setting:
+```
+S:lotrNPCRangedWeaponRules <
+    LOTR.GondorArcher;lotr:item.gondorBow;10
+    LOTR.GondorArcher;lotr:item.ironCrossbow;2
+    LOTR.GondorArcher;empty;1
+>
+```
+
+These choices replace LOTR's separate ranged-weapon inventory slot. In fill-empty mode, an NPC that already has a
+bow or other ranged weapon keeps it.
+
 Weapon rules run after LOTR finishes creating a naturally spawned NPC's normal equipment, including LOTR biome
-world-generation spawns. The selected item replaces the NPC's melee, mounted-melee, idle, and held weapon state.
-Existing NPCs and NPCs introduced through commands, spawn eggs, or unrelated scripted spawning are not changed.
+world-generation spawns. A selected melee item replaces the NPC's melee, mounted-melee, idle, and held weapon state;
+a selected ranged item replaces its ranged-weapon inventory slot. Existing NPCs and NPCs introduced through commands,
+spawn eggs, or unrelated scripted spawning are not changed.
 
 Armor uses `target;slot;itemName;weight`, with independent choices for `boots`, `leggings`, `chest`, and
 `helmet`:

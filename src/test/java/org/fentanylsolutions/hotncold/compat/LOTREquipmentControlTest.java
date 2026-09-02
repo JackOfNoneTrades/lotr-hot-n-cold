@@ -207,6 +207,25 @@ public class LOTREquipmentControlTest {
     }
 
     @Test
+    public void groupsWeightedRangedWeaponRules() {
+        LOTREquipmentControl.RulePreparation preparation = LOTREquipmentControl.resolveRangedWeaponRules(
+            new String[] { "LOTR.GondorArcher;minecraft:bow;3", "faction:GONDOR;empty;1", "all;minecraft:stone_sword;2",
+                "ALL;minecraft:stone_sword;4" },
+            entityResolver(),
+            itemResolver());
+
+        assertEquals(1, preparation.weaponRules.size());
+        assertEquals(1, preparation.factionWeaponRules.size());
+        assertEquals(2, preparation.allWeaponRule.totalWeight);
+        assertSame(BOW, preparation.weaponRules.get(LOTREntityGondorArcher.class).choices.get(0).item);
+        assertNull(preparation.factionWeaponRules.get(LOTRFaction.GONDOR).choices.get(0).item);
+        assertEquals(
+            "LOTR NPC ranged equipment summary: prepared 3 ranged weapon choice(s) for 1 exact NPC type(s) and 1 "
+                + "faction(s) and an all-NPC fallback; rejected 1 invalid or duplicate choice(s).",
+            preparation.describeStartup());
+    }
+
+    @Test
     public void protectsHiredAndCustomNamedNPCsUnlessEnabled() {
         boolean configuredHired = Config.customizeHiredLOTREquipment;
         boolean configuredNamed = Config.customizeNamedLOTREquipment;
@@ -236,6 +255,10 @@ public class LOTREquipmentControlTest {
             new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;3", "LOTR.GondorSoldier;missing;1" },
             entityResolver(),
             itemResolver());
+        LOTREquipmentControl.RulePreparation rangedWeapons = LOTREquipmentControl.resolveRangedWeaponRules(
+            new String[] { "faction:GONDOR;minecraft:bow;2" },
+            entityResolver(),
+            itemResolver());
         LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
             new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;2",
                 "LOTR.GondorArcher;chest;minecraft:iron_chestplate;1" },
@@ -243,10 +266,11 @@ public class LOTREquipmentControlTest {
             itemResolver());
 
         assertEquals(
-            "Reloaded LOTR NPC equipment rules: prepared 1 weapon choice(s) for 1 exact NPC type(s), and 2 armor "
-                + "choice(s) across 2 slot rule(s) for 2 exact NPC type(s); rejected 1 invalid or duplicate "
-                + "choice(s). Existing NPCs were not changed.",
-            new LOTREquipmentControl.EquipmentRuleReloadResult(weapons, armor).describeReload());
+            "Reloaded LOTR NPC equipment rules: prepared 1 weapon choice(s) for 1 exact NPC type(s), 1 ranged "
+                + "weapon choice(s) for 0 exact NPC type(s) and 1 faction(s), and 2 armor choice(s) across 2 slot "
+                + "rule(s) for 2 exact NPC type(s); rejected 1 invalid or duplicate choice(s). Existing NPCs were "
+                + "not changed.",
+            new LOTREquipmentControl.EquipmentRuleReloadResult(weapons, rangedWeapons, armor).describeReload());
     }
 
     @Test

@@ -181,6 +181,16 @@ public final class WarOfTheRingServerFixture {
         Config.lotrNPCWeaponRules[configuredWeaponRules.length + 1] = "faction:GONDOR;" + rohanSwordName + ";1";
         Config.lotrNPCWeaponRules[configuredWeaponRules.length + 2] = "all;" + gondorSwordName + ";1";
 
+        Object urukCrossbowName = Item.itemRegistry.getNameForObject(LOTRMod.urukCrossbow);
+        if (!(urukCrossbowName instanceof String)) {
+            throw new AssertionError("Could not resolve genuine LOTR ranged fixture item: " + urukCrossbowName);
+        }
+        String[] configuredRangedWeaponRules = Config.lotrNPCRangedWeaponRules;
+        Config.lotrNPCRangedWeaponRules = Arrays
+            .copyOf(configuredRangedWeaponRules, configuredRangedWeaponRules.length + 1);
+        Config.lotrNPCRangedWeaponRules[configuredRangedWeaponRules.length] = "faction:GONDOR;" + urukCrossbowName
+            + ";1";
+
         String[] armorSlots = { "boots", "leggings", "chest", "helmet" };
         Item[] rohanArmor = { LOTRMod.bootsRohan, LOTRMod.legsRohan, LOTRMod.bodyRohan, LOTRMod.helmetRohan };
         String[] configuredArmorRules = Config.lotrNPCArmorRules;
@@ -283,6 +293,8 @@ public final class WarOfTheRingServerFixture {
             && containsLine(allEquipmentReport, "Equipment rules for all LOTR NPCs")
             && containsLine(allEquipmentReport, "swordGondor")
             && containsLine(inheritedEquipmentReport, "Weapon (from faction:GONDOR)")
+            && containsLine(inheritedEquipmentReport, "Ranged weapon (from faction:GONDOR)")
+            && containsLine(inheritedEquipmentReport, "urukCrossbow")
             && containsLine(inheritedEquipmentReport, "Chest choices")
             && containsLine(inheritedEquipmentReport, "Helmet (from faction:GONDOR)")
             && containsLine(allFallbackReport, "Weapon (from all)")
@@ -501,6 +513,7 @@ public final class WarOfTheRingServerFixture {
                 && spawnedSoldier.getEquipmentInSlot(4)
                     .getItem() == LOTRMod.helmetRohan
                 && verifyEmptyArmorChoice(world)
+                && verifyRangedWeaponRule(world)
                 && verifyAllEquipmentFallback(world)
                 && verifyFillEmptyMode(world)
                 && verifyProtectedEquipmentNPCs(world);
@@ -527,6 +540,28 @@ public final class WarOfTheRingServerFixture {
             && archer.getEquipmentInSlot(3) == null
             && archer.getEquipmentInSlot(4)
                 .getItem() == LOTRMod.helmetRohan;
+    }
+
+    private static boolean verifyRangedWeaponRule(WorldServer world) {
+        LOTREntityGondorArcher replacedArcher = new LOTREntityGondorArcher(world);
+        replacedArcher.onSpawnWithEgg(null);
+        boolean replaced = LOTREquipmentControl.applyConfiguredRangedWeapon(replacedArcher)
+            && replacedArcher.npcItemsInv.getRangedWeapon()
+                .getItem() == LOTRMod.urukCrossbow
+            && replacedArcher.npcItemsInv.getIdleItem()
+                .getItem() == LOTRMod.urukCrossbow;
+
+        LOTREntityGondorArcher preservedArcher = new LOTREntityGondorArcher(world);
+        preservedArcher.onSpawnWithEgg(null);
+        boolean configuredReplace = Config.replaceExistingLOTREquipment;
+        try {
+            Config.replaceExistingLOTREquipment = false;
+            return replaced && !LOTREquipmentControl.applyConfiguredRangedWeapon(preservedArcher)
+                && preservedArcher.npcItemsInv.getRangedWeapon()
+                    .getItem() == LOTRMod.gondorBow;
+        } finally {
+            Config.replaceExistingLOTREquipment = configuredReplace;
+        }
     }
 
     private static boolean verifyAllEquipmentFallback(WorldServer world) {
