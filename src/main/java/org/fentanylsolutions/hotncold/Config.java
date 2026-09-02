@@ -213,9 +213,9 @@ public class Config {
                 "lotrNPCWeaponRules",
                 lotrNPCWeaponRules,
                 "Weighted weapon choices in the format target;itemName;weight. A target can be an exact LOTR NPC "
-                    + "name or faction:FACTION_CODE, such as faction:GONDOR. Use empty as an item name for a weighted "
-                    + "empty-hand chance. Exact NPC rules override faction rules. Entity and item names are exact and "
-                    + "case-sensitive. Example: "
+                    + "name, faction:FACTION_CODE such as faction:GONDOR, or all. Use empty as an item name for a "
+                    + "weighted empty-hand chance. Priority is exact NPC, then faction, then all. Entity and item "
+                    + "names are exact and case-sensitive. Example: "
                     + "LOTR.GondorSoldier;lotr:swordGondor;10")
             .getStringList();
 
@@ -225,9 +225,9 @@ public class Config {
                 "lotrNPCArmorRules",
                 lotrNPCArmorRules,
                 "Weighted armor choices in the format target;slot;itemName;weight. A target can be an exact LOTR NPC "
-                    + "name or faction:FACTION_CODE, such as faction:GONDOR. Slots are boots, leggings, chest, and "
-                    + "helmet. Use empty for a weighted empty slot chance. Exact NPC rules override faction rules for "
-                    + "the same slot. Example: "
+                    + "name, faction:FACTION_CODE such as faction:GONDOR, or all. Slots are boots, leggings, chest, "
+                    + "and helmet. Use empty for a weighted empty slot chance. Priority per slot is exact NPC, then "
+                    + "faction, then all. Example: "
                     + "LOTR.GondorSoldier;helmet;lotr:helmetGondor;10")
             .getStringList();
     }

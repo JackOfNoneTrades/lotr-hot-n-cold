@@ -22,6 +22,14 @@ public final class LOTREquipmentReport {
     private LOTREquipmentReport() {}
 
     public static List<String> createEquipmentExplanation(String entityName) {
+        if (isAllTarget(entityName)) {
+            return createAllExplanation(
+                LOTREquipmentControl.getPreparedAllWeaponRule(),
+                LOTREquipmentControl.getPreparedAllArmorRules(),
+                Config.replaceExistingLOTREquipment,
+                Config.customizeHiredLOTREquipment,
+                Config.customizeNamedLOTREquipment);
+        }
         if (isFactionTarget(entityName)) {
             String factionName = entityName.substring("faction:".length())
                 .trim();
@@ -30,6 +38,8 @@ public final class LOTREquipmentReport {
                 LOTREquipmentControl.resolveFaction(factionName),
                 LOTREquipmentControl.getPreparedFactionWeaponRules(),
                 LOTREquipmentControl.getPreparedFactionArmorRules(),
+                LOTREquipmentControl.getPreparedAllWeaponRule(),
+                LOTREquipmentControl.getPreparedAllArmorRules(),
                 Config.replaceExistingLOTREquipment,
                 Config.customizeHiredLOTREquipment,
                 Config.customizeNamedLOTREquipment);
@@ -39,13 +49,18 @@ public final class LOTREquipmentReport {
             EntityList.stringToClassMapping.get(entityName),
             LOTREquipmentControl.getPreparedWeaponRules(),
             LOTREquipmentControl.getPreparedArmorRules(),
+            null,
+            Collections.<LOTRFaction, LOTREquipmentControl.WeightedItemRule>emptyMap(),
+            Collections.<LOTRFaction, LOTREquipmentControl.ArmorRuleSet>emptyMap(),
+            LOTREquipmentControl.getPreparedAllWeaponRule(),
+            LOTREquipmentControl.getPreparedAllArmorRules(),
             Config.replaceExistingLOTREquipment,
             Config.customizeHiredLOTREquipment,
             Config.customizeNamedLOTREquipment);
     }
 
     public static List<String> createEquipmentExplanation(String entityName, World world) {
-        if (isFactionTarget(entityName)) {
+        if (isFactionTarget(entityName) || isAllTarget(entityName)) {
             return createEquipmentExplanation(entityName);
         }
 
@@ -65,6 +80,8 @@ public final class LOTREquipmentReport {
             faction,
             LOTREquipmentControl.getPreparedFactionWeaponRules(),
             LOTREquipmentControl.getPreparedFactionArmorRules(),
+            LOTREquipmentControl.getPreparedAllWeaponRule(),
+            LOTREquipmentControl.getPreparedAllArmorRules(),
             Config.replaceExistingLOTREquipment,
             Config.customizeHiredLOTREquipment,
             Config.customizeNamedLOTREquipment);
@@ -82,6 +99,8 @@ public final class LOTREquipmentReport {
             null,
             Collections.<LOTRFaction, LOTREquipmentControl.WeightedItemRule>emptyMap(),
             Collections.<LOTRFaction, LOTREquipmentControl.ArmorRuleSet>emptyMap(),
+            null,
+            null,
             replaceExisting,
             customizeHired,
             customizeNamed);
@@ -93,6 +112,28 @@ public final class LOTREquipmentReport {
         Map<LOTRFaction, LOTREquipmentControl.WeightedItemRule> factionWeaponRules,
         Map<LOTRFaction, LOTREquipmentControl.ArmorRuleSet> factionArmorRules, boolean replaceExisting,
         boolean customizeHired, boolean customizeNamed) {
+        return createEquipmentExplanation(
+            entityName,
+            mappedEntityClass,
+            weaponRules,
+            armorRules,
+            faction,
+            factionWeaponRules,
+            factionArmorRules,
+            null,
+            null,
+            replaceExisting,
+            customizeHired,
+            customizeNamed);
+    }
+
+    static List<String> createEquipmentExplanation(String entityName, Object mappedEntityClass,
+        Map<Class<? extends LOTREntityNPC>, LOTREquipmentControl.WeightedItemRule> weaponRules,
+        Map<Class<? extends LOTREntityNPC>, LOTREquipmentControl.ArmorRuleSet> armorRules, LOTRFaction faction,
+        Map<LOTRFaction, LOTREquipmentControl.WeightedItemRule> factionWeaponRules,
+        Map<LOTRFaction, LOTREquipmentControl.ArmorRuleSet> factionArmorRules,
+        LOTREquipmentControl.WeightedItemRule allWeaponRule, LOTREquipmentControl.ArmorRuleSet allArmorRuleSet,
+        boolean replaceExisting, boolean customizeHired, boolean customizeNamed) {
         if (!(mappedEntityClass instanceof Class)) {
             return Collections
                 .singletonList("Entity '" + entityName + "' was not found. Names are exact and case-sensitive.");
@@ -106,10 +147,18 @@ public final class LOTREquipmentReport {
         @SuppressWarnings("unchecked")
         Class<? extends LOTREntityNPC> npcClass = (Class<? extends LOTREntityNPC>) entityClass;
         LOTREquipmentControl.WeightedItemRule weaponRule = weaponRules.get(npcClass);
-        boolean weaponFromFaction = false;
+        String weaponSource = null;
         if (weaponRule == null && faction != null) {
             weaponRule = factionWeaponRules.get(faction);
-            weaponFromFaction = weaponRule != null;
+            if (weaponRule != null) {
+                weaponSource = "faction:" + faction.codeName();
+            }
+        }
+        if (weaponRule == null) {
+            weaponRule = allWeaponRule;
+            if (weaponRule != null) {
+                weaponSource = "all";
+            }
         }
         LOTREquipmentControl.ArmorRuleSet exactArmorRuleSet = armorRules.get(npcClass);
         LOTREquipmentControl.ArmorRuleSet factionArmorRuleSet = faction == null ? null : factionArmorRules.get(faction);
@@ -119,33 +168,38 @@ public final class LOTREquipmentReport {
         if (weaponRule == null) {
             lines.add("  Weapon: no configured rule.");
         } else {
-            appendChoices(lines, "Weapon" + factionSourceSuffix(weaponFromFaction, faction), weaponRule);
+            appendChoices(lines, "Weapon" + sourceSuffix(weaponSource), weaponRule);
         }
 
-        boolean usedFactionArmorRule = false;
-        if (exactArmorRuleSet == null && factionArmorRuleSet == null) {
+        boolean usedFallbackRule = weaponSource != null;
+        if (exactArmorRuleSet == null && factionArmorRuleSet == null && allArmorRuleSet == null) {
             lines.add("  Armor: no configured rules.");
         } else {
             for (LOTREquipmentControl.ArmorSlot slot : LOTREquipmentControl.ArmorSlot.values()) {
                 LOTREquipmentControl.WeightedItemRule slotRule = exactArmorRuleSet == null ? null
                     : exactArmorRuleSet.slotRules.get(slot);
-                boolean slotFromFaction = false;
+                String slotSource = null;
                 if (slotRule == null && factionArmorRuleSet != null) {
                     slotRule = factionArmorRuleSet.slotRules.get(slot);
-                    slotFromFaction = slotRule != null;
-                    usedFactionArmorRule |= slotFromFaction;
+                    if (slotRule != null) {
+                        slotSource = "faction:" + faction.codeName();
+                    }
+                }
+                if (slotRule == null && allArmorRuleSet != null) {
+                    slotRule = allArmorRuleSet.slotRules.get(slot);
+                    if (slotRule != null) {
+                        slotSource = "all";
+                    }
                 }
                 if (slotRule != null) {
-                    appendChoices(
-                        lines,
-                        capitalize(slot.configName) + factionSourceSuffix(slotFromFaction, faction),
-                        slotRule);
+                    appendChoices(lines, capitalize(slot.configName) + sourceSuffix(slotSource), slotRule);
+                    usedFallbackRule |= slotSource != null;
                 }
             }
         }
 
-        if (weaponFromFaction || usedFactionArmorRule) {
-            lines.add("  Exact NPC rules take priority over faction rules for the same equipment slot.");
+        if (usedFallbackRule) {
+            appendPriority(lines, allWeaponRule != null || allArmorRuleSet != null);
         }
         appendSettings(lines, replaceExisting, customizeHired, customizeNamed);
         return lines;
@@ -155,6 +209,23 @@ public final class LOTREquipmentReport {
         Map<LOTRFaction, LOTREquipmentControl.WeightedItemRule> weaponRules,
         Map<LOTRFaction, LOTREquipmentControl.ArmorRuleSet> armorRules, boolean replaceExisting, boolean customizeHired,
         boolean customizeNamed) {
+        return createFactionExplanation(
+            configuredName,
+            faction,
+            weaponRules,
+            armorRules,
+            null,
+            null,
+            replaceExisting,
+            customizeHired,
+            customizeNamed);
+    }
+
+    static List<String> createFactionExplanation(String configuredName, LOTRFaction faction,
+        Map<LOTRFaction, LOTREquipmentControl.WeightedItemRule> weaponRules,
+        Map<LOTRFaction, LOTREquipmentControl.ArmorRuleSet> armorRules,
+        LOTREquipmentControl.WeightedItemRule allWeaponRule, LOTREquipmentControl.ArmorRuleSet allArmorRuleSet,
+        boolean replaceExisting, boolean customizeHired, boolean customizeNamed) {
         if (faction == null) {
             return Collections.singletonList(
                 "LOTR faction '" + configuredName + "' was not found. Use a faction code such as GONDOR or ROHAN.");
@@ -163,13 +234,54 @@ public final class LOTREquipmentReport {
         List<String> lines = new ArrayList<>();
         lines.add("Equipment rules for faction:" + faction.codeName() + ":");
         LOTREquipmentControl.WeightedItemRule weaponRule = weaponRules.get(faction);
+        String weaponSource = null;
+        if (weaponRule == null) {
+            weaponRule = allWeaponRule;
+            if (weaponRule != null) {
+                weaponSource = "all";
+            }
+        }
+        if (weaponRule == null) {
+            lines.add("  Weapon: no configured rule.");
+        } else {
+            appendChoices(lines, "Weapon" + sourceSuffix(weaponSource), weaponRule);
+        }
+
+        LOTREquipmentControl.ArmorRuleSet armorRuleSet = armorRules.get(faction);
+        if (armorRuleSet == null && allArmorRuleSet == null) {
+            lines.add("  Armor: no configured rules.");
+        } else {
+            for (LOTREquipmentControl.ArmorSlot slot : LOTREquipmentControl.ArmorSlot.values()) {
+                LOTREquipmentControl.WeightedItemRule slotRule = armorRuleSet == null ? null
+                    : armorRuleSet.slotRules.get(slot);
+                String slotSource = null;
+                if (slotRule == null && allArmorRuleSet != null) {
+                    slotRule = allArmorRuleSet.slotRules.get(slot);
+                    if (slotRule != null) {
+                        slotSource = "all";
+                    }
+                }
+                if (slotRule != null) {
+                    appendChoices(lines, capitalize(slot.configName) + sourceSuffix(slotSource), slotRule);
+                }
+            }
+        }
+
+        appendPriority(lines, allWeaponRule != null || allArmorRuleSet != null);
+        appendSettings(lines, replaceExisting, customizeHired, customizeNamed);
+        return lines;
+    }
+
+    static List<String> createAllExplanation(LOTREquipmentControl.WeightedItemRule weaponRule,
+        LOTREquipmentControl.ArmorRuleSet armorRuleSet, boolean replaceExisting, boolean customizeHired,
+        boolean customizeNamed) {
+        List<String> lines = new ArrayList<>();
+        lines.add("Equipment rules for all LOTR NPCs:");
         if (weaponRule == null) {
             lines.add("  Weapon: no configured rule.");
         } else {
             appendChoices(lines, "Weapon", weaponRule);
         }
-
-        LOTREquipmentControl.ArmorRuleSet armorRuleSet = armorRules.get(faction);
         if (armorRuleSet == null) {
             lines.add("  Armor: no configured rules.");
         } else {
@@ -180,8 +292,7 @@ public final class LOTREquipmentReport {
                 }
             }
         }
-
-        lines.add("  Exact NPC rules take priority over faction rules for the same equipment slot.");
+        appendPriority(lines, true);
         appendSettings(lines, replaceExisting, customizeHired, customizeNamed);
         return lines;
     }
@@ -198,11 +309,16 @@ public final class LOTREquipmentReport {
         for (LOTRFaction faction : LOTRFaction.values()) {
             names.add("faction:" + faction.codeName());
         }
+        names.add("all");
         return names.toArray(new String[0]);
     }
 
     private static boolean isFactionTarget(String configuredTarget) {
         return configuredTarget != null && configuredTarget.regionMatches(true, 0, "faction:", 0, "faction:".length());
+    }
+
+    private static boolean isAllTarget(String configuredTarget) {
+        return configuredTarget != null && "all".equalsIgnoreCase(configuredTarget.trim());
     }
 
     private static void appendSettings(List<String> lines, boolean replaceExisting, boolean customizeHired,
@@ -214,8 +330,18 @@ public final class LOTREquipmentReport {
         lines.add("  Existing NPCs are not changed; these rules apply to future natural spawns.");
     }
 
-    private static String factionSourceSuffix(boolean fromFaction, LOTRFaction faction) {
-        return fromFaction ? " (from faction:" + faction.codeName() + ")" : "";
+    private static String sourceSuffix(String source) {
+        return source == null ? "" : " (from " + source + ")";
+    }
+
+    private static void appendPriority(List<String> lines, boolean hasAllRules) {
+        if (hasAllRules) {
+            lines.add(
+                "  Exact NPC rules take priority over faction rules, and faction rules take priority over all-NPC "
+                    + "rules, for the same equipment slot.");
+        } else {
+            lines.add("  Exact NPC rules take priority over faction rules for the same equipment slot.");
+        }
     }
 
     private static void appendChoices(List<String> lines, String label, LOTREquipmentControl.WeightedItemRule rule) {

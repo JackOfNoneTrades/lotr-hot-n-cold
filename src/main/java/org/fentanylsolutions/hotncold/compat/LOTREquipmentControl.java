@@ -27,8 +27,10 @@ public final class LOTREquipmentControl {
 
     private static Map<Class<? extends LOTREntityNPC>, WeightedItemRule> cachedWeaponRules = Collections.emptyMap();
     private static Map<LOTRFaction, WeightedItemRule> cachedFactionWeaponRules = Collections.emptyMap();
+    private static WeightedItemRule cachedAllWeaponRule;
     private static Map<Class<? extends LOTREntityNPC>, ArmorRuleSet> cachedArmorRules = Collections.emptyMap();
     private static Map<LOTRFaction, ArmorRuleSet> cachedFactionArmorRules = Collections.emptyMap();
+    private static ArmorRuleSet cachedAllArmorRules;
 
     private LOTREquipmentControl() {}
 
@@ -50,6 +52,7 @@ public final class LOTREquipmentControl {
         });
         cachedWeaponRules = preparation.weaponRules;
         cachedFactionWeaponRules = preparation.factionWeaponRules;
+        cachedAllWeaponRule = preparation.allWeaponRule;
         return preparation;
     }
 
@@ -71,6 +74,7 @@ public final class LOTREquipmentControl {
         });
         cachedArmorRules = preparation.armorRules;
         cachedFactionArmorRules = preparation.factionArmorRules;
+        cachedAllArmorRules = preparation.allArmorRules;
         return preparation;
     }
 
@@ -95,6 +99,14 @@ public final class LOTREquipmentControl {
 
     static Map<LOTRFaction, ArmorRuleSet> getPreparedFactionArmorRules() {
         return cachedFactionArmorRules;
+    }
+
+    static WeightedItemRule getPreparedAllWeaponRule() {
+        return cachedAllWeaponRule;
+    }
+
+    static ArmorRuleSet getPreparedAllArmorRules() {
+        return cachedAllArmorRules;
     }
 
     static RulePreparation resolveWeaponRules(String[] configuredRules, EntityResolver entityResolver,
@@ -179,6 +191,7 @@ public final class LOTREquipmentControl {
 
         Map<Class<? extends LOTREntityNPC>, WeightedItemRule> resolved = new LinkedHashMap<>();
         Map<LOTRFaction, WeightedItemRule> resolvedFactions = new LinkedHashMap<>();
+        WeightedItemRule resolvedAll = null;
         for (Map.Entry<EquipmentTarget, MutableItemRule> entry : rules.entrySet()) {
             MutableItemRule value = entry.getValue();
             if (!value.choices.isEmpty()) {
@@ -188,12 +201,14 @@ public final class LOTREquipmentControl {
                     value.totalWeight);
                 if (entry.getKey().npcClass != null) {
                     resolved.put(entry.getKey().npcClass, resolvedRule);
-                } else {
+                } else if (entry.getKey().faction != null) {
                     resolvedFactions.put(entry.getKey().faction, resolvedRule);
+                } else {
+                    resolvedAll = resolvedRule;
                 }
             }
         }
-        return new RulePreparation(resolved, resolvedFactions, acceptedChoices, rejectedChoices);
+        return new RulePreparation(resolved, resolvedFactions, resolvedAll, acceptedChoices, rejectedChoices);
     }
 
     static ArmorRulePreparation resolveArmorRules(String[] configuredRules, EntityResolver entityResolver,
@@ -306,6 +321,7 @@ public final class LOTREquipmentControl {
 
         Map<Class<? extends LOTREntityNPC>, ArmorRuleSet> resolved = new LinkedHashMap<>();
         Map<LOTRFaction, ArmorRuleSet> resolvedFactions = new LinkedHashMap<>();
+        ArmorRuleSet resolvedAll = null;
         int slotRuleCount = 0;
         for (Map.Entry<EquipmentTarget, EnumMap<ArmorSlot, MutableItemRule>> npcEntry : rules.entrySet()) {
             EnumMap<ArmorSlot, WeightedItemRule> slotRules = new EnumMap<>(ArmorSlot.class);
@@ -321,13 +337,21 @@ public final class LOTREquipmentControl {
             if (!slotRules.isEmpty()) {
                 if (npcEntry.getKey().npcClass != null) {
                     resolved.put(npcEntry.getKey().npcClass, new ArmorRuleSet(slotRules));
-                } else {
+                } else if (npcEntry.getKey().faction != null) {
                     resolvedFactions.put(npcEntry.getKey().faction, new ArmorRuleSet(slotRules));
+                } else {
+                    resolvedAll = new ArmorRuleSet(slotRules);
                 }
                 slotRuleCount += slotRules.size();
             }
         }
-        return new ArmorRulePreparation(resolved, resolvedFactions, acceptedChoices, rejectedChoices, slotRuleCount);
+        return new ArmorRulePreparation(
+            resolved,
+            resolvedFactions,
+            resolvedAll,
+            acceptedChoices,
+            rejectedChoices,
+            slotRuleCount);
     }
 
     public static boolean applyConfiguredWeapon(LOTREntityNPC npc) {
@@ -339,6 +363,9 @@ public final class LOTREquipmentControl {
         WeightedItemRule rule = cachedWeaponRules.get((Class<? extends LOTREntityNPC>) npc.getClass());
         if (rule == null) {
             rule = cachedFactionWeaponRules.get(npc.getFaction());
+        }
+        if (rule == null) {
+            rule = cachedAllWeaponRule;
         }
         if (rule == null) {
             return false;
@@ -366,7 +393,7 @@ public final class LOTREquipmentControl {
         @SuppressWarnings("unchecked")
         ArmorRuleSet exactRuleSet = cachedArmorRules.get((Class<? extends LOTREntityNPC>) npc.getClass());
         ArmorRuleSet factionRuleSet = cachedFactionArmorRules.get(npc.getFaction());
-        if (exactRuleSet == null && factionRuleSet == null) {
+        if (exactRuleSet == null && factionRuleSet == null && cachedAllArmorRules == null) {
             return 0;
         }
 
@@ -375,6 +402,9 @@ public final class LOTREquipmentControl {
             WeightedItemRule slotRule = exactRuleSet == null ? null : exactRuleSet.slotRules.get(slot);
             if (slotRule == null && factionRuleSet != null) {
                 slotRule = factionRuleSet.slotRules.get(slot);
+            }
+            if (slotRule == null && cachedAllArmorRules != null) {
+                slotRule = cachedAllArmorRules.slotRules.get(slot);
             }
             if (slotRule == null) {
                 continue;
@@ -411,6 +441,9 @@ public final class LOTREquipmentControl {
 
     private static EquipmentTarget resolveTarget(String configuredTarget, String rule, String equipmentType,
         EntityResolver entityResolver) {
+        if ("all".equalsIgnoreCase(configuredTarget)) {
+            return EquipmentTarget.forAll();
+        }
         if (configuredTarget.regionMatches(true, 0, "faction:", 0, "faction:".length())) {
             String factionName = configuredTarget.substring("faction:".length())
                 .trim();
@@ -492,13 +525,16 @@ public final class LOTREquipmentControl {
 
         final Map<Class<? extends LOTREntityNPC>, WeightedItemRule> weaponRules;
         final Map<LOTRFaction, WeightedItemRule> factionWeaponRules;
+        final WeightedItemRule allWeaponRule;
         private final int acceptedChoices;
         private final int rejectedChoices;
 
         private RulePreparation(Map<Class<? extends LOTREntityNPC>, WeightedItemRule> weaponRules,
-            Map<LOTRFaction, WeightedItemRule> factionWeaponRules, int acceptedChoices, int rejectedChoices) {
+            Map<LOTRFaction, WeightedItemRule> factionWeaponRules, WeightedItemRule allWeaponRule, int acceptedChoices,
+            int rejectedChoices) {
             this.weaponRules = Collections.unmodifiableMap(new LinkedHashMap<>(weaponRules));
             this.factionWeaponRules = Collections.unmodifiableMap(new LinkedHashMap<>(factionWeaponRules));
+            this.allWeaponRule = allWeaponRule;
             this.acceptedChoices = acceptedChoices;
             this.rejectedChoices = rejectedChoices;
         }
@@ -509,6 +545,7 @@ public final class LOTREquipmentControl {
                 + weaponRules.size()
                 + " exact NPC type(s)"
                 + describeFactionCount(factionWeaponRules.size())
+                + describeAllTarget(allWeaponRule != null)
                 + "; rejected "
                 + rejectedChoices
                 + " invalid or duplicate choice(s).";
@@ -519,15 +556,17 @@ public final class LOTREquipmentControl {
 
         final Map<Class<? extends LOTREntityNPC>, ArmorRuleSet> armorRules;
         final Map<LOTRFaction, ArmorRuleSet> factionArmorRules;
+        final ArmorRuleSet allArmorRules;
         private final int acceptedChoices;
         private final int rejectedChoices;
         private final int slotRuleCount;
 
         private ArmorRulePreparation(Map<Class<? extends LOTREntityNPC>, ArmorRuleSet> armorRules,
-            Map<LOTRFaction, ArmorRuleSet> factionArmorRules, int acceptedChoices, int rejectedChoices,
-            int slotRuleCount) {
+            Map<LOTRFaction, ArmorRuleSet> factionArmorRules, ArmorRuleSet allArmorRules, int acceptedChoices,
+            int rejectedChoices, int slotRuleCount) {
             this.armorRules = Collections.unmodifiableMap(new LinkedHashMap<>(armorRules));
             this.factionArmorRules = Collections.unmodifiableMap(new LinkedHashMap<>(factionArmorRules));
+            this.allArmorRules = allArmorRules;
             this.acceptedChoices = acceptedChoices;
             this.rejectedChoices = rejectedChoices;
             this.slotRuleCount = slotRuleCount;
@@ -541,6 +580,7 @@ public final class LOTREquipmentControl {
                 + armorRules.size()
                 + " exact NPC type(s)"
                 + describeFactionCount(factionArmorRules.size())
+                + describeAllTarget(allArmorRules != null)
                 + "; rejected "
                 + rejectedChoices
                 + " invalid or duplicate choice(s).";
@@ -563,6 +603,7 @@ public final class LOTREquipmentControl {
                 + weaponPreparation.weaponRules.size()
                 + " exact NPC type(s)"
                 + describeFactionCount(weaponPreparation.factionWeaponRules.size())
+                + describeAllTarget(weaponPreparation.allWeaponRule != null)
                 + ", and "
                 + armorPreparation.acceptedChoices
                 + " armor choice(s) across "
@@ -571,6 +612,7 @@ public final class LOTREquipmentControl {
                 + armorPreparation.armorRules.size()
                 + " exact NPC type(s)"
                 + describeFactionCount(armorPreparation.factionArmorRules.size())
+                + describeAllTarget(armorPreparation.allArmorRules != null)
                 + "; rejected "
                 + (weaponPreparation.rejectedChoices + armorPreparation.rejectedChoices)
                 + " invalid or duplicate choice(s). Existing NPCs were not changed.";
@@ -579,6 +621,10 @@ public final class LOTREquipmentControl {
 
     private static String describeFactionCount(int factionCount) {
         return factionCount == 0 ? "" : " and " + factionCount + " faction(s)";
+    }
+
+    private static String describeAllTarget(boolean hasAllTarget) {
+        return hasAllTarget ? " and an all-NPC fallback" : "";
     }
 
     static final class ArmorRuleSet {
@@ -681,18 +727,24 @@ public final class LOTREquipmentControl {
 
         private final Class<? extends LOTREntityNPC> npcClass;
         private final LOTRFaction faction;
+        private final boolean all;
 
-        private EquipmentTarget(Class<? extends LOTREntityNPC> npcClass, LOTRFaction faction) {
+        private EquipmentTarget(Class<? extends LOTREntityNPC> npcClass, LOTRFaction faction, boolean all) {
             this.npcClass = npcClass;
             this.faction = faction;
+            this.all = all;
         }
 
         private static EquipmentTarget forNPCClass(Class<? extends LOTREntityNPC> npcClass) {
-            return new EquipmentTarget(npcClass, null);
+            return new EquipmentTarget(npcClass, null, false);
         }
 
         private static EquipmentTarget forFaction(LOTRFaction faction) {
-            return new EquipmentTarget(null, faction);
+            return new EquipmentTarget(null, faction, false);
+        }
+
+        private static EquipmentTarget forAll() {
+            return new EquipmentTarget(null, null, true);
         }
 
         @Override
@@ -704,12 +756,12 @@ public final class LOTREquipmentControl {
                 return false;
             }
             EquipmentTarget other = (EquipmentTarget) value;
-            return npcClass == other.npcClass && faction == other.faction;
+            return npcClass == other.npcClass && faction == other.faction && all == other.all;
         }
 
         @Override
         public int hashCode() {
-            return npcClass != null ? npcClass.hashCode() : faction.hashCode();
+            return npcClass != null ? npcClass.hashCode() : faction != null ? faction.hashCode() : 1;
         }
     }
 }

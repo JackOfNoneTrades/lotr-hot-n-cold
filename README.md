@@ -180,6 +180,7 @@ S:lotrNPCWeaponRules <
     LOTR.GondorSoldier;lotr:hammerGondor;3
     LOTR.GondorSoldier;empty;1
     faction:ROHAN;lotr:swordRohan;10
+    all;lotr:swordBronze;1
 >
 ```
 
@@ -208,9 +209,9 @@ Each configured armor slot makes its own weighted selection. Items that are not 
 slot, are rejected with a warning rather than equipped incorrectly.
 
 A target beginning with `faction:` applies to every NPC whose LOTR faction matches that code. For example,
-`faction:GONDOR` can provide a common equipment pool for Gondor soldiers, archers, and other Gondor NPCs. An exact NPC
-rule takes priority over its faction rule for the same weapon or armor slot, allowing broad defaults with specific
-exceptions.
+`faction:GONDOR` can provide a common equipment pool for Gondor soldiers, archers, and other Gondor NPCs. The target
+`all` provides a fallback for every LOTR NPC. Priority is exact NPC rule, then faction rule, then `all`, independently
+for the weapon and each armor slot. This allows broad defaults with specific exceptions.
 
 The special item name `empty` gives weapons and armor slots a weighted chance to remain empty. Its likelihood is
 calculated like any other choice: a helmet rule with item weights `10` and `1`, plus an empty weight of `1`, has a
@@ -245,10 +246,11 @@ To inspect the prepared choices, weights, mode, and safety settings for an exact
 ```
 /hotncold equipment explain LOTR.GondorSoldier
 /hotncold equipment explain faction:GONDOR
+/hotncold equipment explain all
 ```
 
-NPC names are exact and case-sensitive. Faction codes are case-insensitive. Tab completion is available for registered
-LOTR NPCs and faction targets.
+NPC names are exact and case-sensitive. Faction codes and `all` are case-insensitive. Tab completion is available for
+registered LOTR NPCs, faction targets, and `all`.
 
 ## Downloads
 <!--* [CurseForge ![curse](images/icons/curse.png)](https://www.curseforge.com/minecraft/mc-mods/fentlib)

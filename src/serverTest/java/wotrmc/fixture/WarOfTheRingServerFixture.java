@@ -47,6 +47,7 @@ import lotr.common.LOTRDimension;
 import lotr.common.LOTRMod;
 import lotr.common.entity.npc.LOTREntityGondorArcher;
 import lotr.common.entity.npc.LOTREntityGondorSoldier;
+import lotr.common.entity.npc.LOTREntityRohanMan;
 import lotr.common.world.biome.LOTRBiome;
 import lotr.common.world.spawning.LOTRSpawnerAnimals;
 import wotrmc.common.entities.ServerTestAnimal;
@@ -164,22 +165,27 @@ public final class WarOfTheRingServerFixture {
 
         Object gondorSoldierName = EntityList.classToStringMapping.get(LOTREntityGondorSoldier.class);
         Object rohanSwordName = Item.itemRegistry.getNameForObject(LOTRMod.swordRohan);
-        if (!(gondorSoldierName instanceof String) || !(rohanSwordName instanceof String)) {
+        Object gondorSwordName = Item.itemRegistry.getNameForObject(LOTRMod.swordGondor);
+        if (!(gondorSoldierName instanceof String) || !(rohanSwordName instanceof String)
+            || !(gondorSwordName instanceof String)) {
             throw new AssertionError(
                 "Could not resolve genuine LOTR equipment fixture names: entity=" + gondorSoldierName
                     + ", item="
-                    + rohanSwordName);
+                    + rohanSwordName
+                    + ", fallbackItem="
+                    + gondorSwordName);
         }
         String[] configuredWeaponRules = Config.lotrNPCWeaponRules;
-        Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 2);
+        Config.lotrNPCWeaponRules = Arrays.copyOf(configuredWeaponRules, configuredWeaponRules.length + 3);
         Config.lotrNPCWeaponRules[configuredWeaponRules.length] = gondorSoldierName + ";" + rohanSwordName + ";1";
         Config.lotrNPCWeaponRules[configuredWeaponRules.length + 1] = "faction:GONDOR;" + rohanSwordName + ";1";
+        Config.lotrNPCWeaponRules[configuredWeaponRules.length + 2] = "all;" + gondorSwordName + ";1";
 
         String[] armorSlots = { "boots", "leggings", "chest", "helmet" };
         Item[] rohanArmor = { LOTRMod.bootsRohan, LOTRMod.legsRohan, LOTRMod.bodyRohan, LOTRMod.helmetRohan };
         String[] configuredArmorRules = Config.lotrNPCArmorRules;
         Config.lotrNPCArmorRules = Arrays
-            .copyOf(configuredArmorRules, configuredArmorRules.length + armorSlots.length + 3);
+            .copyOf(configuredArmorRules, configuredArmorRules.length + armorSlots.length + 4);
         for (int armorIndex = 0; armorIndex < armorSlots.length; armorIndex++) {
             Object itemName = Item.itemRegistry.getNameForObject(rohanArmor[armorIndex]);
             if (!(itemName instanceof String)) {
@@ -201,6 +207,9 @@ public final class WarOfTheRingServerFixture {
             + ";1";
         Config.lotrNPCArmorRules[configuredArmorRules.length + armorSlots.length + 2] = "faction:GONDOR;chest;"
             + rohanBodyName
+            + ";1";
+        Object gondorHelmetName = Item.itemRegistry.getNameForObject(LOTRMod.helmetGondor);
+        Config.lotrNPCArmorRules[configuredArmorRules.length + armorSlots.length + 3] = "all;helmet;" + gondorHelmetName
             + ";1";
     }
 
@@ -254,9 +263,16 @@ public final class WarOfTheRingServerFixture {
         List<String> factionEquipmentReport = LOTREquipmentReport.createEquipmentExplanation("faction:GONDOR");
         boolean factionEquipmentExplainCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold equipment explain faction:GONDOR") == 1;
+        List<String> allEquipmentReport = LOTREquipmentReport.createEquipmentExplanation("all");
+        boolean allEquipmentExplainCommandPassed = server.getCommandManager()
+            .executeCommand(server, "hotncold equipment explain all") == 1;
         String gondorArcherName = (String) EntityList.classToStringMapping.get(LOTREntityGondorArcher.class);
         List<String> inheritedEquipmentReport = LOTREquipmentReport.createEquipmentExplanation(
             gondorArcherName,
+            DimensionManager.getWorld(LOTRDimension.MIDDLE_EARTH.dimensionID));
+        String rohanManName = (String) EntityList.classToStringMapping.get(LOTREntityRohanMan.class);
+        List<String> allFallbackReport = LOTREquipmentReport.createEquipmentExplanation(
+            rohanManName,
             DimensionManager.getWorld(LOTRDimension.MIDDLE_EARTH.dimensionID));
         boolean equipmentExplainReportPassed = containsLine(equipmentReport, "swordRohan")
             && containsLine(equipmentReport, "Helmet choices")
@@ -264,9 +280,13 @@ public final class WarOfTheRingServerFixture {
             && containsLine(equipmentReport, "Existing NPCs are not changed")
             && containsLine(factionEquipmentReport, "faction:GONDOR")
             && containsLine(factionEquipmentReport, "Exact NPC rules take priority")
+            && containsLine(allEquipmentReport, "Equipment rules for all LOTR NPCs")
+            && containsLine(allEquipmentReport, "swordGondor")
             && containsLine(inheritedEquipmentReport, "Weapon (from faction:GONDOR)")
             && containsLine(inheritedEquipmentReport, "Chest choices")
-            && containsLine(inheritedEquipmentReport, "Helmet (from faction:GONDOR)");
+            && containsLine(inheritedEquipmentReport, "Helmet (from faction:GONDOR)")
+            && containsLine(allFallbackReport, "Weapon (from all)")
+            && containsLine(allFallbackReport, "Helmet (from all)");
         boolean equipmentReloadCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold equipment reload") == 1
             && server.getCommandManager()
@@ -290,6 +310,7 @@ public final class WarOfTheRingServerFixture {
             || !equipmentRulePassed
             || !equipmentExplainCommandPassed
             || !factionEquipmentExplainCommandPassed
+            || !allEquipmentExplainCommandPassed
             || !equipmentExplainReportPassed
             || !equipmentReloadCommandPassed
             || remainingWarOfTheRingEntries != 0) {
@@ -331,6 +352,8 @@ public final class WarOfTheRingServerFixture {
                     + equipmentExplainCommandPassed
                     + ", factionEquipmentExplainCommandPassed="
                     + factionEquipmentExplainCommandPassed
+                    + ", allEquipmentExplainCommandPassed="
+                    + allEquipmentExplainCommandPassed
                     + ", equipmentExplainReportPassed="
                     + equipmentExplainReportPassed
                     + ", equipmentReloadCommandPassed="
@@ -478,6 +501,7 @@ public final class WarOfTheRingServerFixture {
                 && spawnedSoldier.getEquipmentInSlot(4)
                     .getItem() == LOTRMod.helmetRohan
                 && verifyEmptyArmorChoice(world)
+                && verifyAllEquipmentFallback(world)
                 && verifyFillEmptyMode(world)
                 && verifyProtectedEquipmentNPCs(world);
         } finally {
@@ -503,6 +527,18 @@ public final class WarOfTheRingServerFixture {
             && archer.getEquipmentInSlot(3) == null
             && archer.getEquipmentInSlot(4)
                 .getItem() == LOTRMod.helmetRohan;
+    }
+
+    private static boolean verifyAllEquipmentFallback(WorldServer world) {
+        LOTREntityRohanMan rohanMan = new LOTREntityRohanMan(world);
+        rohanMan.onSpawnWithEgg(null);
+        boolean weaponApplied = LOTREquipmentControl.applyConfiguredWeapon(rohanMan);
+        int appliedArmorSlots = LOTREquipmentControl.applyConfiguredArmor(rohanMan);
+        return weaponApplied && appliedArmorSlots == 1
+            && rohanMan.npcItemsInv.getMeleeWeapon()
+                .getItem() == LOTRMod.swordGondor
+            && rohanMan.getEquipmentInSlot(4)
+                .getItem() == LOTRMod.helmetGondor;
     }
 
     private static boolean verifyFillEmptyMode(WorldServer world) {

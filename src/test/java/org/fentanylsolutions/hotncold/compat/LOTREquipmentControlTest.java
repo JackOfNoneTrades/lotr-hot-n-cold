@@ -180,6 +180,33 @@ public class LOTREquipmentControlTest {
     }
 
     @Test
+    public void groupsCaseInsensitiveAllNPCFallbackRules() {
+        LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;1", "faction:GONDOR;minecraft:stone_sword;1",
+                "all;minecraft:bow;3", "ALL;empty;1", "all;minecraft:bow;2" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;1",
+                "faction:GONDOR;chest;minecraft:iron_chestplate;1", "all;leggings;minecraft:iron_leggings;2",
+                "ALL;boots;minecraft:iron_boots;1" },
+            entityResolver(),
+            itemResolver());
+
+        assertEquals(2, weapons.allWeaponRule.choices.size());
+        assertEquals(4, weapons.allWeaponRule.totalWeight);
+        assertEquals(2, armor.allArmorRules.slotRules.size());
+        assertEquals(
+            "LOTR NPC equipment summary: prepared 4 weapon choice(s) for 1 exact NPC type(s) and 1 faction(s) and "
+                + "an all-NPC fallback; rejected 1 invalid or duplicate choice(s).",
+            weapons.describeStartup());
+        assertEquals(
+            "LOTR NPC armor summary: prepared 4 choice(s) across 4 slot rule(s) for 1 exact NPC type(s) and 1 "
+                + "faction(s) and an all-NPC fallback; rejected 0 invalid or duplicate choice(s).",
+            armor.describeStartup());
+    }
+
+    @Test
     public void protectsHiredAndCustomNamedNPCsUnlessEnabled() {
         boolean configuredHired = Config.customizeHiredLOTREquipment;
         boolean configuredNamed = Config.customizeNamedLOTREquipment;
@@ -352,6 +379,49 @@ public class LOTREquipmentControlTest {
                     false,
                     false)
                 .get(0));
+    }
+
+    @Test
+    public void explainsAllFallbackAndThreeLevelPriority() {
+        LOTREquipmentControl.RulePreparation weapons = LOTREquipmentControl.resolveWeaponRules(
+            new String[] { "LOTR.GondorSoldier;minecraft:iron_sword;1", "faction:GONDOR;minecraft:stone_sword;1",
+                "all;minecraft:bow;1" },
+            entityResolver(),
+            itemResolver());
+        LOTREquipmentControl.ArmorRulePreparation armor = LOTREquipmentControl.resolveArmorRules(
+            new String[] { "LOTR.GondorSoldier;helmet;minecraft:iron_helmet;1",
+                "faction:GONDOR;chest;minecraft:iron_chestplate;1", "all;helmet;minecraft:chainmail_helmet;1",
+                "all;leggings;minecraft:iron_leggings;1" },
+            entityResolver(),
+            itemResolver());
+
+        List<String> effectiveLines = LOTREquipmentReport.createEquipmentExplanation(
+            "LOTR.GondorSoldier",
+            LOTREntityGondorSoldier.class,
+            weapons.weaponRules,
+            armor.armorRules,
+            LOTRFaction.GONDOR,
+            weapons.factionWeaponRules,
+            armor.factionArmorRules,
+            weapons.allWeaponRule,
+            armor.allArmorRules,
+            true,
+            false,
+            false);
+        List<String> allLines = LOTREquipmentReport
+            .createAllExplanation(weapons.allWeaponRule, armor.allArmorRules, true, false, false);
+
+        assertTrue(effectiveLines.contains("  Weapon choices (total weight 1):"));
+        assertTrue(effectiveLines.contains("    minecraft:iron_sword - weight 1 (100.0%)"));
+        assertFalse(effectiveLines.contains("    minecraft:stone_sword - weight 1 (100.0%)"));
+        assertFalse(effectiveLines.contains("    minecraft:bow - weight 1 (100.0%)"));
+        assertTrue(effectiveLines.contains("  Chest (from faction:GONDOR) choices (total weight 1):"));
+        assertTrue(effectiveLines.contains("  Leggings (from all) choices (total weight 1):"));
+        assertTrue(effectiveLines.contains("  Helmet choices (total weight 1):"));
+        assertEquals("Equipment rules for all LOTR NPCs:", allLines.get(0));
+        assertTrue(allLines.contains("  Weapon choices (total weight 1):"));
+        assertTrue(allLines.contains("  Leggings choices (total weight 1):"));
+        assertTrue(allLines.contains("  Helmet choices (total weight 1):"));
     }
 
     private static LOTREquipmentControl.EntityResolver entityResolver() {
