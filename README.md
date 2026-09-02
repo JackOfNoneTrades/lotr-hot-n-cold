@@ -8,6 +8,9 @@ This mod allows to grant immunity from frost and heat damage for arbitrary mobs,
 It also allows to configure which biomes are hot or frosty. This mod is compatible with the [War of the Ring mod](https://www.curseforge.com/minecraft/mc-mods/war-of-the-ring-mc) and can optionally provide LOTR biome temperatures to EnviroMine.
 
 ## Usage
+Ready-to-copy configurations are available in [CONFIG_EXAMPLES.md](CONFIG_EXAMPLES.md). Existing installations should
+also read [MIGRATION.md](MIGRATION.md) before enabling the new spawn or equipment controls.
+
 Turn on the `printMobs` option in the config to print all possible entities to the console.
 Then add those names in the respective config lists:
 ```
@@ -189,12 +192,12 @@ faction, or `all`.
 Add one line for every possible weapon:
 ```
 S:lotrNPCWeaponRules <
-    LOTR.GondorSoldier;lotr:swordGondor;10
-    LOTR.GondorSoldier;lotr:hammerGondor;3
-    LOTR.GondorSoldier;empty;1
-    group:guards;lotr:swordGondor;5
-    faction:ROHAN;lotr:swordRohan;10
-    all;lotr:swordBronze;1
+    lotr.GondorSoldier;lotr:item.swordGondor;10
+    lotr.GondorSoldier;lotr:item.hammerGondor;3
+    lotr.GondorSoldier;empty;1
+    group:guards;lotr:item.swordGondor;5
+    faction:ROHAN;lotr:item.swordRohan;10
+    all;lotr:item.swordBronze;1
 >
 ```
 
@@ -205,9 +208,9 @@ duplicate choices are rejected with a clear warning, and startup prints a short 
 Ranged weapons use the same target, item, and weight format in their own setting:
 ```
 S:lotrNPCRangedWeaponRules <
-    LOTR.GondorArcher;lotr:item.gondorBow;10
-    LOTR.GondorArcher;lotr:item.ironCrossbow;2
-    LOTR.GondorArcher;empty;1
+    lotr.GondorArcher;lotr:item.gondorBow;10
+    lotr.GondorArcher;lotr:item.ironCrossbow;2
+    lotr.GondorArcher;empty;1
 >
 ```
 
@@ -217,9 +220,9 @@ bow or other ranged weapon keeps it.
 LOTR shields use their built-in shield codes rather than item registry names:
 ```
 S:lotrNPCShieldRules <
-    LOTR.GondorSoldier;ALIGNMENT_GONDOR;10
-    LOTR.GondorSoldier;ALIGNMENT_ROHAN;2
-    LOTR.GondorSoldier;empty;1
+    lotr.GondorSoldier;ALIGNMENT_GONDOR;10
+    lotr.GondorSoldier;ALIGNMENT_ROHAN;2
+    lotr.GondorSoldier;empty;1
     faction:GONDOR;ALIGNMENT_GONDOR;10
 >
 ```
@@ -237,12 +240,12 @@ Armor uses `target;slot;itemName;weight`, with independent choices for `boots`, 
 `helmet`:
 ```
 S:lotrNPCArmorRules <
-    LOTR.GondorSoldier;helmet;lotr:helmetGondor;10
-    LOTR.GondorSoldier;helmet;lotr:helmetGondorWinged;1
-    LOTR.GondorSoldier;helmet;empty;1
-    LOTR.GondorSoldier;chest;lotr:bodyGondor;10
-    LOTR.GondorSoldier;leggings;lotr:legsGondor;10
-    LOTR.GondorSoldier;boots;lotr:bootsGondor;10
+    lotr.GondorSoldier;helmet;lotr:item.helmetGondor;10
+    lotr.GondorSoldier;helmet;lotr:item.helmetGondorWinged;1
+    lotr.GondorSoldier;helmet;empty;1
+    lotr.GondorSoldier;chest;lotr:item.bodyGondor;10
+    lotr.GondorSoldier;leggings;lotr:item.legsGondor;10
+    lotr.GondorSoldier;boots;lotr:item.bootsGondor;10
 >
 ```
 
@@ -252,11 +255,11 @@ slot, are rejected with a warning rather than equipped incorrectly.
 Define your own cross-faction or profession-style groups by listing one exact NPC name per member:
 ```
 S:lotrNPCGroupMembers <
-    guards;LOTR.GondorSoldier
-    guards;LOTR.GondorArcher
-    guards;LOTR.RohanWarrior
-    archers;LOTR.GondorArcher
-    archers;LOTR.RohanArcher
+    guards;lotr.GondorSoldier
+    guards;lotr.GondorArcher
+    guards;lotr.RohanWarrior
+    archers;lotr.GondorArcher
+    archers;lotr.RohanArcher
 >
 ```
 
@@ -305,7 +308,7 @@ spawns; it does not alter NPCs already in the world.
 
 To inspect the prepared choices, weights, mode, and safety settings for an exact NPC type, use:
 ```
-/hotncold equipment explain LOTR.GondorSoldier
+/hotncold equipment explain lotr.GondorSoldier
 /hotncold equipment explain group:guards
 /hotncold equipment explain faction:GONDOR
 /hotncold equipment explain all

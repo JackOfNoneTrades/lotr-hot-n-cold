@@ -196,9 +196,9 @@ public class Config {
                 Configuration.CATEGORY_GENERAL,
                 "lotrNPCGroupMembers",
                 lotrNPCGroupMembers,
-                "Custom NPC groups in the format groupName;LOTR.NPCName. Add one line per member, then target the "
+                "Custom NPC groups in the format groupName;lotr.NPCName. Add one line per member, then target the "
                     + "group with group:groupName in any equipment rule. Group names ignore capitalization and may "
-                    + "contain letters, numbers, underscores, and hyphens. Example: guards;LOTR.GondorSoldier")
+                    + "contain letters, numbers, underscores, and hyphens. Example: guards;lotr.GondorSoldier")
             .getStringList();
 
         customizeHiredLOTREquipment = configuration.getBoolean(
@@ -247,7 +247,7 @@ public class Config {
                     + "item name for a weighted empty-hand chance. Priority is exact NPC, then group, faction, and "
                     + "all. Entity and item "
                     + "names are exact and case-sensitive. Example: "
-                    + "LOTR.GondorSoldier;lotr:swordGondor;10")
+                    + "lotr.GondorSoldier;lotr:item.swordGondor;10")
             .getStringList();
 
         lotrNPCRangedWeaponRules = configuration
@@ -260,7 +260,7 @@ public class Config {
                     + "an item name for a weighted chance to have no ranged weapon. Priority is exact NPC, then "
                     + "group, faction, and all. "
                     + "Entity and item names are exact and case-sensitive. Example: "
-                    + "LOTR.GondorArcher;lotr:item.gondorBow;10")
+                    + "lotr.GondorArcher;lotr:item.gondorBow;10")
             .getStringList();
 
         lotrNPCShieldRules = configuration.get(
@@ -270,8 +270,8 @@ public class Config {
             "Weighted LOTR shield choices in the format target;shieldName;weight. A target can be an exact "
                 + "LOTR NPC name, group:GROUP_NAME, faction:FACTION_CODE such as faction:GONDOR, or all. Shield names are LOTR "
                 + "shield codes such as ALIGNMENT_GONDOR. Use empty for a weighted no-shield chance. Priority "
-                + "is exact NPC, then faction, then all. Example: "
-                + "LOTR.GondorSoldier;ALIGNMENT_GONDOR;10")
+                + "is exact NPC, then group, faction, and all. Example: "
+                + "lotr.GondorSoldier;ALIGNMENT_GONDOR;10")
             .getStringList();
 
         lotrNPCArmorRules = configuration.get(
@@ -281,8 +281,8 @@ public class Config {
             "Weighted armor choices in the format target;slot;itemName;weight. A target can be an exact LOTR NPC "
                 + "name, group:GROUP_NAME, faction:FACTION_CODE such as faction:GONDOR, or all. Slots are boots, leggings, chest, "
                 + "and helmet. Use empty for a weighted empty slot chance. Priority per slot is exact NPC, then "
-                + "faction, then all. Example: "
-                + "LOTR.GondorSoldier;helmet;lotr:helmetGondor;10")
+                + "group, faction, and all. Example: "
+                + "lotr.GondorSoldier;helmet;lotr:item.helmetGondor;10")
             .getStringList();
     }
 

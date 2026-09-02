@@ -249,7 +249,7 @@ public final class LOTREquipmentControl {
             }
             String[] fields = member.split(";", -1);
             if (fields.length != 2) {
-                HotNCold.LOG.warn("Invalid LOTR NPC group member '{}'; expected groupName;LOTR.NPCName", member);
+                HotNCold.LOG.warn("Invalid LOTR NPC group member '{}'; expected groupName;lotr.NPCName", member);
                 rejectedMembers++;
                 continue;
             }
