@@ -35,6 +35,7 @@ import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnReport;
 import org.fentanylsolutions.hotncold.compat.WarOfTheRingSpawnCompat;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -279,6 +280,8 @@ public final class WarOfTheRingServerFixture {
         boolean controlPreserved = spawnEntries.contains(controlEntry);
         int remainingWarOfTheRingEntries = WarOfTheRingSpawnCompat.countWarOfTheRingAnimalSpawns();
         boolean lateSpawnGuardPassed = verifyLateSpawnGuard();
+        int spawnStressIterations = Integer.getInteger("hotncold.fixture.spawnStressIterations", 0);
+        boolean spawnStressPassed = verifyElephantSpawnStress(spawnStressIterations);
         MinecraftServer server = MinecraftServer.getServer();
         boolean dumpCommandPassed = server.getCommandManager()
             .executeCommand(server, "hotncold spawns dump shire creature") == 1;
@@ -336,6 +339,8 @@ public final class WarOfTheRingServerFixture {
             .executeCommand(server, "hotncold equipment reload") == 1
             && server.getCommandManager()
                 .executeCommand(server, "hotncold equipment reload") == 1;
+        boolean badMobsExpectationPassed = Loader.isModLoaded("badmobs")
+            == Boolean.getBoolean("hotncold.fixture.expectBadMobs");
 
         if (!ruleReapplicationPassed || !fixtureRemoved
             || !blockedRemoved
@@ -359,6 +364,8 @@ public final class WarOfTheRingServerFixture {
             || !groupEquipmentExplainCommandPassed
             || !equipmentExplainReportPassed
             || !equipmentReloadCommandPassed
+            || !badMobsExpectationPassed
+            || !spawnStressPassed
             || remainingWarOfTheRingEntries != 0) {
             throw new AssertionError(
                 "Spawn cleanup integration check failed: ruleReapplicationPassed=" + ruleReapplicationPassed
@@ -410,12 +417,21 @@ public final class WarOfTheRingServerFixture {
                     + inheritedEquipmentReport
                     + ", equipmentReloadCommandPassed="
                     + equipmentReloadCommandPassed
+                    + ", badMobsExpectationPassed="
+                    + badMobsExpectationPassed
+                    + ", spawnStressPassed="
+                    + spawnStressPassed
                     + ", remainingWarOfTheRingEntries="
                     + remainingWarOfTheRingEntries);
         }
 
         LOG.info(
             "SERVER_FIXTURE_PASSED: additions and blocks changed only their targets; duplicates and controls handled");
+        if (spawnStressIterations > 0) {
+            LOG.info(
+                "SERVER_SPAWN_STRESS_PASSED: {} blocked Mo' Creatures elephant spawn checks completed without a crash",
+                spawnStressIterations);
+        }
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -875,6 +891,30 @@ public final class WarOfTheRingServerFixture {
             && worldGenDenied
             && directSpawnAllowed
             && realElephantDenied;
+    }
+
+    private static boolean verifyElephantSpawnStress(int iterations) {
+        if (iterations <= 0) {
+            return true;
+        }
+        WorldServer world = DimensionManager.getWorld(LOTRDimension.MIDDLE_EARTH.dimensionID);
+        if (world == null) {
+            return false;
+        }
+        int x = 8;
+        int z = 8;
+        int y = world.getTopSolidOrLiquidBlock(x, z) + 1;
+        for (int attempt = 0; attempt < iterations; attempt++) {
+            Entity elephant = EntityList.createEntityByName("MoCreatures.Elephant", world);
+            if (!(elephant instanceof EntityLiving)) {
+                return false;
+            }
+            elephant.setLocationAndAngles(x + 0.5D, y, z + 0.5D, 0F, 0F);
+            if (ForgeEventFactory.canEntitySpawn((EntityLiving) elephant, world, x, y, z) != Event.Result.DENY) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static int countMatchingEntries(List entries, Class entityClass, int weight, int minimumGroupSize,

@@ -51,6 +51,9 @@ dependencies {
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
+        if (project.hasProperty("badMobsRuntime")) {
+            runtimeOnlyNonPublishable(rfg.deobf("curse.maven:bad-mobs-233258:2250741"))
+        }
     }
 
     testImplementation("junit:junit:4.13.2")

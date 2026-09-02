@@ -45,6 +45,26 @@ tasks.withType<JavaExec>().matching { it.name.matches(Regex("runClient(17|21|25)
     classpath = files(clientFixture.output, normalClasspath)
 }
 
+tasks.withType<JavaExec>().configureEach {
+    if (project.hasProperty("badMobsRuntime")) {
+        systemProperty("hotncold.fixture.expectBadMobs", "true")
+    }
+    project.findProperty("spawnStressIterations")?.toString()?.let {
+        systemProperty("hotncold.fixture.spawnStressIterations", it)
+    }
+    if (project.hasProperty("clientSmokeTest")) {
+        systemProperty("hotncold.fixture.clientSmokeTest", "true")
+        systemProperty(
+            "hotncold.fixture.clientWorld",
+            project.findProperty("clientFixtureWorld")?.toString() ?: "hotncold-client-fixture",
+        )
+        systemProperty(
+            "hotncold.fixture.clientTerrain",
+            project.findProperty("clientFixtureTerrain")?.toString() ?: "new",
+        )
+    }
+}
+
 tasks.withType<JavaExec>().matching { it.name.matches(Regex("runClient(17|21|25)")) }.configureEach {
     dependsOn(prepareModernClientConfig)
 }
@@ -55,4 +75,39 @@ tasks.register<Jar>("serverFixtureJar") {
     from(serverFixture.output)
     archiveFileName.set("wotrmc-server-fixture.jar")
     destinationDirectory.set(layout.projectDirectory.dir("run/server/mods"))
+}
+
+val badMobsServerFixtureJar by tasks.registering(Jar::class) {
+    group = "verification"
+    description = "Builds the server fixture in the isolated Bad Mobs test directory."
+    from(serverFixture.output)
+    archiveFileName.set("wotrmc-server-fixture.jar")
+    destinationDirectory.set(layout.projectDirectory.dir("run/badmobs-server/mods"))
+}
+
+val prepareBadMobsServer by tasks.registering {
+    group = "verification"
+    description = "Prepares the isolated Bad Mobs compatibility server."
+
+    doLast {
+        val serverDirectory = layout.projectDirectory.dir("run/badmobs-server").asFile
+        serverDirectory.mkdirs()
+        val eulaFile = serverDirectory.resolve("eula.txt")
+        if (!eulaFile.exists()) {
+            eulaFile.writeText("eula=true\n")
+        }
+        val propertiesFile = serverDirectory.resolve("server.properties")
+        propertiesFile.writeText(
+            "level-name=hotncold-badmobs-test\n" +
+                "online-mode=false\n" +
+                "server-port=25577\n",
+        )
+    }
+}
+
+tasks.withType<JavaExec>().matching { it.name.matches(Regex("runServer(17|21|25)?")) }.configureEach {
+    if (project.hasProperty("badMobsRuntime")) {
+        dependsOn(badMobsServerFixtureJar, prepareBadMobsServer)
+        workingDir(layout.projectDirectory.dir("run/badmobs-server"))
+    }
 }
