@@ -16,6 +16,7 @@ public class Config {
     public static boolean autoPopulateEnviromineBiomeTemperatures = false;
     public static boolean removeAllWarOfTheRingAnimalSpawns = false;
     public static boolean logBlockedSpawnAttempts = false;
+    public static boolean logLOTREquipmentChanges = false;
     public static boolean replaceExistingLOTREquipment = true;
     public static boolean customizeHiredLOTREquipment = false;
     public static boolean customizeNamedLOTREquipment = false;
@@ -191,6 +192,14 @@ public class Config {
     }
 
     private static void readNPCEquipmentConfiguration(Configuration configuration) {
+        logLOTREquipmentChanges = configuration.getBoolean(
+            "logLOTREquipmentChanges",
+            Configuration.CATEGORY_GENERAL,
+            logLOTREquipmentChanges,
+            "Log each naturally spawned LOTR NPC whose configured equipment is applied, including its resulting "
+                + "weapon, armor, and shield. Also log protected NPCs that are deliberately skipped. Disabled by "
+                + "default because busy servers may produce many lines.");
+
         lotrNPCGroupMembers = configuration
             .get(
                 Configuration.CATEGORY_GENERAL,

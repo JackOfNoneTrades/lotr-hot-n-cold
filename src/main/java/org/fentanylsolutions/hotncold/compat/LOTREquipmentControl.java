@@ -18,6 +18,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.MathHelper;
 
 import org.fentanylsolutions.hotncold.Config;
 import org.fentanylsolutions.hotncold.HotNCold;
@@ -821,12 +822,118 @@ public final class LOTREquipmentControl {
         IEntityLivingData result = entity.onSpawnWithEgg(livingData);
         if (entity instanceof LOTREntityNPC) {
             LOTREntityNPC npc = (LOTREntityNPC) entity;
-            applyConfiguredWeapon(npc);
-            applyConfiguredRangedWeapon(npc);
-            applyConfiguredArmor(npc);
-            applyConfiguredShield(npc);
+            if (!hasConfiguredEquipmentFor(npc)) {
+                return result;
+            }
+            if (!shouldApplyConfiguredEquipment(npc)) {
+                if (Config.logLOTREquipmentChanges) {
+                    HotNCold.LOG.info(
+                        "Skipped configured LOTR NPC equipment for {} at {} because it is protected: {}",
+                        registeredEntityName(npc),
+                        describePosition(npc),
+                        describeActiveProtections(npc));
+                }
+                return result;
+            }
+
+            boolean weaponApplied = applyConfiguredWeapon(npc);
+            boolean rangedApplied = applyConfiguredRangedWeapon(npc);
+            int armorSlotsApplied = applyConfiguredArmor(npc);
+            boolean shieldApplied = applyConfiguredShield(npc);
+            if (Config.logLOTREquipmentChanges
+                && (weaponApplied || rangedApplied || armorSlotsApplied > 0 || shieldApplied)) {
+                HotNCold.LOG.info(
+                    "Applied configured LOTR NPC equipment to {} at {}: changed melee={}, ranged={}, armorSlots={}, shield={}; resulting gear: melee={}, ranged={}, boots={}, leggings={}, chest={}, helmet={}, shield={}",
+                    registeredEntityName(npc),
+                    describePosition(npc),
+                    weaponApplied,
+                    rangedApplied,
+                    armorSlotsApplied,
+                    shieldApplied,
+                    registeredItemName(npc.npcItemsInv.getMeleeWeapon()),
+                    registeredItemName(npc.npcItemsInv.getRangedWeapon()),
+                    registeredItemName(npc.getEquipmentInSlot(ArmorSlot.BOOTS.equipmentSlot)),
+                    registeredItemName(npc.getEquipmentInSlot(ArmorSlot.LEGGINGS.equipmentSlot)),
+                    registeredItemName(npc.getEquipmentInSlot(ArmorSlot.CHEST.equipmentSlot)),
+                    registeredItemName(npc.getEquipmentInSlot(ArmorSlot.HELMET.equipmentSlot)),
+                    npc.npcShield == null ? "empty" : npc.npcShield.toString());
+            }
         }
         return result;
+    }
+
+    private static boolean hasConfiguredEquipmentFor(LOTREntityNPC npc) {
+        @SuppressWarnings("unchecked")
+        Class<? extends LOTREntityNPC> npcClass = (Class<? extends LOTREntityNPC>) npc.getClass();
+        LOTRFaction faction = npc.getFaction();
+        return cachedWeaponRules.containsKey(npcClass) || findGroupRule(npcClass, cachedGroupWeaponRules) != null
+            || cachedFactionWeaponRules.containsKey(faction)
+            || cachedAllWeaponRule != null
+            || cachedRangedWeaponRules.containsKey(npcClass)
+            || findGroupRule(npcClass, cachedGroupRangedWeaponRules) != null
+            || cachedFactionRangedWeaponRules.containsKey(faction)
+            || cachedAllRangedWeaponRule != null
+            || cachedShieldRules.containsKey(npcClass)
+            || findGroupRule(npcClass, cachedGroupShieldRules) != null
+            || cachedFactionShieldRules.containsKey(faction)
+            || cachedAllShieldRule != null
+            || cachedArmorRules.containsKey(npcClass)
+            || hasGroupArmorRule(npcClass)
+            || cachedFactionArmorRules.containsKey(faction)
+            || cachedAllArmorRules != null;
+    }
+
+    private static boolean hasGroupArmorRule(Class<? extends LOTREntityNPC> npcClass) {
+        for (ArmorSlot slot : ArmorSlot.values()) {
+            if (findGroupArmorSlotRule(npcClass, slot) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String registeredEntityName(LOTREntityNPC npc) {
+        Object name = EntityList.classToStringMapping.get(npc.getClass());
+        return name instanceof String ? (String) name
+            : npc.getClass()
+                .getName();
+    }
+
+    private static String registeredItemName(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getItem() == null) {
+            return "empty";
+        }
+        Object name = Item.itemRegistry.getNameForObject(itemStack.getItem());
+        return name == null ? itemStack.getItem()
+            .getClass()
+            .getName() : name.toString();
+    }
+
+    private static String describePosition(LOTREntityNPC npc) {
+        return "dimension " + npc.worldObj.provider.dimensionId
+            + " at "
+            + MathHelper.floor_double(npc.posX)
+            + ","
+            + MathHelper.floor_double(npc.posY)
+            + ","
+            + MathHelper.floor_double(npc.posZ);
+    }
+
+    private static String describeActiveProtections(LOTREntityNPC npc) {
+        List<String> protections = new ArrayList<>();
+        if (!Config.customizeHiredLOTREquipment && npc.hiredNPCInfo != null && npc.hiredNPCInfo.isActive) {
+            protections.add("hired");
+        }
+        if (!Config.customizeNamedLOTREquipment && npc.hasCustomNameTag()) {
+            protections.add("custom-named");
+        }
+        if (!Config.customizeQuestLOTREquipment && isQuestLinked(npc)) {
+            protections.add("quest-linked");
+        }
+        if (!Config.customizePersistentLOTREquipment && (npc.isNPCPersistent || npc.getHasSpecificLocationName())) {
+            protections.add("persistent/location-specific");
+        }
+        return protections.isEmpty() ? "an enabled safety rule" : protections.toString();
     }
 
     private static boolean shouldApplyConfiguredEquipment(LOTREntityNPC npc) {

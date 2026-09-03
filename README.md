@@ -306,6 +306,13 @@ After editing any equipment setting, an operator can reload and validate the rul
 The command prints the number of accepted and rejected choices. Reloading changes only the rules used for future NPC
 spawns; it does not alter NPCs already in the world.
 
+During testing, applied equipment choices and protected NPCs that were skipped can be written to the server log with:
+```
+B:logLOTREquipmentChanges=true
+```
+Each applied line includes the NPC type, coordinates, changed categories, and resulting weapon, armor, and shield.
+This is disabled by default because a busy server may produce many lines.
+
 To inspect the prepared choices, weights, mode, and safety settings for an exact NPC type, use:
 ```
 /hotncold equipment explain lotr.GondorSoldier
