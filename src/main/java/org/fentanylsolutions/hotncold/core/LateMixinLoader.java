@@ -27,10 +27,19 @@ public class LateMixinLoader implements ILateMixinLoader {
     public List<String> getMixins(Set<String> loadedCoreMods) {
         return new MixinUtil.MixinBuilder(false).addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinLOTRSpawnerAnimals", MixinUtil.Side.BOTH, "lotr")
+            .addMixin("MixinLOTRSpawnerNPCs", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinEMConfigHandler", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEMStatusManagerLOTR", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "wotrmc")
             .addMixin("MixinSubGuiNpcBiomes", MixinUtil.Side.CLIENT, "customnpcs")
+            .addMixin("MixinLOTRChunkProvider", MixinUtil.Side.BOTH, "streams")
+            .addMixin("MixinRiverMouthComponent", MixinUtil.Side.BOTH, "streams")
+            .addMixin("MixinRiverUpstreamComponent", MixinUtil.Side.BOTH, "streams")
+            .addMixin("MixinLOTRChunkProvider", MixinUtil.Side.BOTH, "gregcaves")
+            .addMixin("MixinMapGenGregCaves", MixinUtil.Side.BOTH, "gregcaves")
+            .addMixin("MixinLOTRChunkProvider", MixinUtil.Side.BOTH, "wildcaves3")
+            .addMixin("MixinDecorationHelper", MixinUtil.Side.BOTH, "wildcaves3")
+            .addMixin("MixinWorldGenWildCaves", MixinUtil.Side.BOTH, "wildcaves3")
             .build();
     }
 }

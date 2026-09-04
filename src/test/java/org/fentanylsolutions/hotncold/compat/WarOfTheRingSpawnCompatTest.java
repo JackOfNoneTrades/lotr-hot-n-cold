@@ -13,6 +13,7 @@ import net.minecraft.world.biome.BiomeGenBase;
 import org.junit.Test;
 
 import wotrmc.common.entities.TestWarOfTheRingAnimal;
+import wotrmc.common.entities.TestWarOfTheRingNPC;
 
 public class WarOfTheRingSpawnCompatTest {
 
@@ -21,6 +22,10 @@ public class WarOfTheRingSpawnCompatTest {
         assertTrue(WarOfTheRingSpawnCompat.isWarOfTheRingEntity(TestWarOfTheRingAnimal.class));
         assertFalse(WarOfTheRingSpawnCompat.isWarOfTheRingEntity(WarOfTheRingSpawnCompatTest.class));
         assertFalse(WarOfTheRingSpawnCompat.isWarOfTheRingEntity(null));
+        assertTrue(WarOfTheRingSpawnCompat.isWarOfTheRingAnimal(TestWarOfTheRingAnimal.class));
+        assertFalse(WarOfTheRingSpawnCompat.isWarOfTheRingAnimal(TestWarOfTheRingNPC.class));
+        assertFalse(WarOfTheRingSpawnCompat.isWarOfTheRingAnimal(net.minecraft.entity.passive.EntityCow.class));
+        assertFalse(WarOfTheRingSpawnCompat.isWarOfTheRingAnimal(null));
     }
 
     @Test
@@ -41,10 +46,13 @@ public class WarOfTheRingSpawnCompatTest {
         entries.add(warOfTheRingEntry);
         entries.add(regularEntry);
         entries.add(unknownEntry);
+        BiomeGenBase.SpawnListEntry npcEntry = new BiomeGenBase.SpawnListEntry(TestWarOfTheRingNPC.class, 8, 1, 2);
+        entries.add(npcEntry);
 
         assertEquals(1, WarOfTheRingSpawnCompat.removeWarOfTheRingEntries(entries));
-        assertEquals(2, entries.size());
+        assertEquals(3, entries.size());
         assertSame(regularEntry, entries.get(0));
         assertSame(unknownEntry, entries.get(1));
+        assertSame(npcEntry, entries.get(2));
     }
 }

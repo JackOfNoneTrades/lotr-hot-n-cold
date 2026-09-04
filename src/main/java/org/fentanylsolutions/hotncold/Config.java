@@ -13,6 +13,12 @@ public class Config {
 
     public static boolean printMobs = false;
     public static boolean printBiomes = false;
+    public static boolean enableStreamsMiddleEarth = true;
+    public static boolean enableGregCavesMiddleEarth = true;
+    public static boolean enableWildCavesMiddleEarth = true;
+    public static boolean logWorldgenCompatibility = false;
+    public static String[] streamsMiddleEarthBiomes = { "shire", "breeland", "eriador", "rohan", "gondor",
+        "anduinVale" };
     public static boolean autoPopulateEnviromineBiomeTemperatures = false;
     public static boolean removeAllWarOfTheRingAnimalSpawns = false;
     public static boolean logBlockedSpawnAttempts = false;
@@ -60,6 +66,7 @@ public class Config {
 
         readSpawnConfiguration(configuration);
         readNPCEquipmentConfiguration(configuration);
+        readWorldgenConfiguration(configuration);
 
         mobsImmuneToFrost = configuration
             .get(
@@ -109,6 +116,35 @@ public class Config {
             HotNCold.rebuildBiomeLists();
             HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
         }
+    }
+
+    private static void readWorldgenConfiguration(Configuration configuration) {
+        enableStreamsMiddleEarth = configuration.getBoolean(
+            "enableStreamsMiddleEarth",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "Generate Streams rivers in new Middle-earth terrain. Requires Streams and Farseek. Restart Minecraft after changing world-generation settings; existing chunks are not regenerated.");
+        enableGregCavesMiddleEarth = configuration.getBoolean(
+            "enableGregCavesMiddleEarth",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "Use Greg Caves instead of LOTR's cave generator in new Middle-earth terrain. Requires Greg Caves and its Mycelium dependency. Restart required.");
+        enableWildCavesMiddleEarth = configuration.getBoolean(
+            "enableWildCavesMiddleEarth",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "Add Wild Caves 3 decorations to LOTR underground blocks in new Middle-earth terrain. Respects Wild Caves' dimension blacklist and generation settings. Restart required.");
+        streamsMiddleEarthBiomes = configuration.get(
+            Configuration.CATEGORY_GENERAL,
+            "streamsMiddleEarthBiomes",
+            new String[] { "shire", "breeland", "eriador", "rohan", "gondor", "anduinVale" },
+            "Middle-earth biome names or numeric IDs where Streams rivers may generate. Names ignore capitalization. An empty list disables Middle-earth rivers. River mouths may also connect to ocean, river and lake biomes. Restart required.")
+            .getStringList();
+        logWorldgenCompatibility = configuration.getBoolean(
+            "logWorldgenCompatibility",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "Log detailed cave/river generation diagnostics per chunk. Disabled by default: this can produce many lines and performs extra block scans. Restart required.");
     }
 
     public static boolean reloadSpawnConfiguration() {

@@ -46,6 +46,16 @@ dependencies {
     //implementation(rfg.deobf("curse.maven:enviromine-for-galaxy-odyssey-429410:4449395"))
     compileOnly(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
 
+    // Optional world generation bridges, restored from streams-greg-wild-test4.
+    def worldgenCompatMods = [
+        "curse.maven:streams-229769:2566220",
+        "curse.maven:farseek-229708:2457658",
+        "curse.maven:wild-caves-3-965949:5808595",
+        "maven.modrinth:JZYCRz9r:WjQXOama", // Greg Caves 1.3
+        "maven.modrinth:3EqWeoiF:4FQLH0Ow" // Mycelium 2.3
+    ]
+    worldgenCompatMods.each { compileOnly(rfg.deobf(it)) }
+
     if (includeOptionalCompatRuntime) {
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:war-of-the-ring-mc-444971:4559696"))
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
@@ -53,6 +63,9 @@ dependencies {
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
         if (project.hasProperty("badMobsRuntime")) {
             runtimeOnlyNonPublishable(rfg.deobf("curse.maven:bad-mobs-233258:2250741"))
+        }
+        if (project.hasProperty("worldgenCompatRuntime")) {
+            worldgenCompatMods.each { runtimeOnlyNonPublishable(rfg.deobf(it)) }
         }
     }
 

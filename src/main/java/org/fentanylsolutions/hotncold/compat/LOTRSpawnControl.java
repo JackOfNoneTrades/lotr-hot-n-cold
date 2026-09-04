@@ -201,7 +201,7 @@ public final class LOTRSpawnControl {
         if (entityClass == null || biome == null || !lotrBiomes.contains(biome)) {
             return false;
         }
-        if (removeAllWarOfTheRingAnimals && WarOfTheRingSpawnCompat.isWarOfTheRingEntity(entityClass)) {
+        if (removeAllWarOfTheRingAnimals && WarOfTheRingSpawnCompat.isWarOfTheRingAnimal(entityClass)) {
             return true;
         }
         if (globallyBlockedClasses.contains(entityClass)) {

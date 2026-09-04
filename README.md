@@ -8,6 +8,7 @@ Hot N Cold is a Minecraft 1.7.10 addon for LOTR Legacy that gives modpack makers
 
 - Configure frost and heat biomes and grant selected mobs immunity.
 - Add LOTR biome temperatures to EnviroMine and EnviroMine Continuation.
+- Generate Streams rivers, Greg Caves, and Wild Caves decorations in Middle-earth.
 - Remove all natural animal spawns added by War of the Ring.
 - Block selected mobs globally or in individual LOTR biomes.
 - Add natural spawns with configurable category, frequency, and group size.
@@ -31,6 +32,7 @@ For installation, configuration examples, commands, migration help, and troubles
 - [UniMixins](https://modrinth.com/mod/unimixins) is required.
 - [EnviroMine](https://www.curseforge.com/minecraft/mc-mods/enviromine) is optional.
 - War of the Ring, Mo' Creatures, IvToolkit, Custom NPCs, and Bad Mobs integrations are optional.
+- Streams/Farseek, Greg Caves/Mycelium, and Wild Caves 3 are optional world-generation integrations.
 
 ## Building
 

@@ -5,8 +5,11 @@ import net.minecraftforge.common.MinecraftForge;
 import org.fentanylsolutions.hotncold.command.CommandHotNCold;
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
 import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
+import org.fentanylsolutions.hotncold.compat.LOTRNPCShieldSync;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnGuard;
+import org.fentanylsolutions.hotncold.compat.StreamsCompat;
+import org.fentanylsolutions.hotncold.compat.WildCavesCompat;
 import org.fentanylsolutions.hotncold.util.BiomeUtil;
 import org.fentanylsolutions.hotncold.util.MobUtil;
 
@@ -26,7 +29,10 @@ public class CommonProxy {
 
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(LOTRSpawnGuard.INSTANCE);
+        LOTRNPCShieldSync.init();
     }
+
+    public void receiveNPCShield(int entityId, int dimension, String shieldName) {}
 
     public void postInit(FMLPostInitializationEvent event) {
         HotNCold.rebuildMobLists();
@@ -38,6 +44,20 @@ public class CommonProxy {
         HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
         if (Loader.isModLoaded("enviromine")) {
             EnviroMineCompat.applyBiomeTemperatureOverrides("CommonProxy.postInit");
+        }
+        HotNCold.LOG.info(
+            "Middle-earth worldgen compatibility: Streams installed={}, enabled={}; Greg Caves installed={}, enabled={}; Wild Caves installed={}, enabled={}",
+            Loader.isModLoaded("streams"),
+            Config.enableStreamsMiddleEarth,
+            Loader.isModLoaded("gregcaves"),
+            Config.enableGregCavesMiddleEarth,
+            Loader.isModLoaded("wildcaves3"),
+            Config.enableWildCavesMiddleEarth);
+        if (Loader.isModLoaded("streams") && Loader.isModLoaded("farseek")) {
+            StreamsCompat.initialize();
+        }
+        if (Loader.isModLoaded("wildcaves3") && Config.enableWildCavesMiddleEarth) {
+            WildCavesCompat.initialize();
         }
     }
 

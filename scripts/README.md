@@ -1,0 +1,64 @@
+# Production acceptance tests
+
+These tests launch genuine obfuscated Minecraft 1.7.10 and Forge 1614 with unmodified release jars copied from a Fjord Launcher test instance. They do not use `runClient`/`runServer`, a development Minecraft jar, account credentials, or the development-only Wizardry model workaround. The fixture fails if Minecraft reports a development runtime.
+
+## Run
+
+Requires Java 8, Bash, `jq`, `rg`, `timeout`, and (for the client) Xvfb. The configured launcher instance must have been started once so its libraries and native files exist. Dedicated tests reuse the already accepted `run/server/eula.txt`; accept Minecraft's EULA yourself before running a server.
+
+```sh
+./gradlew --no-configuration-cache spotlessApply build productionFixtureJar
+scripts/test-production.sh server full
+WITH_BADMOBS=true scripts/test-production.sh client full
+scripts/test-production.sh client friend
+scripts/test-production.sh client baseline
+scripts/test-production.sh client terrain
+```
+
+- `full`: spawn categories, replacement biomes, blocks/additions, commands, reloads, weighted equipment and protected NPCs, 100,000 elephant guard checks, plus actual NPC-spawner equipment, save/load, WOTR NPC preservation and the real WOTR Mumakil guard. The client also verifies received armor/shield state and a live empty-shield update.
+- `friend`: reads `/tmp/hotncold.cfg`, validates the supplied 27-member Gondor group and fill-empty setting, then tests controlled equipment changes, actual NPC spawning, save/load and client synchronization. When History Items is installed, its actual `historyitems:breehelmet` is tested through group and exact rules and must be registered. Otherwise a known LOTR helmet is tested with an explicit exclusion; substitutions are not claimed as exact-pack compatibility.
+- `baseline`: terrain and registry snapshot with WOTR but without Hot N Cold. Client only: WOTR's unpatched dedicated-server restriction prevents a dedicated baseline.
+- `terrain`: the same snapshot with Hot N Cold's default configuration. Compare the two newly generated `terrain-snapshot.txt` files with `diff -u`.
+- `compat`: observes generated Middle-earth terrain in a supplied reference build, without assuming that it contains the current restriction transformer or spawn/equipment features. Records actual Streams/Wild Caves blocks as well as cave air. A completed observation is not a positive assertion that every integration works.
+- `streams`: searches up to 289 natural river-generation regions using the actual Middle-earth chunk provider, then populates a valid river's area and requires actual `streams:` water blocks. It fails if the compatibility implementation, river generator, valid river or water blocks are absent. No artificial river or terrain is inserted.
+- `worldgen`: checks the merged product's actual Greg generator, cave air, Wild Caves blocks, configuration/blacklist handling, and Streams water when enabled. Also tests the Streams biome policy (names/IDs, WOTR replacement, allowed and forbidden biomes, mouth connectors, empty allowlist, disabled switch and Overworld isolation). The policy test uses a controlled biome provider; generation tests use the real world.
+- `combined`: runs `worldgen`, then `friend`, in one process. This checks that the restored terrain integrations coexist with actual NPC spawning, gear save/load and client synchronization. Reads the friend configuration as with `friend`.
+
+Each run prints its isolated directory under gitignored `run/`, containing the full `console.log`, jar checksums in `artifacts.sha256`, and a `production-result.txt` only after assertions pass. Missing-mod notices remain exclusions even when the available tests pass. Read the full log for underlying mods' warnings, not only the pass markers.
+
+The NPC test controls the biome's candidate list, spawn interval, random position and terrain so it reliably exercises the real `LOTRSpawnerNPCs.performSpawning` loop. The production mod itself is not stubbed. This is a deterministic integration test, not a claim about long-term natural spawn frequency. The 100,000-check test is a guard stress test, not 100,000 live elephants.
+
+Client equipment runs also render the actual tracked NPC and save `screenshots/equipment-preview.png`, showing the configured helmet alongside the same NPC without it. A successful render and screenshot are asserted; inspect the image before claiming the helmet looks correct. This is not automated pixel-perfect validation.
+
+## Paths and reruns
+
+Defaults use `$HOME/.local/share/FjordLauncher/instances/lotr-test`. Override `FJORD_ROOT`, `FJORD_INSTANCE`, `PRODUCTION_JAVA`, `FRIEND_CONFIG`, or `MINECRAFT_SERVER_JAR` if necessary. Dedicated tests default to the original server jar in Gradle's Minecraft download cache.
+
+Use `PRODUCTION_MOD_JAR` for an exact released/reference jar, `PRODUCTION_EXTRA_MODS` for a folder of additional release jars, and `PRODUCTION_CONFIG` for an initial Hot N Cold configuration. These are copied into the isolated run; the supplied files are not modified. Record the precise dependency versions when reporting results. For example:
+
+```sh
+PRODUCTION_MOD_JAR=/tmp/hotncold-streams-greg-wild-test4.jar \
+PRODUCTION_EXTRA_MODS="$PWD/run/compat-dependencies" \
+PRODUCTION_CONFIG=/tmp/hotncold.cfg \
+scripts/test-production.sh client streams
+```
+
+For the current combined build, omit `PRODUCTION_MOD_JAR` and run `client combined`. To test all compatibility switches off with dependencies still installed, set `PRODUCTION_CONFIG="$PWD/scripts/production-worldgen/all-disabled.cfg"` and run `client worldgen`. `empty-streams.cfg` checks an enabled Streams switch with an empty allowlist. `diagnostics.cfg` enables all three integrations and their per-chunk diagnostics. For independent-addon tests, point `PRODUCTION_EXTRA_MODS` at a folder containing only that addon and its dependencies (Streams/Farseek, Greg Caves/Mycelium, or Wild Caves 3).
+
+To require the friend's actual custom helmet, put a History Items release jar in the extra-mods folder and set `REQUIRE_HISTORY_ITEMS=true` with `friend` or `combined`. The run then fails if the helmet is unavailable instead of substituting another item:
+
+```sh
+REQUIRE_HISTORY_ITEMS=true \
+PRODUCTION_EXTRA_MODS="$PWD/run/compat-history-items-neid" \
+scripts/test-production.sh client combined
+```
+
+Record the downloaded release and checksum, not only its mod-list text: the History Items 6.1 release contains stale `4.4.1` text in `mcmod.info`, although its mod annotation declares `6.1`. CurseForge file ID `8188686` is the tested 6.1 release; the friend's exact version must be confirmed separately.
+
+The History Items 6.1 + WOTR 1.3.1 test stack exceeds Forge's normal block-ID range during WOTR registration, including with Hot N Cold absent. The `compat-history-items-neid` test folder adds NotEnoughIDs 2.1.11 and its GTNHLib 0.9.53 dependency, alongside History Items and the terrain addons. This is an explicit test-stack dependency, not a new Hot N Cold requirement. Keep ID-extension experiments in disposable saves; do not remove an ID extender from a world using extended IDs.
+
+Each run has its own copied jars. Do not edit the launcher script while it is executing. For cave mods with random initialization, exact air/decorative/water counts are observations, not golden values; positive block assertions and all-disabled baseline comparisons serve different purposes.
+
+Set `PRODUCTION_TEST_DIR` to an existing absolute test directory to reopen its world. Keep the same side/profile and Bad Mobs choice. Previous logs/results are archived inside that directory; a stale marker cannot turn a failure into a pass. For a terrain comparison, use fresh directories for both sides of the comparison.
+
+The fixture is packaged separately at `build/production-test/hotncold-production-fixture.jar` and must never be distributed as part of the mod or installed in a normal playing instance. Tests rewrite only their isolated copies, never the launcher instance or original friend configuration.

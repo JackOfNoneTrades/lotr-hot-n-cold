@@ -814,7 +814,7 @@ public final class LOTREquipmentControl {
             return false;
         }
 
-        npc.npcShield = rule.choose(npc.getRNG()).shield;
+        LOTRNPCShieldSync.setConfiguredShield(npc, rule.choose(npc.getRNG()).shield);
         return true;
     }
 

@@ -23,6 +23,27 @@ import org.junit.Test;
 public class LOTRSpawnControlTest {
 
     @Test
+    public void animalOnlyGuardPreservesWarOfTheRingNPCs() {
+        Set<BiomeGenBase> biomes = Collections.singleton(BiomeGenBase.plains);
+        assertTrue(
+            LOTRSpawnControl.isSpawnBlocked(
+                wotrmc.common.entities.TestWarOfTheRingAnimal.class,
+                BiomeGenBase.plains,
+                biomes,
+                true,
+                Collections.<Class>emptySet(),
+                Collections.<BiomeGenBase, Set<Class>>emptyMap()));
+        assertFalse(
+            LOTRSpawnControl.isSpawnBlocked(
+                wotrmc.common.entities.TestWarOfTheRingNPC.class,
+                BiomeGenBase.plains,
+                biomes,
+                true,
+                Collections.<Class>emptySet(),
+                Collections.<BiomeGenBase, Set<Class>>emptyMap()));
+    }
+
+    @Test
     public void resolvesExactRegisteredEntityNamesAndSkipsInvalidNames() {
         Set<Class> resolved = LOTRSpawnControl
             .resolveBlockedEntityClasses(new String[] { " Cow ", "Cow", "cow", "missing.test.entity", "", null });

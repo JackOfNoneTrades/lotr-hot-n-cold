@@ -1,4 +1,4 @@
-
+import com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar
 plugins {
     id("com.gtnewhorizons.gtnhconvention")
 }
@@ -13,8 +13,39 @@ val clientFixture by sourceSets.creating {
     compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
 }
 
+val productionFixture by sourceSets.creating {
+    java.srcDir("src/productionTest/java")
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+}
+
+val productionFixtureDevJar by tasks.registering(org.gradle.jvm.tasks.Jar::class) {
+    group = "verification"
+    description = "Packages acceptance tests for real obfuscated Minecraft; never part of the released mod."
+    from(productionFixture.output, serverFixture.output)
+    archiveFileName.set("hotncold-production-fixture-dev.jar")
+    destinationDirectory.set(layout.buildDirectory.dir("production-test"))
+}
+
+tasks.register<ReobfuscatedJar>("productionFixtureJar") {
+    group = "verification"
+    description = "Reobfuscates the acceptance fixture using the same mappings as the released mod."
+    val modJar = tasks.named<ReobfuscatedJar>("reobfJar")
+    dependsOn(modJar)
+    setInputJarFromTask(productionFixtureDevJar)
+    mcVersion.set(modJar.flatMap { it.mcVersion })
+    srg.set(modJar.flatMap { it.srg })
+    fieldCsv.set(modJar.flatMap { it.fieldCsv })
+    methodCsv.set(modJar.flatMap { it.methodCsv })
+    exceptorCfg.set(modJar.flatMap { it.exceptorCfg })
+    recompMcJar.set(modJar.flatMap { it.recompMcJar })
+    referenceClasspath.from(productionFixture.compileClasspath, serverFixture.output)
+    archiveFileName.set("hotncold-production-fixture.jar")
+    destinationDirectory.set(layout.buildDirectory.dir("production-test"))
+}
+
 configurations[serverFixture.annotationProcessorConfigurationName].extendsFrom(configurations.annotationProcessor.get())
 configurations[clientFixture.annotationProcessorConfigurationName].extendsFrom(configurations.annotationProcessor.get())
+configurations[productionFixture.annotationProcessorConfigurationName].extendsFrom(configurations.annotationProcessor.get())
 
 val prepareModernClientConfig by tasks.registering {
     group = "verification"

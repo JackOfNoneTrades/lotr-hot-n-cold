@@ -1,6 +1,11 @@
 package wotrmc.common.entities;
 
-public final class TestWarOfTheRingAnimal {
+import net.minecraft.entity.passive.EntityCow;
+import net.minecraft.world.World;
 
-    private TestWarOfTheRingAnimal() {}
+public final class TestWarOfTheRingAnimal extends EntityCow {
+
+    public TestWarOfTheRingAnimal(World world) {
+        super(world);
+    }
 }

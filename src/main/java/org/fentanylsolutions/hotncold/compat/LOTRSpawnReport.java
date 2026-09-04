@@ -211,7 +211,7 @@ public final class LOTRSpawnReport {
                 + ")");
 
         boolean warOfTheRingBlocked = removeAllWarOfTheRingAnimals
-            && WarOfTheRingSpawnCompat.isWarOfTheRingEntity(entityClass);
+            && WarOfTheRingSpawnCompat.isWarOfTheRingAnimal(entityClass);
         boolean globallyBlocked = globallyBlockedClasses.contains(entityClass);
         Set<Class> biomeBlockedClasses = blockedClassesByBiome.get(biome);
         boolean biomeBlocked = biomeBlockedClasses != null && biomeBlockedClasses.contains(entityClass);

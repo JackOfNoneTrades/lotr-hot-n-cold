@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 
 import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.passive.EntityAmbientCreature;
+import net.minecraft.entity.passive.EntityAnimal;
+import net.minecraft.entity.passive.EntityWaterMob;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import org.fentanylsolutions.hotncold.Config;
@@ -33,9 +36,10 @@ public final class WarOfTheRingSpawnCompat {
         int changedBiomes = 0;
 
         for (BiomeGenBase biome : getAllLOTRSpawnBiomes()) {
-            int removedFromBiome = removeWarOfTheRingEntries(
-                biome.getSpawnableList(EnumCreatureType.creature),
-                journal);
+            int removedFromBiome = 0;
+            for (EnumCreatureType type : EnumCreatureType.values()) {
+                removedFromBiome += removeWarOfTheRingEntries(biome.getSpawnableList(type), journal);
+            }
             if (removedFromBiome > 0) {
                 removedEntries += removedFromBiome;
                 changedBiomes++;
@@ -52,10 +56,12 @@ public final class WarOfTheRingSpawnCompat {
     public static int countWarOfTheRingAnimalSpawns() {
         int count = 0;
         for (BiomeGenBase biome : getAllLOTRSpawnBiomes()) {
-            for (Object value : biome.getSpawnableList(EnumCreatureType.creature)) {
-                if (value instanceof BiomeGenBase.SpawnListEntry
-                    && isWarOfTheRingEntity(((BiomeGenBase.SpawnListEntry) value).entityClass)) {
-                    count++;
+            for (EnumCreatureType type : EnumCreatureType.values()) {
+                for (Object value : biome.getSpawnableList(type)) {
+                    if (value instanceof BiomeGenBase.SpawnListEntry
+                        && isWarOfTheRingAnimal(((BiomeGenBase.SpawnListEntry) value).entityClass)) {
+                        count++;
+                    }
                 }
             }
         }
@@ -117,7 +123,7 @@ public final class WarOfTheRingSpawnCompat {
             }
 
             BiomeGenBase.SpawnListEntry entry = (BiomeGenBase.SpawnListEntry) value;
-            if (isWarOfTheRingEntity(entry.entityClass)) {
+            if (isWarOfTheRingAnimal(entry.entityClass)) {
                 if (journal != null) {
                     journal.recordRemoved(spawnEntries, entry, entryIndex);
                 }
@@ -134,5 +140,11 @@ public final class WarOfTheRingSpawnCompat {
     static boolean isWarOfTheRingEntity(Class entityClass) {
         return entityClass != null && entityClass.getName()
             .startsWith(WOTR_ENTITY_PACKAGE);
+    }
+
+    public static boolean isWarOfTheRingAnimal(Class entityClass) {
+        return isWarOfTheRingEntity(entityClass)
+            && (EntityAnimal.class.isAssignableFrom(entityClass) || EntityWaterMob.class.isAssignableFrom(entityClass)
+                || EntityAmbientCreature.class.isAssignableFrom(entityClass));
     }
 }

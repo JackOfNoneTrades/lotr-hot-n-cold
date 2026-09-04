@@ -81,6 +81,9 @@ public final class WarOfTheRingServerFixture {
     @Mod.EventHandler
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void init(FMLInitializationEvent event) {
+        if (!"full".equals(System.getProperty("hotncold.fixture.profile", "full"))) {
+            return;
+        }
         EntityRegistry.registerModEntity(BlockedTestAnimal.class, "BlockedTestAnimal", 0, this, 64, 3, true);
         EntityRegistry.registerModEntity(AllowedTestAnimal.class, "AllowedTestAnimal", 1, this, 64, 3, true);
         EntityRegistry.registerModEntity(BiomeBlockedTestAnimal.class, "BiomeBlockedTestAnimal", 2, this, 64, 3, true);
@@ -140,6 +143,9 @@ public final class WarOfTheRingServerFixture {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+        if (!"full".equals(System.getProperty("hotncold.fixture.profile", "full"))) {
+            return;
+        }
         Config.removeAllWarOfTheRingAnimalSpawns = true;
         Config.customizeHiredLOTREquipment = false;
         Config.customizeNamedLOTREquipment = false;
@@ -253,6 +259,9 @@ public final class WarOfTheRingServerFixture {
 
     @Mod.EventHandler
     public void serverStarted(FMLServerStartedEvent event) {
+        if (!"full".equals(System.getProperty("hotncold.fixture.profile", "full"))) {
+            return;
+        }
         boolean ruleReapplicationPassed = verifyRuleReapplication();
         List spawnEntries = testBiome.getSpawnableList(EnumCreatureType.creature);
         boolean fixtureRemoved = !spawnEntries.contains(fixtureEntry);
@@ -816,8 +825,7 @@ public final class WarOfTheRingServerFixture {
         for (Object value : EntityList.stringToClassMapping.entrySet()) {
             Map.Entry entry = (Map.Entry) value;
             if (entry.getKey() instanceof String && entry.getValue() instanceof Class
-                && ((Class) entry.getValue()).getName()
-                    .startsWith("wotrmc.common.entities.")) {
+                && WarOfTheRingSpawnCompat.isWarOfTheRingAnimal((Class) entry.getValue())) {
                 return (String) entry.getKey();
             }
         }
