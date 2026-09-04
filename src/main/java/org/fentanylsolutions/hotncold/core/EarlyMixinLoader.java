@@ -20,6 +20,7 @@ import cpw.mods.fml.relauncher.ReflectionHelper;
 public class EarlyMixinLoader extends FentEarlyMixinLoader {
 
     private static final Logger LOG = LogManager.getLogger("Hot N Cold core");
+    private static boolean warOfTheRingRestrictionBypassEnabled;
 
     @Override
     public String getMixinConfig() {
@@ -34,6 +35,17 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
     @Override
     @SuppressWarnings("unchecked")
     public void injectData(Map<String, Object> data) {
+        Object runtimeDeobfuscationEnabled = data.get("runtimeDeobfuscationEnabled");
+        boolean developmentEnvironment = Boolean.FALSE.equals(runtimeDeobfuscationEnabled)
+            || Boolean.TRUE.equals(Launch.blackboard.get("fml.deobfuscatedEnvironment"));
+        warOfTheRingRestrictionBypassEnabled = shouldEnableWarOfTheRingRestrictionBypass(
+            MixinUtil.isServer(),
+            developmentEnvironment);
+        if (!warOfTheRingRestrictionBypassEnabled) {
+            LOG.info("Leaving War of the Ring classes untransformed on the production client");
+            return;
+        }
+
         LaunchClassLoader classLoader = data.get("classLoader") instanceof LaunchClassLoader
             ? (LaunchClassLoader) data.get("classLoader")
             : Launch.classLoader;
@@ -47,5 +59,13 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
 
     static boolean allowWarOfTheRingTransformations(Set<String> transformerExclusions) {
         return transformerExclusions.remove("wotrmc");
+    }
+
+    static boolean shouldEnableWarOfTheRingRestrictionBypass(boolean dedicatedServer, boolean developmentEnvironment) {
+        return dedicatedServer || developmentEnvironment;
+    }
+
+    static boolean isWarOfTheRingRestrictionBypassEnabled() {
+        return warOfTheRingRestrictionBypassEnabled;
     }
 }

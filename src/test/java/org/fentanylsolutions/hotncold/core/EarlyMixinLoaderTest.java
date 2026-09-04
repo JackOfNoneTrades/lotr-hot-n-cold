@@ -21,4 +21,19 @@ public class EarlyMixinLoaderTest {
         assertTrue(exclusions.contains("another.coremod"));
         assertFalse(EarlyMixinLoader.allowWarOfTheRingTransformations(exclusions));
     }
+
+    @Test
+    public void enablesRestrictionBypassOnDedicatedServers() {
+        assertTrue(EarlyMixinLoader.shouldEnableWarOfTheRingRestrictionBypass(true, false));
+    }
+
+    @Test
+    public void enablesRestrictionBypassInDevelopmentClients() {
+        assertTrue(EarlyMixinLoader.shouldEnableWarOfTheRingRestrictionBypass(false, true));
+    }
+
+    @Test
+    public void leavesProductionSingleplayerWarOfTheRingClassesUntouched() {
+        assertFalse(EarlyMixinLoader.shouldEnableWarOfTheRingRestrictionBypass(false, false));
+    }
 }
