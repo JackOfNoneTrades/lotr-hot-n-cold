@@ -8,7 +8,7 @@ instance=${FJORD_INSTANCE:-"$launcher/instances/lotr-test"}
 side=${1:-client}
 profile=${2:-friend}
 case "$side" in client|server) ;; *) exit 2 ;; esac
-case "$profile" in full|friend|terrain|baseline|compat|streams|worldgen|combined|sources|null-control|null-block|null-biome|null-wotr|null-add) ;; *) exit 2 ;; esac
+case "$profile" in full|friend|terrain|baseline|compat|streams|worldgen|combined|sources|lightning|null-control|null-block|null-biome|null-wotr|null-add) ;; *) exit 2 ;; esac
 if [[ "$side" == server && "$profile" == baseline ]]; then
     printf 'Use client baseline: unpatched WOTR refuses a dedicated server\n' >&2
     exit 2

@@ -18,12 +18,17 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
     private int visibilityTicks;
     private int failedMenuTicks;
     private ProductionGearScreen gearScreen;
+    private LightningClientChecks lightningChecks;
 
     @Override
     public void init() {
         FMLCommonHandler.instance()
             .bus()
             .register(this);
+        if ("lightning".equals(ProductionFixture.profile())) {
+            lightningChecks = new LightningClientChecks();
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(lightningChecks);
+        }
     }
 
     @SubscribeEvent
@@ -55,6 +60,9 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
             !failedMenu || ++failedMenuTicks < 100,
             "Integrated server returned to the menu without loading the acceptance world; see the FML startup error");
         if (ProductionFixture.serverChecksPassed && mc.theWorld != null && mc.thePlayer != null) {
+            if (lightningChecks != null && !lightningChecks.tick(mc)) {
+                return;
+            }
             if (ProductionFixture.visibilityNPCData != null && ProductionFixture.visibilityStage != 4) {
                 ProductionFixture.require(
                     ++visibilityTicks < 1200,

@@ -166,6 +166,8 @@ public final class ProductionFixture {
         } else if ("sources".equals(profile())) {
             SpawnSourceChecks.start();
             return;
+        } else if ("lightning".equals(profile())) {
+            LightningChecks.run();
         } else if ("full".equals(profile())) {
             org.fentanylsolutions.hotncold.Config.lotrNPCGroupMembers = new String[] { "Gondor;lotr.GondorSoldier" };
             org.fentanylsolutions.hotncold.compat.LOTREquipmentControl.prepareConfiguredNPCGroups();

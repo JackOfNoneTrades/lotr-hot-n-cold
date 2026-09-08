@@ -13,6 +13,7 @@ public class Config {
 
     public static boolean printMobs = false;
     public static boolean printBiomes = false;
+    public static boolean disableLightningExplosionSound = false;
     public static boolean enableStreamsMiddleEarth = true;
     public static boolean enableGregCavesMiddleEarth = true;
     public static boolean enableWildCavesMiddleEarth = true;
@@ -70,6 +71,7 @@ public class Config {
         readSpawnConfiguration(configuration);
         readNPCEquipmentConfiguration(configuration);
         readWorldgenConfiguration(configuration);
+        readSoundConfiguration(configuration);
 
         mobsImmuneToFrost = configuration
             .get(
@@ -119,6 +121,14 @@ public class Config {
             HotNCold.rebuildBiomeLists();
             HotNCold.rebuildEnviromineBiomeTemperatureOverrides();
         }
+    }
+
+    private static void readSoundConfiguration(Configuration configuration) {
+        disableLightningExplosionSound = configuration.getBoolean(
+            "disableLightningExplosionSound",
+            Configuration.CATEGORY_GENERAL,
+            false,
+            "Mute only vanilla lightning's explosion sound in all dimensions. Thunder, actual explosions, lightning damage and fire are unchanged. Off by default. Restart Minecraft (or the dedicated server) after changing this; multiplayer uses the server's setting.");
     }
 
     private static void readWorldgenConfiguration(Configuration configuration) {

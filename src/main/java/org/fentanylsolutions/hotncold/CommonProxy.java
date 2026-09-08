@@ -26,6 +26,10 @@ public class CommonProxy {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
 
         HotNCold.LOG.info("I am Hot N Cold at version " + Tags.VERSION);
+        if (Config.disableLightningExplosionSound) {
+            HotNCold.LOG
+                .info("Lightning explosion sound disabled; thunder, actual explosions and strike effects unchanged");
+        }
     }
 
     public void init(FMLInitializationEvent event) {

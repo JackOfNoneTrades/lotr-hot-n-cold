@@ -35,7 +35,8 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
 
     @Override
     public List<String> getMixins(Set<String> loadedCoreMods) {
-        return new MixinUtil.MixinBuilder(true).build();
+        return new MixinUtil.MixinBuilder(true).addMixin("MixinEntityLightningBolt", MixinUtil.Side.BOTH)
+            .build();
     }
 
     @Override

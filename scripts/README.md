@@ -67,6 +67,19 @@ Run `scripts/test-production.sh client sources` and `scripts/test-production.sh 
 
 Use `PRODUCTION_EXTRA_MODS` and `REQUIRE_HISTORY_ITEMS=true` to require the actual `historyitems:breehelmet`. `PRODUCTION_BASE_MODS` can select an explicit folder of base release jars instead of the launcher's default LOTR/WOTR set (for example, LOTR v36.14 and UniMixins 0.3.1 without WOTR). Checksums record what was actually loaded. Structure and invasion geometry, weights, positions and random timing are controlled only by the fixture to make the real spawning code deterministic.
 
+## Lightning sound regression
+
+```sh
+scripts/test-production.sh server lightning
+scripts/test-production.sh client lightning
+PRODUCTION_CONFIG="$PWD/scripts/production-lightning/muted.cfg" scripts/test-production.sh server lightning
+PRODUCTION_CONFIG="$PWD/scripts/production-lightning/muted.cfg" scripts/test-production.sh client lightning
+```
+
+The `lightning` profile tests the actual transformed vanilla lightning entity in the Overworld and Middle-earth, with the sound switch off/on/off and LOTR's lightning-grief protection off/on. It observes sound calls and compares thunder arguments, damage, fire, random-number consumption and bolt lifetime; a real explosion's sound remains audible. The client additionally receives a real server weather entity and sound packets, then observes thunder, the expected presence/absence of the impact sound, an unchanged ordinary explosion sound, and the lightning flash. No audio recording or subjective listening is claimed. Repeat with `PRODUCTION_BASE_MODS` pointing at a LOTR-only stack to verify WOTR is not required.
+
+The fixture temporarily controls random seeds and terrain in its disposable world; the released mod does not. The startup config is restored after the off/on/off checks and used for the client sound test. The setting requires a normal game/server restart; the test does not add a sound reload command.
+
 ## Unsupported spawn-list regression
 
 All `null-*` profiles register a test-only extra creature category that real LOTR biomes do not support. Run with `client` or `server`:
