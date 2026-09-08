@@ -157,6 +157,14 @@ public final class LOTRSpawnReport {
         lines.add("  blockedEntitiesInAllLOTRBiomes: " + ruleEntityName);
         lines.add("  blockedEntityBiomeRules: " + ruleEntityName + ":" + ruleBiomeToken);
         if (EntityLiving.class.isAssignableFrom(entityClass)) {
+            long supported = sortedBiomes.stream()
+                .filter(biome -> biome.getSpawnableList(creatureType) != null)
+                .count();
+            if (supported == 0) {
+                lines.add(
+                    "  Addition unavailable: category '" + creatureType.name() + "' is unsupported by these biomes.");
+                return lines;
+            }
             lines.add(
                 "  addedEntityBiomeRules: " + ruleEntityName
                     + ":"
@@ -165,6 +173,13 @@ public final class LOTRSpawnReport {
                     + creatureType.name()
                     + ":10:1:3");
             lines.add("  Addition defaults shown: weight 10, group 1-3; adjust them before use.");
+            if (supported < sortedBiomes.size()) {
+                lines.add(
+                    "  This category is supported by " + supported
+                        + " of "
+                        + sortedBiomes.size()
+                        + " matching biome variants; unsupported variants will be skipped.");
+            }
         } else {
             lines.add("  This entity is not living and cannot be added as a natural spawn.");
         }
@@ -269,7 +284,11 @@ public final class LOTRSpawnReport {
     private static List<CategorizedSpawnEntry> getEntityEntries(BiomeGenBase biome, Class entityClass) {
         List<CategorizedSpawnEntry> entries = new ArrayList<>();
         for (EnumCreatureType creatureType : EnumCreatureType.values()) {
-            for (Object value : biome.getSpawnableList(creatureType)) {
+            List spawnEntries = biome.getSpawnableList(creatureType);
+            if (spawnEntries == null) {
+                continue;
+            }
+            for (Object value : spawnEntries) {
                 if (value instanceof BiomeGenBase.SpawnListEntry
                     && ((BiomeGenBase.SpawnListEntry) value).entityClass == entityClass) {
                     entries.add(new CategorizedSpawnEntry(creatureType, (BiomeGenBase.SpawnListEntry) value));
@@ -295,7 +314,10 @@ public final class LOTRSpawnReport {
                         + ", group "
                         + addition.minimumGroupSize
                         + "-"
-                        + addition.maximumGroupSize);
+                        + addition.maximumGroupSize
+                        + (biome.getSpawnableList(addition.creatureType) == null
+                            ? " (ignored: category unsupported by this biome)"
+                            : ""));
             }
         }
         return descriptions;
@@ -322,7 +344,12 @@ public final class LOTRSpawnReport {
     }
 
     private static void appendCategory(List<String> lines, BiomeGenBase biome, EnumCreatureType creatureType) {
-        List<BiomeGenBase.SpawnListEntry> entries = getSortedEntries(biome, creatureType);
+        List spawnEntries = biome.getSpawnableList(creatureType);
+        if (spawnEntries == null) {
+            lines.add("  " + creatureType.name() + " (unsupported by this biome)");
+            return;
+        }
+        List<BiomeGenBase.SpawnListEntry> entries = getSortedEntries(biome, spawnEntries);
         lines.add("  " + creatureType.name() + " (" + entries.size() + ")");
         for (BiomeGenBase.SpawnListEntry entry : entries) {
             lines.add(
@@ -336,10 +363,9 @@ public final class LOTRSpawnReport {
         }
     }
 
-    private static List<BiomeGenBase.SpawnListEntry> getSortedEntries(BiomeGenBase biome,
-        EnumCreatureType creatureType) {
+    private static List<BiomeGenBase.SpawnListEntry> getSortedEntries(BiomeGenBase biome, List spawnEntries) {
         List<BiomeGenBase.SpawnListEntry> entries = new ArrayList<>();
-        for (Object value : biome.getSpawnableList(creatureType)) {
+        for (Object value : spawnEntries) {
             if (value instanceof BiomeGenBase.SpawnListEntry
                 && !LOTRSpawnControl.isSpawnBlocked(((BiomeGenBase.SpawnListEntry) value).entityClass, biome)) {
                 entries.add((BiomeGenBase.SpawnListEntry) value);

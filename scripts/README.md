@@ -61,4 +61,30 @@ Each run has its own copied jars. Do not edit the launcher script while it is ex
 
 Set `PRODUCTION_TEST_DIR` to an existing absolute test directory to reopen its world. Keep the same side/profile and Bad Mobs choice. Previous logs/results are archived inside that directory; a stale marker cannot turn a failure into a pass. For a terrain comparison, use fresh directories for both sides of the comparison.
 
+## Optional NPC spawn sources
+
+Run `scripts/test-production.sh client sources` and `scripts/test-production.sh server sources` to exercise real LOTR egg use, dispenser eggs, generated Gondor and Angmar towers, structure NPC respawners, and invasion waves. The profile rewrites its isolated config and executes the real equipment reload command for each case: switches off, each source separately, all sources on, fill-empty mode, persistent/named/hired/quest protections, and reload off/on. It checks saved entity data, unchanged existing NPCs, and client equipment tracking/rendering for each enabled source.
+
+Use `PRODUCTION_EXTRA_MODS` and `REQUIRE_HISTORY_ITEMS=true` to require the actual `historyitems:breehelmet`. `PRODUCTION_BASE_MODS` can select an explicit folder of base release jars instead of the launcher's default LOTR/WOTR set (for example, LOTR v36.14 and UniMixins 0.3.1 without WOTR). Checksums record what was actually loaded. Structure and invasion geometry, weights, positions and random timing are controlled only by the fixture to make the real spawning code deterministic.
+
+## Unsupported spawn-list regression
+
+All `null-*` profiles register a test-only extra creature category that real LOTR biomes do not support. Run with `client` or `server`:
+
+- `null-control`: start with blocking off.
+- `null-block`: start with a global block for vanilla `Chicken` (the original crash reproduction).
+- `null-biome`: start with `Chicken` blocked only in the Shire.
+- `null-wotr`: start with broad WOTR animal cleanup enabled; use a WOTR test stack.
+- `null-add`: start with an addition targeting an unsupported category.
+
+Each profile then exercises all block modes, WOTR cleanup/counting and NPC protection when installed, valid additions to LOTR's extra ambient category, rejected unsupported additions, dump/explain/example commands, repeated reloads, and restoration of the original lists and entry objects. The client must actually enter the world. All profiles should pass on the fixed product. This reproduces the missing-list condition, not the specific addon introducing that category in the friend's full pack.
+
+```sh
+scripts/test-production.sh client null-block
+scripts/test-production.sh client null-wotr
+scripts/test-production.sh server null-wotr
+```
+
+Use `PRODUCTION_MOD_JAR` to compare against the reported `6781391` build: `null-block` must fail during the real server-starting event at `LOTRSpawnControl.removeBlockedEntries:550`. Do not count this expected negative control as an acceptance pass.
+
 The fixture is packaged separately at `build/production-test/hotncold-production-fixture.jar` and must never be distributed as part of the mod or installed in a normal playing instance. Tests rewrite only their isolated copies, never the launcher instance or original friend configuration.

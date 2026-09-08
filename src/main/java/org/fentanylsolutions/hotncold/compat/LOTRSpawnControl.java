@@ -82,6 +82,17 @@ public final class LOTRSpawnControl {
         Set<BiomeGenBase> changedBiomes = Collections.newSetFromMap(new IdentityHashMap<BiomeGenBase, Boolean>());
         for (SpawnAddition addition : additions) {
             List spawnEntries = addition.biome.getSpawnableList(addition.creatureType);
+            if (spawnEntries == null) {
+                HotNCold.LOG.warn(
+                    "LOTR biome '{}' ({}, {}) does not support spawn category '{}'; ignoring addition of {}",
+                    addition.biome.biomeName,
+                    addition.biome.biomeID,
+                    addition.biome.getClass()
+                        .getName(),
+                    addition.creatureType.name(),
+                    EntityList.classToStringMapping.get(addition.entityClass));
+                continue;
+            }
             BiomeGenBase.SpawnListEntry addedEntry = addSpawnEntryIfAbsentAndReturn(
                 spawnEntries,
                 addition.entityClass,
@@ -428,6 +439,9 @@ public final class LOTRSpawnControl {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static BiomeGenBase.SpawnListEntry addSpawnEntryIfAbsentAndReturn(List spawnEntries,
         Class<? extends EntityLiving> entityClass, int weight, int minimumGroupSize, int maximumGroupSize) {
+        if (spawnEntries == null) {
+            return null;
+        }
         for (Object value : spawnEntries) {
             if (value instanceof BiomeGenBase.SpawnListEntry
                 && ((BiomeGenBase.SpawnListEntry) value).entityClass == entityClass) {
@@ -546,6 +560,10 @@ public final class LOTRSpawnControl {
 
     private static int removeBlockedEntries(List spawnEntries, Set<Class> blockedEntityClasses,
         SpawnListJournal journal) {
+        // Extra creature categories can be registered by other mods without a list in this biome.
+        if (spawnEntries == null) {
+            return 0;
+        }
         int removedEntries = 0;
         Iterator iterator = spawnEntries.iterator();
         int entryIndex = 0;
@@ -605,7 +623,7 @@ public final class LOTRSpawnControl {
                 + removedBiomeBlockedEntries
                 + " biome-blocked); rejected "
                 + rejectedAdditionTargets
-                + " duplicate addition target(s).";
+                + " duplicate or unsupported addition target(s).";
         }
 
         public String describeReload() {
@@ -620,7 +638,7 @@ public final class LOTRSpawnControl {
                 + removedBiomeBlockedEntries
                 + " biome-blocked spawn entry/entries; rejected "
                 + rejectedAdditionTargets
-                + " duplicate addition target(s).";
+                + " duplicate or unsupported addition target(s).";
         }
     }
 

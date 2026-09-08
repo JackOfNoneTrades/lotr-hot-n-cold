@@ -16,6 +16,7 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
     private boolean launched;
     private int playableTicks;
     private int visibilityTicks;
+    private int failedMenuTicks;
     private ProductionGearScreen gearScreen;
 
     @Override
@@ -46,10 +47,17 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
             settings.enableCommands();
             mc.launchIntegratedServer("acceptance", "Production acceptance", settings);
         }
+        boolean failedMenu = launched && mc.currentScreen instanceof GuiMainMenu
+            && mc.theWorld == null
+            && (mc.getIntegratedServer() == null || mc.getIntegratedServer()
+                .isServerStopped());
+        ProductionFixture.require(
+            !failedMenu || ++failedMenuTicks < 100,
+            "Integrated server returned to the menu without loading the acceptance world; see the FML startup error");
         if (ProductionFixture.serverChecksPassed && mc.theWorld != null && mc.thePlayer != null) {
             if (ProductionFixture.visibilityNPCData != null && ProductionFixture.visibilityStage != 4) {
                 ProductionFixture.require(
-                    ++visibilityTicks < 300,
+                    ++visibilityTicks < 1200,
                     "Client did not receive configured armor/shield or empty shield update");
                 net.minecraft.entity.Entity entity = mc.theWorld.getEntityByID(ProductionFixture.visibleEntityId);
                 if (visibilityTicks % 100 == 0) {
@@ -76,10 +84,10 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
                         ProductionFixture.LOG.info(
                             "PRODUCTION_CLIENT_GEAR_PASSED: client entity has helmet={} and configured shield after tracking saved NPC",
                             net.minecraft.item.Item.itemRegistry.getNameForObject(ProductionFixture.visibilityHelmet));
-                        gearScreen = new ProductionGearScreen(npc);
+                        gearScreen = new ProductionGearScreen(npc, ProductionFixture.visibilityLabel);
                         mc.displayGuiScreen(gearScreen);
                         ProductionFixture.visibilityStage = 2;
-                    } else if (ProductionFixture.visibilityStage == 3 && npc.npcShield == null) {
+                    } else if (ProductionFixture.visibilityStage == 3 && npc.npcShield == null && gearScreen.rendered) {
                         ProductionFixture.LOG
                             .info("PRODUCTION_CLIENT_EMPTY_SHIELD_PASSED: live shield update reached client");
                         ProductionFixture.visibilityStage = 4;

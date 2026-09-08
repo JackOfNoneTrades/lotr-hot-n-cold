@@ -24,6 +24,11 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
     private static final Logger LOG = LogManager.getLogger("Hot N Cold core");
 
     @Override
+    public String[] getASMTransformerClass() {
+        return new String[] { "org.fentanylsolutions.hotncold.core.EquipmentSpawnTransformer" };
+    }
+
+    @Override
     public String getMixinConfig() {
         return "mixins." + HotNCold.MODID + ".early.json";
     }

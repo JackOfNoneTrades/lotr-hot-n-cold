@@ -3,7 +3,11 @@ package hotncold.production;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Queue;
+import java.util.Set;
 
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +32,35 @@ public final class ProductionFixture {
     public static net.minecraft.item.Item visibilityHelmet;
     public static volatile int visibleEntityId;
     public static volatile int visibilityStage;
+    public static volatile String visibilityLabel = "preview";
+    public static final Set<String> visibilityLabels = new HashSet<>();
+    private static final Queue<VisibilityCheck> visibilityChecks = new ArrayDeque<>();
+
+    public static void addVisibilityCheck(lotr.common.entity.npc.LOTREntityNPC npc, net.minecraft.item.Item helmet,
+        String label) {
+        net.minecraft.nbt.NBTTagCompound data = new net.minecraft.nbt.NBTTagCompound();
+        npc.writeToNBT(data);
+        data.setString("id", net.minecraft.entity.EntityList.getEntityString(npc));
+        visibilityHelmet = helmet;
+        visibilityLabels.add(label);
+        if (visibilityNPCData == null) {
+            visibilityNPCData = data;
+            visibilityLabel = label;
+        } else {
+            visibilityChecks.add(new VisibilityCheck(data, label));
+        }
+    }
+
+    private static final class VisibilityCheck {
+
+        private final net.minecraft.nbt.NBTTagCompound data;
+        private final String label;
+
+        private VisibilityCheck(net.minecraft.nbt.NBTTagCompound data, String label) {
+            this.data = data;
+            this.label = label;
+        }
+    }
 
     @SidedProxy(
         clientSide = "hotncold.production.ProductionClient",
@@ -40,6 +73,9 @@ public final class ProductionFixture {
             Boolean.FALSE.equals(Launch.blackboard.get("fml.deobfuscatedEnvironment")),
             "Acceptance tests must run on obfuscated Minecraft, never Gradle's development runtime");
         LOG.info("PRODUCTION_RUNTIME_CONFIRMED: obfuscated Minecraft; profile={}", profile());
+        if (profile().startsWith("null-")) {
+            org.fentanylsolutions.hotncold.compat.NullableSpawnChecks.init(profile());
+        }
         FMLCommonHandler.instance()
             .bus()
             .register(this);
@@ -61,10 +97,15 @@ public final class ProductionFixture {
         net.minecraft.entity.player.EntityPlayerMP player = (net.minecraft.entity.player.EntityPlayerMP) server
             .getConfigurationManager().playerEntityList.get(0);
         if (visibilityStage == 0) {
-            // Restore a genuinely naturally-spawned NPC next to the real connected player.
-            lotr.common.entity.npc.LOTREntityGondorSoldier npc = new lotr.common.entity.npc.LOTREntityGondorSoldier(
-                player.worldObj);
-            npc.readFromNBT(visibilityNPCData);
+            // Restore an NPC from an actual spawn source next to the connected player.
+            lotr.common.entity.npc.LOTREntityNPC npc;
+            if (visibilityNPCData.hasKey("id")) {
+                npc = (lotr.common.entity.npc.LOTREntityNPC) net.minecraft.entity.EntityList
+                    .createEntityFromNBT(visibilityNPCData, player.worldObj);
+            } else {
+                npc = new lotr.common.entity.npc.LOTREntityGondorSoldier(player.worldObj);
+                npc.readFromNBT(visibilityNPCData);
+            }
             npc.dimension = player.dimension;
             npc.setPosition(player.posX + 3, player.posY, player.posZ + 3);
             npc.isNPCPersistent = true;
@@ -87,12 +128,28 @@ public final class ProductionFixture {
                     .getTrackingPlayers(npc)
                     .size());
             visibilityStage = 3;
+        } else if (visibilityStage == 4 && !visibilityChecks.isEmpty()) {
+            net.minecraft.entity.Entity old = player.worldObj.getEntityByID(visibleEntityId);
+            if (old != null) {
+                old.setDead();
+            }
+            VisibilityCheck next = visibilityChecks.remove();
+            visibilityNPCData = next.data;
+            visibilityLabel = next.label;
+            visibilityStage = 0;
         }
     }
 
     @Mod.EventHandler
     public void started(FMLServerStartedEvent event) throws Exception {
-        if (!"baseline".equals(profile()) && !"compat".equals(profile()) && !"streams".equals(profile())) {
+        if (profile().startsWith("null-")) {
+            org.fentanylsolutions.hotncold.compat.NullableSpawnChecks.run();
+            completeServerChecks();
+            return;
+        }
+        if (cpw.mods.fml.common.Loader.isModLoaded("wotrmc") && !"baseline".equals(profile())
+            && !"compat".equals(profile())
+            && !"streams".equals(profile())) {
             org.fentanylsolutions.hotncold.core.RestrictionChecks.run();
         }
         if ("terrain".equals(profile()) || "baseline".equals(profile()) || "compat".equals(profile())) {
@@ -106,6 +163,9 @@ public final class ProductionFixture {
             StreamsChecks.run();
         } else if ("friend".equals(profile())) {
             FriendConfigChecks.run();
+        } else if ("sources".equals(profile())) {
+            SpawnSourceChecks.start();
+            return;
         } else if ("full".equals(profile())) {
             org.fentanylsolutions.hotncold.Config.lotrNPCGroupMembers = new String[] { "Gondor;lotr.GondorSoldier" };
             org.fentanylsolutions.hotncold.compat.LOTREquipmentControl.prepareConfiguredNPCGroups();
@@ -114,6 +174,10 @@ public final class ProductionFixture {
             NaturalNPCChecks.run(world);
             SpawnBehaviorChecks.run(world);
         }
+        completeServerChecks();
+    }
+
+    public static void completeServerChecks() throws Exception {
         serverChecksPassed = true;
         if (MinecraftServer.getServer()
             .isDedicatedServer()) {

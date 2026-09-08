@@ -820,20 +820,26 @@ public final class LOTREquipmentControl {
 
     public static IEntityLivingData finishNaturalSpawn(EntityLiving entity, IEntityLivingData livingData) {
         IEntityLivingData result = entity.onSpawnWithEgg(livingData);
-        if (entity instanceof LOTREntityNPC) {
+        applySpawnEquipment(entity, "natural");
+        return result;
+    }
+
+    public static void applySpawnEquipment(EntityLiving entity, String source) {
+        if (!entity.worldObj.isRemote && entity instanceof LOTREntityNPC) {
             LOTREntityNPC npc = (LOTREntityNPC) entity;
             if (!hasConfiguredEquipmentFor(npc)) {
-                return result;
+                return;
             }
             if (!shouldApplyConfiguredEquipment(npc)) {
                 if (Config.logLOTREquipmentChanges) {
                     HotNCold.LOG.info(
-                        "Skipped configured LOTR NPC equipment for {} at {} because it is protected: {}",
+                        "Skipped configured LOTR NPC equipment for {} from {} at {} because it is protected: {}",
                         registeredEntityName(npc),
+                        source,
                         describePosition(npc),
                         describeActiveProtections(npc));
                 }
-                return result;
+                return;
             }
 
             boolean weaponApplied = applyConfiguredWeapon(npc);
@@ -843,8 +849,9 @@ public final class LOTREquipmentControl {
             if (Config.logLOTREquipmentChanges
                 && (weaponApplied || rangedApplied || armorSlotsApplied > 0 || shieldApplied)) {
                 HotNCold.LOG.info(
-                    "Applied configured LOTR NPC equipment to {} at {}: changed melee={}, ranged={}, armorSlots={}, shield={}; resulting gear: melee={}, ranged={}, boots={}, leggings={}, chest={}, helmet={}, shield={}",
+                    "Applied configured LOTR NPC equipment to {} from {} at {}: changed melee={}, ranged={}, armorSlots={}, shield={}; resulting gear: melee={}, ranged={}, boots={}, leggings={}, chest={}, helmet={}, shield={}",
                     registeredEntityName(npc),
+                    source,
                     describePosition(npc),
                     weaponApplied,
                     rangedApplied,
@@ -859,7 +866,6 @@ public final class LOTREquipmentControl {
                     npc.npcShield == null ? "empty" : npc.npcShield.toString());
             }
         }
-        return result;
     }
 
     private static boolean hasConfiguredEquipmentFor(LOTREntityNPC npc) {

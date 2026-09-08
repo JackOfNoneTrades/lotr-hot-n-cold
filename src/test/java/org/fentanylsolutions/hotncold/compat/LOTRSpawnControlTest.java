@@ -198,11 +198,11 @@ public class LOTRSpawnControlTest {
 
         assertEquals(
             "LOTR spawn summary: added 4; removed 18 total (5 War of the Ring, 6 globally blocked, "
-                + "7 biome-blocked); rejected 8 duplicate addition target(s).",
+                + "7 biome-blocked); rejected 8 duplicate or unsupported addition target(s).",
             result.describeStartup());
         assertEquals(
             "Reloaded LOTR spawn rules: undid 3 previous change(s); added 4, removed 5 War of the Ring, "
-                + "6 globally blocked, and 7 biome-blocked spawn entry/entries; rejected 8 duplicate addition target(s).",
+                + "6 globally blocked, and 7 biome-blocked spawn entry/entries; rejected 8 duplicate or unsupported addition target(s).",
             result.describeReload());
     }
 }

@@ -8,7 +8,7 @@ instance=${FJORD_INSTANCE:-"$launcher/instances/lotr-test"}
 side=${1:-client}
 profile=${2:-friend}
 case "$side" in client|server) ;; *) exit 2 ;; esac
-case "$profile" in full|friend|terrain|baseline|compat|streams|worldgen|combined) ;; *) exit 2 ;; esac
+case "$profile" in full|friend|terrain|baseline|compat|streams|worldgen|combined|sources|null-control|null-block|null-biome|null-wotr|null-add) ;; *) exit 2 ;; esac
 if [[ "$side" == server && "$profile" == baseline ]]; then
     printf 'Use client baseline: unpatched WOTR refuses a dedicated server\n' >&2
     exit 2
@@ -36,12 +36,18 @@ if [[ -f "$run_dir/console.log" ]]; then
 fi
 trap 'status=$?; if (( status != 0 )); then printf "Production test failed; full log: %s/console.log\n" "$run_dir" >&2; tail -n 45 "$run_dir/console.log" >&2; fi' EXIT
 
-for mod in '+unimixins-all-1.7.10-0.2.1.jar' 'LOTRMod v36.14.jar' 'War of the Ring-1.3.1.jar' 'DrZharks MoCreatures Mod v6.3.1.zip' 'IvToolkit-1.2.1.jar' 'EnviroMine-1.3.148-ESE-0x01.jar'; do
-    cp "$instance/.minecraft/mods/$mod" "$run_dir/mods/$mod"
-done
+if [[ -n ${PRODUCTION_BASE_MODS:-} ]]; then
+    while IFS= read -r -d '' mod; do
+        cp "$mod" "$run_dir/mods/"
+    done < <(find "$PRODUCTION_BASE_MODS" -maxdepth 1 -type f \( -name '*.jar' -o -name '*.zip' \) -print0)
+else
+    for mod in '+unimixins-all-1.7.10-0.2.1.jar' 'LOTRMod v36.14.jar' 'War of the Ring-1.3.1.jar' 'DrZharks MoCreatures Mod v6.3.1.zip' 'IvToolkit-1.2.1.jar' 'EnviroMine-1.3.148-ESE-0x01.jar'; do
+        cp "$instance/.minecraft/mods/$mod" "$run_dir/mods/$mod"
+    done
+fi
 extra_java=()
 if [[ ${REQUIRE_HISTORY_ITEMS:-false} == true ]]; then
-    [[ "$profile" == friend || "$profile" == combined ]] || { printf 'History Items requires friend or combined profile\n' >&2; exit 2; }
+    [[ "$profile" == friend || "$profile" == combined || "$profile" == sources ]] || { printf 'History Items requires friend, combined or sources profile\n' >&2; exit 2; }
     extra_java+=(-Dhotncold.fixture.requireHistoryItems=true)
 fi
 if [[ ${WITH_BADMOBS:-false} == true ]]; then
@@ -64,7 +70,7 @@ fi
 if [[ -n ${PRODUCTION_CONFIG:-} && ! -f "$run_dir/config/hotncold.cfg" ]]; then
     cp "$PRODUCTION_CONFIG" "$run_dir/config/hotncold.cfg"
 fi
-(cd "$run_dir" && sha256sum mods/*.jar mods/*.zip > artifacts.sha256)
+(cd "$run_dir" && find mods -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > artifacts.sha256)
 
 classpath=''
 while IFS=: read -r group artifact version classifier; do

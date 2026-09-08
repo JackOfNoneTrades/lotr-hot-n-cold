@@ -562,7 +562,20 @@ public final class LOTREquipmentReport {
         lines.add(
             "  Persistent or location-specific NPCs: "
                 + (Config.customizePersistentLOTREquipment ? "included." : "protected."));
-        lines.add("  Existing NPCs are not changed; these rules apply to future natural spawns.");
+        lines.add(
+            "  Spawn sources: natural=yes, eggs=" + Config.customizeSpawnEggLOTREquipment
+                + ", structures="
+                + Config.customizeStructureLOTREquipment
+                + ", invasions="
+                + Config.customizeInvasionLOTREquipment
+                + ".");
+        if (!Config.customizePersistentLOTREquipment
+            && (Config.customizeSpawnEggLOTREquipment || Config.customizeStructureLOTREquipment
+                || Config.customizeInvasionLOTREquipment)) {
+            lines.add(
+                "  LOTR normally marks egg, structure and invasion NPCs persistent: enable customizePersistentLOTREquipment to include them.");
+        }
+        lines.add("  Existing NPCs are not changed; only future spawns from enabled sources are customized.");
     }
 
     private static String sourceSuffix(String source) {

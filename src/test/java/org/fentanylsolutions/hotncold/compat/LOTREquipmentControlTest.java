@@ -397,7 +397,10 @@ public class LOTREquipmentControlTest {
         assertEquals("  NPCs with custom name tags: included.", lines.get(8));
         assertEquals("  Quest-linked NPCs: protected.", lines.get(9));
         assertEquals("  Persistent or location-specific NPCs: protected.", lines.get(10));
-        assertEquals("  Existing NPCs are not changed; these rules apply to future natural spawns.", lines.get(11));
+        assertEquals("  Spawn sources: natural=yes, eggs=false, structures=false, invasions=false.", lines.get(11));
+        assertEquals(
+            "  Existing NPCs are not changed; only future spawns from enabled sources are customized.",
+            lines.get(12));
     }
 
     @Test

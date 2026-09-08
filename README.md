@@ -14,6 +14,7 @@ Hot N Cold is a Minecraft 1.7.10 addon for LOTR Legacy that gives modpack makers
 - Add natural spawns with configurable category, frequency, and group size.
 - Inspect, explain, generate, and reload spawn rules in-game.
 - Randomize LOTR NPC melee weapons, ranged weapons, shields, and armor.
+- Optionally apply NPC gear rules to LOTR spawn eggs, structures, and invasions.
 - Target exact NPCs, custom groups, factions, or every LOTR NPC.
 - Preserve existing, hired, named, quest-linked, and location-specific NPCs by default.
 - Use LOTR biomes in Custom NPCs.

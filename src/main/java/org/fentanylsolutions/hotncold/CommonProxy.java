@@ -5,6 +5,7 @@ import net.minecraftforge.common.MinecraftForge;
 import org.fentanylsolutions.hotncold.command.CommandHotNCold;
 import org.fentanylsolutions.hotncold.compat.EnviroMineCompat;
 import org.fentanylsolutions.hotncold.compat.LOTREquipmentControl;
+import org.fentanylsolutions.hotncold.compat.LOTREquipmentSpawns;
 import org.fentanylsolutions.hotncold.compat.LOTRNPCShieldSync;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnControl;
 import org.fentanylsolutions.hotncold.compat.LOTRSpawnGuard;
@@ -30,6 +31,7 @@ public class CommonProxy {
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(LOTRSpawnGuard.INSTANCE);
         LOTRNPCShieldSync.init();
+        LOTREquipmentSpawns.init();
     }
 
     public void receiveNPCShield(int entityId, int dimension, String shieldName) {}

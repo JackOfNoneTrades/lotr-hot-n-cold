@@ -57,7 +57,11 @@ public final class WarOfTheRingSpawnCompat {
         int count = 0;
         for (BiomeGenBase biome : getAllLOTRSpawnBiomes()) {
             for (EnumCreatureType type : EnumCreatureType.values()) {
-                for (Object value : biome.getSpawnableList(type)) {
+                List spawnEntries = biome.getSpawnableList(type);
+                if (spawnEntries == null) {
+                    continue;
+                }
+                for (Object value : spawnEntries) {
                     if (value instanceof BiomeGenBase.SpawnListEntry
                         && isWarOfTheRingAnimal(((BiomeGenBase.SpawnListEntry) value).entityClass)) {
                         count++;
@@ -111,6 +115,9 @@ public final class WarOfTheRingSpawnCompat {
     }
 
     private static int removeWarOfTheRingEntries(List spawnEntries, SpawnListJournal journal) {
+        if (spawnEntries == null) {
+            return 0;
+        }
         int removedEntries = 0;
         Iterator iterator = spawnEntries.iterator();
         int entryIndex = 0;

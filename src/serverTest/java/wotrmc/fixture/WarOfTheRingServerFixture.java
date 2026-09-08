@@ -491,7 +491,7 @@ public final class WarOfTheRingServerFixture {
             && repeatedResult.describeStartup()
                 .contains("LOTR spawn summary:")
             && repeatedResult.describeStartup()
-                .contains("duplicate addition target(s)");
+                .contains("duplicate or unsupported addition target(s)");
     }
 
     private static boolean verifyExplainReport() {
