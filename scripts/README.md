@@ -78,6 +78,24 @@ PRODUCTION_CONFIG="$PWD/scripts/production-lightning/muted.cfg" scripts/test-pro
 
 The `lightning` profile tests the actual transformed vanilla lightning entity in the Overworld and Middle-earth, with the sound switch off/on/off and LOTR's lightning-grief protection off/on. It observes sound calls and compares thunder arguments, damage, fire, random-number consumption and bolt lifetime; a real explosion's sound remains audible. The client additionally receives a real server weather entity and sound packets, then observes thunder, the expected presence/absence of the impact sound, an unchanged ordinary explosion sound, and the lightning flash. No audio recording or subjective listening is claimed. Repeat with `PRODUCTION_BASE_MODS` pointing at a LOTR-only stack to verify WOTR is not required.
 
+### Development client: actual Wizardry command
+
+The opt-in `clientLightningTest` fixture exercises `/cast lightning_bolt`, not a substitute spell or a direct test-created bolt. It checks the sound pipeline in both the Overworld and Middle-earth with impact muting enabled, disabled, and restored. It records the incoming and replacement sound names, requires LOTR's replacement thunder in Middle-earth, checks the visible flash, and verifies that a separate ordinary explosion still plays. This fixture is never packaged in the released mod.
+
+Use a fresh isolated directory with a copy of the development client's configuration. The copied configuration must have `general.B:disableLightningExplosionSound=true` in `hotncold.cfg` and `B:"New weather"=true` in `lotr.cfg`. The fixture temporarily changes the runtime mute flag for comparisons; it does not rewrite the saved sound setting.
+
+```sh
+lightning_run=$(mktemp -d "$PWD/run/lightning-command-XXXXXX")
+cp -a run/client/config "$lightning_run/config"
+xvfb-run -a ./gradlew --configuration-cache \
+  -PrunClientWorkingDirectory="$lightning_run" \
+  -PclientLightningTest -PclientFixtureWorld=lightning-command runClient25
+```
+
+Use `runClient` instead for Java 8. Success requires five `CLIENT_LIGHTNING_COMMAND_CASE_PASSED` lines followed by `CLIENT_LIGHTNING_COMMAND_PASSED` and a clean shutdown. For a rerun in the same test world, also pass `-PclientFixtureTerrain=existing`. Do not point this terrain-modifying fixture at a world you play in.
+
+When investigating a reported remaining sound, distinguish `random.explode` from `ambient.weather.thunder` (replaced by `lotr:ambient.weather.thunder` in Middle-earth with LOTR's new weather enabled). The option intentionally preserves thunder. The option is read at Minecraft startup, not by the spawn/equipment reload commands.
+
 The fixture temporarily controls random seeds and terrain in its disposable world; the released mod does not. The startup config is restored after the off/on/off checks and used for the client sound test. The setting requires a normal game/server restart; the test does not add a sound reload command.
 
 ## Unsupported spawn-list regression

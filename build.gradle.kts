@@ -51,8 +51,10 @@ val prepareModernClientConfig by tasks.registering {
     group = "verification"
     description = "Prepares compatibility settings needed by the War of the Ring development client on modern Java."
 
+    val clientDirectory = project.findProperty("runClientWorkingDirectory")?.toString() ?: "run/client"
+    val configFile = project.file("$clientDirectory/config/hodgepodge.cfg")
+
     doLast {
-        val configFile = layout.projectDirectory.file("run/client/config/hodgepodge.cfg").asFile
         val setting = "B:preventLoadingChunksWhenTickingBlocks"
         val disabledSetting = "$setting=false"
 
@@ -83,8 +85,9 @@ tasks.withType<JavaExec>().configureEach {
     project.findProperty("spawnStressIterations")?.toString()?.let {
         systemProperty("hotncold.fixture.spawnStressIterations", it)
     }
-    if (project.hasProperty("clientSmokeTest")) {
+    if (project.hasProperty("clientSmokeTest") || project.hasProperty("clientLightningTest")) {
         systemProperty("hotncold.fixture.clientSmokeTest", "true")
+        systemProperty("hotncold.fixture.clientLightningTest", project.hasProperty("clientLightningTest").toString())
         systemProperty(
             "hotncold.fixture.clientWorld",
             project.findProperty("clientFixtureWorld")?.toString() ?: "hotncold-client-fixture",

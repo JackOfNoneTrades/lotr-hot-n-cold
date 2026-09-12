@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
+import net.minecraftforge.common.MinecraftForge;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,10 +27,18 @@ public final class ClientIntegrationFixture {
     private static final Logger LOG = LogManager.getLogger("Hot N Cold client fixture");
     private boolean launchRequested;
     private int playableTicks;
+    private ClientLightningFixture lightning;
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         if (Boolean.getBoolean("hotncold.fixture.clientSmokeTest")) {
+            if (Boolean.getBoolean("hotncold.fixture.clientLightningTest")) {
+                lightning = new ClientLightningFixture();
+                MinecraftForge.EVENT_BUS.register(lightning);
+                FMLCommonHandler.instance()
+                    .bus()
+                    .register(lightning);
+            }
             FMLCommonHandler.instance()
                 .bus()
                 .register(this);
@@ -55,6 +64,9 @@ public final class ClientIntegrationFixture {
         if (playableTicks < 40) {
             return;
         }
+        if (lightning != null && !lightning.tick(minecraft)) {
+            return;
+        }
 
         String terrain = System.getProperty("hotncold.fixture.clientTerrain", "new");
         LOG.info("CLIENT_INTEGRATED_FIXTURE_PASSED: {} terrain loaded in a playable integrated server", terrain);
@@ -77,6 +89,7 @@ public final class ClientIntegrationFixture {
         }
 
         launchRequested = true;
+        minecraft.gameSettings.pauseOnLostFocus = false;
         WorldSettings settings = new WorldSettings(
             74839274923L,
             WorldSettings.GameType.CREATIVE,
