@@ -31,6 +31,9 @@ public class LateMixinLoader implements ILateMixinLoader {
             builder.addMixin("MixinTileEntityCampfire", MixinUtil.Side.BOTH, "campfirebackport")
                 .addMixin("MixinBlockCampfire", MixinUtil.Side.BOTH, "campfirebackport");
         }
+        builder.addMixin("MixinEntityRendererProxyWeather2Mini", MixinUtil.Side.CLIENT, "weather2")
+            .addMixin("MixinSceneEnhancer", MixinUtil.Side.CLIENT, "weather2")
+            .addMixin("MixinClientTickHandler", MixinUtil.Side.CLIENT, "weather2");
         return builder.addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinLOTRSpawnerAnimals", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinLOTRSpawnerNPCs", MixinUtil.Side.BOTH, "lotr")

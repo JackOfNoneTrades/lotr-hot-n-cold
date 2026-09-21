@@ -12,6 +12,7 @@ Hot N Cold is a Minecraft 1.7.10 addon for LOTR Legacy that gives modpack makers
 - Optionally mute lightning's explosion sound while keeping thunder and normal explosion sounds.
 - Show Eärendil in every Middle-earth biome, including Mordor, with LOTR's custom sky enabled.
 - Feed Campfire Backport campfires with MineFantasy 2 firepit fuels and give cooking food a configurable chance to burn when both mods are installed.
+- Restore vanilla and LOTR precipitation with Weather 2, with a configurable dark-sky delay before rain.
 - Remove all natural animal spawns added by War of the Ring.
 - Block selected mobs globally or in individual LOTR biomes.
 - Add natural spawns with configurable category, frequency, and group size.

@@ -9,6 +9,14 @@ import lotr.common.entity.npc.LOTREntityNPC;
 public class ClientProxy extends CommonProxy {
 
     @Override
+    public void init(cpw.mods.fml.common.event.FMLInitializationEvent event) {
+        super.init(event);
+        if (cpw.mods.fml.common.Loader.isModLoaded("weather2")) {
+            org.fentanylsolutions.hotncold.compat.WeatherRainDelay.initialize();
+        }
+    }
+
+    @Override
     public void receiveNPCShield(int entityId, int dimension, String shieldName) {
         Minecraft mc = Minecraft.getMinecraft();
         mc.func_152344_a(() -> {

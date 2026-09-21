@@ -123,3 +123,20 @@ Cooking keeps Campfire Backport's four slots and recipe times. Each completed fo
 Campfire Backport's ordinary rain, water and oxygen extinguishing still applies. Its automatic burnout timer is replaced by the fuel supply while this integration is enabled; fuel exhaustion extinguishes the block rather than applying the optional "Burn to Nothing" destruction chance.
 
 Tested releases: MineFantasy II 2.8.14.6 and Campfire Backport 1.11.3. With the regular Campfire jar, load UniMixins first (for example, name its jar `!unimixins-0.3.1.jar`) so Campfire's bundled older Mixin does not take precedence. Campfire also publishes a `+nomixin` variant for installations that already provide Mixin.
+
+## Weather 2 precipitation
+
+With Weather 2 installed, Hot N Cold restores vanilla precipitation and the dimension's own weather renderer. Middle-earth therefore uses LOTR's rain, snow, Mordor ash and desert sandstorms. Weather 2's separate rain/snow particles are suppressed. Its camera renderer replacement is bypassed while this patch is enabled, keeping LOTR's renderer stable instead of letting the two mods replace it every tick. Tornadoes, storm progression, wind, clouds, hail and other effects keep their existing behavior and settings.
+
+```cfg
+general {
+    B:enableWeather2VanillaRain=true
+    I:weather2RainDelaySeconds=120
+}
+```
+
+These are **client settings**, read at startup. The sky darkens normally when wet weather reaches the player. Rain/snow (including LOTR's special precipitation), ground splashes and rain sounds wait for the configured delay. Set the delay to `0` for immediate precipitation, or disable `enableWeather2VanillaRain` to restore Weather 2's original rendering. The delay accepts 0–3600 seconds and pauses with a paused single-player game.
+
+The delay runs locally from the onset of wet weather; it resets after clear skies, disconnecting or changing dimensions. Joining an already active storm starts a new local delay. This is a visual delay: server rain mechanics and storm timing continue normally. Weather 2 still decides where its localized storms occur in its enabled dimensions. Dimensions outside Weather 2's weather list retain their own native rain state; this patch does not add dimensions to Weather 2's lists or change storm frequency.
+
+Test target: [Weather 2 2.3.20](https://www.curseforge.com/minecraft/mc-mods/weather-storms-tornadoes/files/2513048), with [CoroUtil 1.1.6](https://www.curseforge.com/minecraft/mc-mods/coroutil/files/2388794), for Minecraft 1.7.10. Use `./gradlew runClient -Pweather2Runtime` to include both in the development runtime. They remain optional and are not bundled into Hot N Cold.

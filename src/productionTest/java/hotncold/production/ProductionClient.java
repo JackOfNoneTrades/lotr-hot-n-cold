@@ -20,6 +20,7 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
     private ProductionGearScreen gearScreen;
     private LightningClientChecks lightningChecks;
     private EarendilClientChecks earendilChecks;
+    private WeatherRainClientChecks weatherRainChecks;
 
     @Override
     public void init() {
@@ -63,6 +64,15 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
         if (ProductionFixture.serverChecksPassed && mc.theWorld != null && mc.thePlayer != null) {
             if ("campfire".equals(ProductionFixture.profile()) && !CampfireClientChecks.tick(mc)) {
                 return;
+            }
+            if ("weather-rain".equals(ProductionFixture.profile())) {
+                if (weatherRainChecks == null) {
+                    weatherRainChecks = new WeatherRainClientChecks();
+                    mc.displayGuiScreen(weatherRainChecks);
+                }
+                if (!weatherRainChecks.finished || !weatherRainChecks.checkStableRenderer(mc)) {
+                    return;
+                }
             }
             if ("earendil".equals(ProductionFixture.profile())) {
                 if (earendilChecks == null) {

@@ -14,6 +14,8 @@ public class Config {
     public static boolean printMobs = false;
     public static boolean printBiomes = false;
     public static boolean disableLightningExplosionSound = false;
+    public static boolean enableWeather2VanillaRain = true;
+    public static int weather2RainDelaySeconds = 120;
     public static boolean enableMineFantasyCampfires = true;
     public static float campfireFoodBurnChance = 0.25F;
     public static boolean enableStreamsMiddleEarth = true;
@@ -74,6 +76,18 @@ public class Config {
         readNPCEquipmentConfiguration(configuration);
         readWorldgenConfiguration(configuration);
         readSoundConfiguration(configuration);
+        enableWeather2VanillaRain = configuration.getBoolean(
+            "enableWeather2VanillaRain",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "With Weather 2 installed, use vanilla and dimension-specific precipitation instead of Weather 2 rain/snow particles. Preserves storm simulation, wind and clouds. Client setting; restart required.");
+        weather2RainDelaySeconds = configuration.getInt(
+            "weather2RainDelaySeconds",
+            Configuration.CATEGORY_GENERAL,
+            120,
+            0,
+            3600,
+            "Seconds of dark sky before precipitation, rain splashes and rain sounds appear locally. Requires enableWeather2VanillaRain and Weather 2. 0 disables the delay. Resets on clear weather, disconnect or dimension change. Client setting; restart required.");
         enableMineFantasyCampfires = configuration.getBoolean(
             "enableMineFantasyCampfires",
             Configuration.CATEGORY_GENERAL,

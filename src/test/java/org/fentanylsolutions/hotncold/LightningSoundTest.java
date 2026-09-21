@@ -92,9 +92,19 @@ public class LightningSoundTest {
     }
 
     @Test
-    public void mixinIsRegisteredEvenWithNoOptionalCoremods() {
-        assertTrue(
-            new EarlyMixinLoader().getMixins(Collections.emptySet())
-                .contains("minecraft.MixinEntityLightningBolt"));
+    public void mixinIsRegisteredEvenWithNoOptionalCoremods() throws Exception {
+        java.lang.reflect.Field field = cpw.mods.fml.relauncher.FMLLaunchHandler.class.getDeclaredField("side");
+        field.setAccessible(true);
+        Object original = field.get(null);
+        try {
+            for (cpw.mods.fml.relauncher.Side side : cpw.mods.fml.relauncher.Side.values()) {
+                field.set(null, side);
+                java.util.List<String> mixins = new EarlyMixinLoader().getMixins(Collections.emptySet());
+                assertTrue(mixins.contains("minecraft.MixinEntityLightningBolt"));
+                assertEquals(side.isClient(), mixins.contains("minecraft.MixinEntityRenderer"));
+            }
+        } finally {
+            field.set(null, original);
+        }
     }
 }

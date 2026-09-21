@@ -48,6 +48,13 @@ dependencies {
     compileOnly(rfg.deobf("curse.maven:minefantasy2-232408:2620461"))
     compileOnly(rfg.deobf("maven.modrinth:yRcrQfWl:faPjmd7J")) // Campfire Backport 1.11.3
 
+    compileOnly(rfg.deobf("curse.maven:weather-storms-tornadoes-237746:2513048"))
+    compileOnly(rfg.deobf("curse.maven:coroutil-237749:2388794"))
+    if (includeOptionalCompatRuntime && project.hasProperty("weather2Runtime")) {
+        runtimeOnlyNonPublishable(rfg.deobf("curse.maven:weather-storms-tornadoes-237746:2513048"))
+        runtimeOnlyNonPublishable(rfg.deobf("curse.maven:coroutil-237749:2388794"))
+    }
+
     // Optional world generation bridges, restored from streams-greg-wild-test4.
     def worldgenCompatMods = [
         "curse.maven:streams-229769:2566220",
