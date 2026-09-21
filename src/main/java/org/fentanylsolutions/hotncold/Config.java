@@ -14,6 +14,8 @@ public class Config {
     public static boolean printMobs = false;
     public static boolean printBiomes = false;
     public static boolean disableLightningExplosionSound = false;
+    public static boolean enableMineFantasyCampfires = true;
+    public static float campfireFoodBurnChance = 0.25F;
     public static boolean enableStreamsMiddleEarth = true;
     public static boolean enableGregCavesMiddleEarth = true;
     public static boolean enableWildCavesMiddleEarth = true;
@@ -72,6 +74,18 @@ public class Config {
         readNPCEquipmentConfiguration(configuration);
         readWorldgenConfiguration(configuration);
         readSoundConfiguration(configuration);
+        enableMineFantasyCampfires = configuration.getBoolean(
+            "enableMineFantasyCampfires",
+            Configuration.CATEGORY_GENERAL,
+            true,
+            "When both MineFantasy 2 and Campfire Backport are installed, campfires require MineFantasy firepit fuel (up to ten minutes) and may burn food. New and previously unfueled campfires start empty. Server setting; restart required.");
+        campfireFoodBurnChance = configuration.getFloat(
+            "campfireFoodBurnChance",
+            Configuration.CATEGORY_GENERAL,
+            0.25F,
+            0.0F,
+            1.0F,
+            "Chance that a completed food recipe produces MineFantasy burnt food instead. Requires enableMineFantasyCampfires. 0 disables burning; 1 always burns. Non-food recipes and byproducts are unaffected. Does not use player skills or award XP. Server setting; restart required.");
 
         mobsImmuneToFrost = configuration
             .get(

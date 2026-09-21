@@ -19,6 +19,7 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
     private int failedMenuTicks;
     private ProductionGearScreen gearScreen;
     private LightningClientChecks lightningChecks;
+    private EarendilClientChecks earendilChecks;
 
     @Override
     public void init() {
@@ -60,6 +61,18 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
             !failedMenu || ++failedMenuTicks < 100,
             "Integrated server returned to the menu without loading the acceptance world; see the FML startup error");
         if (ProductionFixture.serverChecksPassed && mc.theWorld != null && mc.thePlayer != null) {
+            if ("campfire".equals(ProductionFixture.profile()) && !CampfireClientChecks.tick(mc)) {
+                return;
+            }
+            if ("earendil".equals(ProductionFixture.profile())) {
+                if (earendilChecks == null) {
+                    earendilChecks = new EarendilClientChecks();
+                    mc.displayGuiScreen(earendilChecks);
+                }
+                if (!earendilChecks.rendered) {
+                    return;
+                }
+            }
             if (lightningChecks != null && !lightningChecks.tick(mc)) {
                 return;
             }

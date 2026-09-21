@@ -101,3 +101,25 @@ The default safety settings preserve hired, custom-named, quest-linked, and pers
 ```
 
 Reloads affect future natural spawns only. They never rewrite existing entities or NPC gear.
+## MineFantasy 2 / Campfire Backport
+
+When **both** mods are installed, Hot N Cold enables firepit-style fuel and food burning on Campfire Backport campfires in all dimensions. Either mod can be absent without affecting the other.
+
+```cfg
+general {
+    B:enableMineFantasyCampfires=true
+    D:campfireFoodBurnChance=0.25
+}
+```
+
+These are server settings, read at startup. Set `enableMineFantasyCampfires=false` to restore Campfire Backport's normal behavior. `campfireFoodBurnChance` ranges from `0.0` (never burn) to `1.0` (always burn).
+
+Right-click with a MineFantasy firepit fuel to add one item's burn time, up to ten minutes. This uses MineFantasy's actual fuel function, including timber material modifiers. In MineFantasy 2.8.14.6, sticks provide 30 seconds; its timber and cut timber provide 10 seconds times their material modifier, and timber panes provide 30 seconds times the modifier. Vanilla logs, planks and coal are not accepted by that firepit fuel function. Fuel is not consumed from the player's hand in creative mode or when the campfire is full.
+
+New campfires and existing campfires without saved fuel start empty. Add fuel, then light the campfire with a normal Campfire Backport ignitor. Fuel counts down only while the placed campfire is lit. At zero fuel it extinguishes and keeps its cooking inventory. Extinguishing and relighting preserves remaining fuel; relighting never refills it. Regular, soul and signal campfires all need fuel. Fuel survives world/chunk reloads; breaking a campfire discards its remaining fuel. MineFantasy's HUD displays the remaining fuel when looking at a campfire with fuel, and disappears when it is empty.
+
+Cooking keeps Campfire Backport's four slots and recipe times. Each completed food recipe rolls once: by default it has a 25% chance to produce MineFantasy's Burnt Food instead of the normal food output, preserving the output count. Multi-input recipes roll once for the combined result. Non-food outputs and recipe byproducts are unchanged. This does not copy MineFantasy's manual cooking attempts, provisioning skill bonuses or XP.
+
+Campfire Backport's ordinary rain, water and oxygen extinguishing still applies. Its automatic burnout timer is replaced by the fuel supply while this integration is enabled; fuel exhaustion extinguishes the block rather than applying the optional "Burn to Nothing" destruction chance.
+
+Tested releases: MineFantasy II 2.8.14.6 and Campfire Backport 1.11.3. With the regular Campfire jar, load UniMixins first (for example, name its jar `!unimixins-0.3.1.jar`) so Campfire's bundled older Mixin does not take precedence. Campfire also publishes a `+nomixin` variant for installations that already provide Mixin.

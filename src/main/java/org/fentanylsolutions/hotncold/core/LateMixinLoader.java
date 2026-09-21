@@ -9,6 +9,7 @@ import org.fentanylsolutions.hotncold.HotNCold;
 import com.gtnewhorizon.gtnhmixins.ILateMixinLoader;
 import com.gtnewhorizon.gtnhmixins.LateMixin;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 
 @SuppressWarnings("unused")
@@ -25,9 +26,15 @@ public class LateMixinLoader implements ILateMixinLoader {
 
     @Override
     public List<String> getMixins(Set<String> loadedCoreMods) {
-        return new MixinUtil.MixinBuilder(false).addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "lotr")
+        MixinUtil.MixinBuilder builder = new MixinUtil.MixinBuilder(false);
+        if (Loader.isModLoaded("minefantasy2") && Loader.isModLoaded("campfirebackport")) {
+            builder.addMixin("MixinTileEntityCampfire", MixinUtil.Side.BOTH, "campfirebackport")
+                .addMixin("MixinBlockCampfire", MixinUtil.Side.BOTH, "campfirebackport");
+        }
+        return builder.addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinLOTRSpawnerAnimals", MixinUtil.Side.BOTH, "lotr")
             .addMixin("MixinLOTRSpawnerNPCs", MixinUtil.Side.BOTH, "lotr")
+            .addMixin("MixinLOTRSkyRenderer", MixinUtil.Side.CLIENT, "lotr")
             .addMixin("MixinEMConfigHandler", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEMStatusManagerLOTR", MixinUtil.Side.BOTH, "enviromine")
             .addMixin("MixinEventHelper", MixinUtil.Side.BOTH, "wotrmc")

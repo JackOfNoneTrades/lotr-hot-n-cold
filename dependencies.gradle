@@ -45,6 +45,8 @@ dependencies {
     compileOnly(rfg.deobf("curse.maven:custom-npcs-221826:2495406"))
     //implementation(rfg.deobf("curse.maven:enviromine-for-galaxy-odyssey-429410:4449395"))
     compileOnly(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
+    compileOnly(rfg.deobf("curse.maven:minefantasy2-232408:2620461"))
+    compileOnly(rfg.deobf("maven.modrinth:yRcrQfWl:faPjmd7J")) // Campfire Backport 1.11.3
 
     // Optional world generation bridges, restored from streams-greg-wild-test4.
     def worldgenCompatMods = [
@@ -61,6 +63,8 @@ dependencies {
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:ivtoolkit-224535:2294442"))
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:mo-creatures-229260:2232973"))
         runtimeOnlyNonPublishable(rfg.deobf("curse.maven:enviromine-continuation-997281:7450612"))
+        runtimeOnlyNonPublishable(rfg.deobf("curse.maven:minefantasy2-232408:2620461"))
+        runtimeOnlyNonPublishable(rfg.deobf("maven.modrinth:yRcrQfWl:faPjmd7J")) // Campfire Backport 1.11.3
         if (project.hasProperty("badMobsRuntime")) {
             runtimeOnlyNonPublishable(rfg.deobf("curse.maven:bad-mobs-233258:2250741"))
         }

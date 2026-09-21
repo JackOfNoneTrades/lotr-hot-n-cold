@@ -24,6 +24,7 @@ usercache.json
 whitelist.json
 /out/
 /docs/
+/scripts/
 *.iml
 *.ipr
 *.iws

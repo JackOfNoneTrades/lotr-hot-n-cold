@@ -152,7 +152,11 @@ public final class ProductionFixture {
             && !"streams".equals(profile())) {
             org.fentanylsolutions.hotncold.core.RestrictionChecks.run();
         }
-        if ("terrain".equals(profile()) || "baseline".equals(profile()) || "compat".equals(profile())) {
+        if ("campfire".equals(profile())) {
+            CampfireChecks.run();
+        } else if ("campfire-only".equals(profile())) {
+            CampfireOnlyChecks.run();
+        } else if ("terrain".equals(profile()) || "baseline".equals(profile()) || "compat".equals(profile())) {
             TerrainChecks.run();
         } else if ("worldgen".equals(profile()) || "combined".equals(profile())) {
             WorldgenChecks.run();
