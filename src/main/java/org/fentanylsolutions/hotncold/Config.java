@@ -156,7 +156,7 @@ public class Config {
             "disableLightningExplosionSound",
             Configuration.CATEGORY_GENERAL,
             false,
-            "Mute only vanilla lightning's explosion sound in all dimensions. Thunder, actual explosions, lightning damage and fire are unchanged. Off by default. Restart Minecraft (or the dedicated server) after changing this; multiplayer uses the server's setting.");
+            "Mute vanilla and Weather 2 lightning's explosion sound in all dimensions. Thunder, actual explosions, lightning damage and fire are unchanged. Off by default. Restart after changing this. Vanilla lightning uses the server's setting in multiplayer; Weather 2 lightning uses each client's setting because it emits sounds locally.");
     }
 
     private static void readWorldgenConfiguration(Configuration configuration) {

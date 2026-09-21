@@ -67,6 +67,7 @@ public final class ProductionClient extends ProductionFixture.ServerProxy {
             }
             if ("weather-rain".equals(ProductionFixture.profile())) {
                 if (weatherRainChecks == null) {
+                    WeatherLightningClientChecks.run(mc);
                     weatherRainChecks = new WeatherRainClientChecks();
                     mc.displayGuiScreen(weatherRainChecks);
                 }
