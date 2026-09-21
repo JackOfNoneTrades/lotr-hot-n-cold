@@ -80,14 +80,14 @@ public class Config {
             "enableWeather2VanillaRain",
             Configuration.CATEGORY_GENERAL,
             true,
-            "With Weather 2 installed, use vanilla and dimension-specific precipitation instead of Weather 2 rain/snow particles. Preserves storm simulation, wind and clouds. Client setting; restart required.");
+            "With Weather 2 installed, use vanilla and dimension-specific precipitation instead of Weather 2 rain/snow particles. Preserves storm simulation, wind and clouds. Server setting when Hot N Cold is installed on both sides; otherwise local. Restart required.");
         weather2RainDelaySeconds = configuration.getInt(
             "weather2RainDelaySeconds",
             Configuration.CATEGORY_GENERAL,
             120,
             0,
             3600,
-            "Seconds of dark sky before precipitation, rain splashes and rain sounds appear locally. Requires enableWeather2VanillaRain and Weather 2. 0 disables the delay. Resets on clear weather, disconnect or dimension change. Client setting; restart required.");
+            "Seconds of dark sky before precipitation and rain-dependent effects begin. Native/global rain mechanics are delayed on the server and synchronized to clients; localized Weather 2 rain is delayed at the player. Requires enableWeather2VanillaRain and Weather 2. 0 disables the delay. Server setting when installed on both sides; otherwise local. Restart required.");
         enableMineFantasyCampfires = configuration.getBoolean(
             "enableMineFantasyCampfires",
             Configuration.CATEGORY_GENERAL,

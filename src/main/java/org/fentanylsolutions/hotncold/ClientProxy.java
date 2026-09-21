@@ -12,8 +12,14 @@ public class ClientProxy extends CommonProxy {
     public void init(cpw.mods.fml.common.event.FMLInitializationEvent event) {
         super.init(event);
         if (cpw.mods.fml.common.Loader.isModLoaded("weather2")) {
-            org.fentanylsolutions.hotncold.compat.WeatherRainDelay.initialize();
+            org.fentanylsolutions.hotncold.compat.WeatherRainClient.initialize();
         }
+    }
+
+    @Override
+    public void receiveRain(org.fentanylsolutions.hotncold.compat.WeatherRainSync.RainMessage message) {
+        Minecraft mc = Minecraft.getMinecraft();
+        mc.func_152344_a(() -> message.apply(mc.theWorld));
     }
 
     @Override

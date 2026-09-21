@@ -36,7 +36,12 @@ public class CommonProxy {
         MinecraftForge.EVENT_BUS.register(LOTRSpawnGuard.INSTANCE);
         LOTRNPCShieldSync.init();
         LOTREquipmentSpawns.init();
+        if (Loader.isModLoaded("weather2")) {
+            org.fentanylsolutions.hotncold.compat.WeatherRainDelay.initialize();
+        }
     }
+
+    public void receiveRain(org.fentanylsolutions.hotncold.compat.WeatherRainSync.RainMessage message) {}
 
     public void receiveNPCShield(int entityId, int dimension, String shieldName) {}
 

@@ -37,6 +37,8 @@ public class EarlyMixinLoader extends FentEarlyMixinLoader {
     public List<String> getMixins(Set<String> loadedCoreMods) {
         return new MixinUtil.MixinBuilder(true).addMixin("MixinEntityLightningBolt", MixinUtil.Side.BOTH)
             .addMixin("MixinEntityRenderer", MixinUtil.Side.CLIENT)
+            .addMixin("MixinWorldSkyColor", MixinUtil.Side.CLIENT)
+            .addMixin("MixinWorldRain", MixinUtil.Side.BOTH)
             .build();
     }
 

@@ -152,7 +152,9 @@ public final class ProductionFixture {
             && !"streams".equals(profile())) {
             org.fentanylsolutions.hotncold.core.RestrictionChecks.run();
         }
-        if ("campfire".equals(profile())) {
+        if ("weather-rain".equals(profile())) {
+            WeatherRainServerChecks.run();
+        } else if ("campfire".equals(profile())) {
             CampfireChecks.run();
         } else if ("campfire-only".equals(profile())) {
             CampfireOnlyChecks.run();

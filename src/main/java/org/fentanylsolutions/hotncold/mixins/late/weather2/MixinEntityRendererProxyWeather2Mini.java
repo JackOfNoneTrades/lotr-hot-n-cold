@@ -1,6 +1,8 @@
 package org.fentanylsolutions.hotncold.mixins.late.weather2;
 
-import org.fentanylsolutions.hotncold.Config;
+import net.minecraft.client.Minecraft;
+
+import org.fentanylsolutions.hotncold.compat.WeatherRainDelay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -18,6 +20,6 @@ public abstract class MixinEntityRendererProxyWeather2Mini {
         require = 1)
     private boolean hotncold$restoreNativePrecipitation() {
         // Let EntityRenderer call the world's renderer (including LOTR ash/sand), or vanilla rain/snow.
-        return !Config.enableWeather2VanillaRain && ConfigMisc.Particle_RainSnow;
+        return !WeatherRainDelay.isEnabled(Minecraft.getMinecraft().theWorld) && ConfigMisc.Particle_RainSnow;
     }
 }

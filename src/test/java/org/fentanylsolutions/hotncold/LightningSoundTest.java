@@ -101,7 +101,9 @@ public class LightningSoundTest {
                 field.set(null, side);
                 java.util.List<String> mixins = new EarlyMixinLoader().getMixins(Collections.emptySet());
                 assertTrue(mixins.contains("minecraft.MixinEntityLightningBolt"));
+                assertTrue(mixins.contains("minecraft.MixinWorldRain"));
                 assertEquals(side.isClient(), mixins.contains("minecraft.MixinEntityRenderer"));
+                assertEquals(side.isClient(), mixins.contains("minecraft.MixinWorldSkyColor"));
             }
         } finally {
             field.set(null, original);
